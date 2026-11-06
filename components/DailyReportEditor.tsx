@@ -7,7 +7,8 @@ import {
   uid,
   todayISO,
   formatVNDate,
-  labelRows
+  labelRows,
+  saveReportLogosToCloudVault
 } from '../services/dailyReportService';
 
 interface DailyReportEditorProps {
@@ -158,11 +159,7 @@ export const DailyReportEditor: React.FC<DailyReportEditorProps> = ({
             key={tab.id}
             type="button"
             onClick={() => setActiveEditorTab(tab.id as any)}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-              activeEditorTab === tab.id
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-            }`}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${activeEditorTab === tab.id ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
           >
             {tab.label}
           </button>
@@ -314,7 +311,15 @@ export const DailyReportEditor: React.FC<DailyReportEditorProps> = ({
 
           {/* Logos upload */}
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <h4 className="text-xs font-bold text-slate-800 mb-3">Logo đầu báo cáo (Tư vấn giám sát / Chủ đầu tư / Nhà thầu)</h4>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h4 className="text-xs font-bold text-slate-800">
+                Logo đầu báo cáo (Tư vấn giám sát / Chủ đầu tư / Nhà thầu)
+              </h4>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Tự động lưu cố định trên Cloud (Chỉ thay đổi khi bạn tải ảnh mới)</span>
+              </span>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {([
                 ['tvgs', 'Tư vấn giám sát'],
@@ -322,26 +327,39 @@ export const DailyReportEditor: React.FC<DailyReportEditorProps> = ({
                 ['nt', 'Nhà thầu']
               ] as const).map(([key, label]) => (
                 <div key={key} className="bg-white p-3 rounded-lg border border-slate-200">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">{label}</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700">{label}</label>
+                    {draftReport.logos[key] && (
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                        Đã khóa cố định
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={(e) =>
-                      handleImageUpload(e.target.files?.[0], 500, true, (dataUrl) =>
-                        setDraftReport((prev) => ({ ...prev, logos: { ...prev.logos, [key]: dataUrl } }))
-                      )
+                      handleImageUpload(e.target.files?.[0], 500, true, async (dataUrl) => {
+                        setDraftReport((prev) => ({ ...prev, logos: { ...prev.logos, [key]: dataUrl } }));
+                        await saveReportLogosToCloudVault({ [key]: dataUrl });
+                        showToast(`Đã lưu cố định Logo ${label} lên Cloud! Sẽ tự động giữ nguyên khi đồng bộ app.`);
+                      })
                     }
                     className="text-xs w-full"
                   />
                   {draftReport.logos[key] && (
-                    <div className="flex items-center gap-2 mt-2">
-                      <img src={draftReport.logos[key]} alt={label} className="h-9 object-contain border border-slate-200 rounded p-0.5" />
+                    <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-100">
+                      <img src={draftReport.logos[key]} alt={label} className="h-9 object-contain border border-slate-200 rounded p-0.5 bg-white" />
                       <button
                         type="button"
-                        onClick={() => setDraftReport((prev) => ({ ...prev, logos: { ...prev.logos, [key]: '' } }))}
-                        className="text-xs text-rose-600 font-semibold hover:underline"
+                        onClick={async () => {
+                          setDraftReport((prev) => ({ ...prev, logos: { ...prev.logos, [key]: '' } }));
+                          await saveReportLogosToCloudVault({}, key);
+                          showToast(`Đã xóa Logo ${label} khỏi bộ nhớ cố định.`);
+                        }}
+                        className="text-xs text-rose-600 font-semibold hover:underline cursor-pointer"
                       >
-                        Xóa
+                        Xóa logo
                       </button>
                     </div>
                   )}
@@ -351,7 +369,6 @@ export const DailyReportEditor: React.FC<DailyReportEditorProps> = ({
           </div>
         </div>
       )}
-
       {/* Tab 2: I. Weather & II. Safety */}
       {activeEditorTab === 'weather' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -785,7 +802,7 @@ export const DailyReportEditor: React.FC<DailyReportEditorProps> = ({
                 type="button"
                 onClick={() => addRow('work', { type: 'row', name: '', unit: '', plan: '', today: '', cum: '', next: '', note: '' })}
                 className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline cursor-pointer"
-              >
+            >
                 <Plus className="w-3.5 h-3.5" /> Thêm công tác
               </button>
             </div>
@@ -884,8 +901,7 @@ export const DailyReportEditor: React.FC<DailyReportEditorProps> = ({
                 <button
                   type="button"
                   onClick={() => deleteRow('photos', p.id)}
-                  className="absolute top-2 right-2 text-rose-500 hover:text-rose-700"
-                >
+                  className="absolute top-2 right-2 text-rose-500 hover:text-rose-700">
                   <Trash2 className="w-4 h-4" />
                 </button>
                 <input
@@ -973,3 +989,4 @@ export const DailyReportEditor: React.FC<DailyReportEditorProps> = ({
 };
 
 export default DailyReportEditor;
+

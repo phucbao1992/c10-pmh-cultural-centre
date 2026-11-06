@@ -40,7 +40,11 @@ import {
   loadDailyReportPermissions,
   saveDailyReportPermissions,
   canUserEditDailyReport,
-  DAILY_REPORT_DOC_PUBLISHED
+  DAILY_REPORT_DOC_PUBLISHED,
+  mergeWithPermanentLogos,
+  saveReportLogosLocal,
+  subscribeReportLogosFromFirestore,
+  DAILY_REPORT_LOGOS_EVENT
 } from '../services/dailyReportService';
 import DailyReportEditor from './DailyReportEditor';
 import DailyReportPrintSheet from './DailyReportPrintSheet';
@@ -71,9 +75,11 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
             ...(parsed.cloud || {}),
             sheetUrl: sanitizeC10SheetUrl(parsed.cloud?.sheetUrl ?? def.cloud.sheetUrl)
           };
+          const mergedLogos = saveReportLogosLocal(parsed.logos || {});
           return {
             ...def,
             ...parsed,
+            logos: mergedLogos,
             cloud: mergedCloud,
             fileSuffix: parsed.fileSuffix || DEFAULT_FILE_SUFFIX
           };
@@ -85,7 +91,7 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
     return def;
   });
 
-  // Draft report for editing inside the Form Builder (auto-strip legacy CN82 Sheet link)
+  // Draft report for editing inside the Form Builder (auto-strip legacy CN82 Sheet link & lock permanent logos)
   const [draftReport, setDraftReport] = useState<DailyReportModel>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_DRAFT);
@@ -98,16 +104,18 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
             ...(parsed.cloud || {}),
             sheetUrl: sanitizeC10SheetUrl(parsed.cloud?.sheetUrl ?? def.cloud.sheetUrl)
           };
+          const mergedLogos = saveReportLogosLocal(parsed.logos || {});
           return {
             ...def,
             ...parsed,
+            logos: mergedLogos,
             cloud: mergedCloud,
             fileSuffix: parsed.fileSuffix || DEFAULT_FILE_SUFFIX
           };
         }
       }
     } catch {}
-    return publishedReport;
+    return createInheritedDraftFromPublished(publishedReport);
   });
 
   // Editable suffix state (always defaults to "Delta-Báo cáo ngày")
@@ -219,18 +227,65 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
       setIsCloudSynced(true);
     });
 
-    // 2. Load historical reports index
+    // 2. Realtime Permanent Logo Vault synchronization (c10/report_logos_vault)
+    const unsubLogos = subscribeReportLogosFromFirestore((cloudLogos) => {
+      setPublishedReport((prev) => {
+        const updatedLogos = mergeWithPermanentLogos({ ...prev.logos, ...cloudLogos });
+        if (
+          updatedLogos.tvgs === prev.logos?.tvgs &&
+          updatedLogos.cdt === prev.logos?.cdt &&
+          updatedLogos.nt === prev.logos?.nt
+        ) {
+          return prev;
+        }
+        const next = { ...prev, logos: updatedLogos };
+        try {
+          localStorage.setItem(STORAGE_KEY_PUBLISHED, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+      setDraftReport((prev) => {
+        const updatedLogos = mergeWithPermanentLogos({ ...prev.logos, ...cloudLogos });
+        if (
+          updatedLogos.tvgs === prev.logos?.tvgs &&
+          updatedLogos.cdt === prev.logos?.cdt &&
+          updatedLogos.nt === prev.logos?.nt
+        ) {
+          return prev;
+        }
+        return { ...prev, logos: updatedLogos };
+      });
+    });
+
+    const handleLogosUpdatedEvent = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail) return;
+      setPublishedReport((prev) => {
+        const next = { ...prev, logos: detail };
+        try {
+          localStorage.setItem(STORAGE_KEY_PUBLISHED, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+    };
+    window.addEventListener(DAILY_REPORT_LOGOS_EVENT, handleLogosUpdatedEvent);
+
+    // 3. Load historical reports index
     fetchDailyReportHistoryIndex().then((list) => {
       if (list && Array.isArray(list)) setHistoryList(list);
     });
 
-    // 3. Load permissions
+    // 4. Load permissions
     loadDailyReportPermissions().then((perms) => {
       setPermissionsState(perms);
       setCanEdit(computeCanEdit());
     });
 
-    return () => unsub();
+    return () => {
+      unsub();
+      unsubLogos();
+      window.removeEventListener(DAILY_REPORT_LOGOS_EVENT, handleLogosUpdatedEvent);
+    };
   }, [selectedHistoryDate]);
 
   // Keep fileSuffix synced into draft/published report

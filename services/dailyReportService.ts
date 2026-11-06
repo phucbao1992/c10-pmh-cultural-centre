@@ -125,20 +125,91 @@ export interface DailyReportModel {
 export const STORAGE_KEY_PUBLISHED = 'c10_daily_report_published_v3';
 export const STORAGE_KEY_DRAFT = 'c10_daily_report_draft_v3';
 export const STORAGE_KEY_CLOUD_CONFIG = 'c10_daily_report_cloud_config_v1';
+export const STORAGE_KEY_LOGOS_VAULT = 'c10_permanent_logos_v1';
 export const DAILY_REPORT_CONFIG_EVENT = 'c10-daily-report-config-updated';
+export const DAILY_REPORT_LOGOS_EVENT = 'c10-daily-report-logos-updated';
 
 export const DEFAULT_FILE_SUFFIX = 'Delta-Báo cáo ngày';
 export const DEFAULT_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/10sldhCeoddg_8qx78DKVAauYET2J4sCp';
-// Không lấy chung với link Google Sheet cũ của CN82 (1KmNuj1im35A7XPQ90pcKkQ5ooSQy_Z84IxDqvmElLCA)
-export const LEGACY_CN82_SHEET_ID = '1KmNuj1im35A7XPQ90pcKkQ5ooSQy_Z84IxDqvmElLCA';
 export const DEFAULT_GOOGLE_SHEET_URL = '';
 export const DEFAULT_APPS_SCRIPT_URL = '';
 
+export type ReportLogos = DailyReportModel['logos'];
+
+/**
+ * Đọc bộ 3 Logo cố định (TVGS, Chủ đầu tư, Nhà thầu) từ bộ nhớ bền vững.
+ * Đảm bảo một khi người dùng đã tải logo lên thì không bao giờ bị mất khi đồng bộ app hay sang ngày mới.
+ */
+export const loadSavedReportLogos = (): ReportLogos => {
+  const empty: ReportLogos = { tvgs: '', cdt: '', nt: '' };
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_LOGOS_VAULT);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        return {
+          tvgs: typeof parsed.tvgs === 'string' ? parsed.tvgs : '',
+          cdt: typeof parsed.cdt === 'string' ? parsed.cdt : '',
+          nt: typeof parsed.nt === 'string' ? parsed.nt : ''
+        };
+      }
+    }
+  } catch {}
+  return empty;
+};
+
+/**
+ * Hợp nhất logo của báo cáo với kho lưu trữ cố định (ưu tiên giữ logo đã lưu nếu báo cáo truyền vào bị rỗng).
+ */
+export const mergeWithPermanentLogos = (
+  incoming?: Partial<ReportLogos> | null
+): ReportLogos => {
+  const vault = loadSavedReportLogos();
+  return {
+    tvgs: incoming?.tvgs && incoming.tvgs.trim() ? incoming.tvgs : vault.tvgs,
+    cdt: incoming?.cdt && incoming.cdt.trim() ? incoming.cdt : vault.cdt,
+    nt: incoming?.nt && incoming.nt.trim() ? incoming.nt : vault.nt
+  };
+};
+
+/**
+ * Lưu bộ 3 Logo vào LocalStorage cố định (chỉ xóa khi có cờ explicitClearKey).
+ */
+export const saveReportLogosLocal = (
+  partialLogos: Partial<ReportLogos>,
+  explicitClearKey?: keyof ReportLogos
+): ReportLogos => {
+  const current = loadSavedReportLogos();
+  const next: ReportLogos = {
+    tvgs:
+      explicitClearKey === 'tvgs'
+        ? ''
+        : partialLogos.tvgs && partialLogos.tvgs.trim()
+        ? partialLogos.tvgs
+        : current.tvgs,
+    cdt:
+      explicitClearKey === 'cdt'
+        ? ''
+        : partialLogos.cdt && partialLogos.cdt.trim()
+        ? partialLogos.cdt
+        : current.cdt,
+    nt:
+      explicitClearKey === 'nt'
+        ? ''
+        : partialLogos.nt && partialLogos.nt.trim()
+        ? partialLogos.nt
+        : current.nt
+  };
+  try {
+    localStorage.setItem(STORAGE_KEY_LOGOS_VAULT, JSON.stringify(next));
+    window.dispatchEvent(new CustomEvent(DAILY_REPORT_LOGOS_EVENT, { detail: next }));
+  } catch {}
+  return next;
+};
+
 export const sanitizeC10SheetUrl = (url?: string): string => {
   if (!url) return '';
-  const trimmed = url.trim();
-  if (trimmed.includes(LEGACY_CN82_SHEET_ID)) return '';
-  return trimmed;
+  return url.trim();
 };
 
 export const extractFolderIdFromUrl = (url?: string): string => {
@@ -214,6 +285,106 @@ export const STORAGE_KEY_PERMISSIONS = 'c10_daily_report_permissions_v1';
 export const DAILY_REPORT_DOC_PUBLISHED = 'daily_report_published';
 export const DAILY_REPORT_DOC_INDEX = 'daily_reports_index';
 export const DAILY_REPORT_DOC_PERMISSIONS = 'daily_report_permissions';
+export const DAILY_REPORT_DOC_LOGOS = 'report_logos_vault';
+
+/**
+ * Lưu cố định Logo (TVGS, Chủ đầu tư, Nhà thầu) lên Cloud Firestore (`c10/report_logos_vault`)
+ * và đồng bộ ngay vào báo cáo hiện hành (`c10/daily_report_published`).
+ * Một khi đã lưu, logo sẽ giữ nguyên vĩnh viễn qua mọi lần đồng bộ app cho đến khi người dùng chủ động đổi logo mới.
+ */
+export const saveReportLogosToCloudVault = async (
+  partialLogos: Partial<ReportLogos>,
+  explicitClearKey?: keyof ReportLogos
+): Promise<ReportLogos> => {
+  const nextLogos = saveReportLogosLocal(partialLogos, explicitClearKey);
+  try {
+    if (db) {
+      const nowIso = new Date().toISOString();
+      await Promise.all([
+        setDoc(
+          doc(db, 'c10', DAILY_REPORT_DOC_LOGOS),
+          {
+            ...nextLogos,
+            updatedAt: nowIso
+          },
+          { merge: true }
+        ),
+        setDoc(
+          doc(db, 'c10', DAILY_REPORT_DOC_PUBLISHED),
+          {
+            logos: nextLogos,
+            logosUpdatedAt: nowIso
+          },
+          { merge: true }
+        )
+      ]);
+    }
+  } catch (err) {
+    console.warn('Lỗi lưu cố định Logo lên Cloud:', err);
+  }
+  return nextLogos;
+};
+
+/**
+ * Lắng nghe kho lưu trữ Logo cố định từ Cloud Firestore (`c10/report_logos_vault`).
+ * Nếu kho lưu trữ chưa có hoặc thiếu logo, tự động tìm và khôi phục từ các bản báo cáo đã lưu trên Cloud.
+ */
+export const subscribeReportLogosFromFirestore = (
+  onUpdate: (logos: ReportLogos) => void
+): (() => void) => {
+  if (!db) return () => {};
+  try {
+    const unsub = onSnapshot(
+      doc(db, 'c10', DAILY_REPORT_DOC_LOGOS),
+      async (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data() as Partial<ReportLogos>;
+          const merged = saveReportLogosLocal({
+            tvgs: data.tvgs || '',
+            cdt: data.cdt || '',
+            nt: data.nt || ''
+          });
+          onUpdate(merged);
+          if (merged.tvgs && merged.cdt && merged.nt) return;
+        }
+
+        // Tự động khôi phục logo từ bản báo cáo hiện hành hoặc lịch sử nếu kho lưu trữ còn thiếu
+        try {
+          const currentLocal = loadSavedReportLogos();
+          if (currentLocal.tvgs || currentLocal.cdt || currentLocal.nt) {
+            await setDoc(
+              doc(db, 'c10', DAILY_REPORT_DOC_LOGOS),
+              { ...currentLocal, updatedAt: new Date().toISOString() },
+              { merge: true }
+            );
+            onUpdate(currentLocal);
+          }
+
+          const pubSnap = await getDoc(doc(db, 'c10', DAILY_REPORT_DOC_PUBLISHED));
+          if (pubSnap.exists()) {
+            const pubData = pubSnap.data() as DailyReportModel;
+            if (pubData?.logos && (pubData.logos.tvgs || pubData.logos.cdt || pubData.logos.nt)) {
+              const recovered = saveReportLogosLocal(pubData.logos);
+              await setDoc(
+                doc(db, 'c10', DAILY_REPORT_DOC_LOGOS),
+                { ...recovered, updatedAt: new Date().toISOString() },
+                { merge: true }
+              );
+              onUpdate(recovered);
+              return;
+            }
+          }
+        } catch {}
+      },
+      (err) => {
+        console.warn('Lỗi realtime listener report_logos_vault:', err);
+      }
+    );
+    return unsub;
+  } catch {
+    return () => {};
+  }
+};
 
 /**
  * Loại bỏ undefined trước khi ghi lên Firestore
@@ -234,7 +405,12 @@ export const syncDailyReportToFirestore = async (
 ): Promise<boolean> => {
   try {
     if (!db) return false;
-    const clean = cleanReportForFirestore(report);
+    const lockedLogos = saveReportLogosLocal(report.logos || {});
+    const reportWithLockedLogos: DailyReportModel = {
+      ...report,
+      logos: lockedLogos
+    };
+    const clean = cleanReportForFirestore(reportWithLockedLogos);
     const nowIso = new Date().toISOString();
     const effectiveEmail = (
       userEmail ||
@@ -247,6 +423,15 @@ export const syncDailyReportToFirestore = async (
       cloudSyncedAt: nowIso,
       updatedBy: effectiveEmail
     };
+
+    // 0. Nếu có bất kỳ logo nào, khóa luôn vào kho lưu trữ cố định report_logos_vault
+    if (lockedLogos.tvgs || lockedLogos.cdt || lockedLogos.nt) {
+      await setDoc(
+        doc(db, 'c10', DAILY_REPORT_DOC_LOGOS),
+        { ...lockedLogos, updatedAt: nowIso },
+        { merge: true }
+      ).catch(() => {});
+    }
 
     // 1. Cập nhật bản Báo cáo hiện hành (Latest Published) cho tất cả máy
     await setDoc(doc(db, 'c10', DAILY_REPORT_DOC_PUBLISHED), payload, { merge: true });
@@ -292,7 +477,6 @@ export const syncDailyReportToFirestore = async (
     return false;
   }
 };
-
 /**
  * Lắng nghe cập nhật thời gian thực từ Cloud Firestore
  * Bất cứ khi nào có người xuất báo cáo, các máy khác tự động nhận dữ liệu mới ngay
@@ -314,9 +498,11 @@ export const subscribeDailyReportFromFirestore = (
               ...(data.cloud || {}),
               sheetUrl: sanitizeC10SheetUrl(data.cloud?.sheetUrl ?? def.cloud.sheetUrl)
             };
+            const mergedLogos = saveReportLogosLocal(data.logos || {});
             const fullReport: DailyReportModel = {
               ...def,
               ...data,
+              logos: mergedLogos,
               cloud: mergedCloud,
               fileSuffix: data.fileSuffix || DEFAULT_FILE_SUFFIX
             };
@@ -371,6 +557,7 @@ export const fetchDailyReportByDateKey = async (
         return {
           ...def,
           ...data,
+          logos: mergeWithPermanentLogos(data.logos),
           cloud: mergedCloud,
           fileSuffix: data.fileSuffix || DEFAULT_FILE_SUFFIX
         };
@@ -538,7 +725,7 @@ export const createDefaultReport = (): DailyReportModel => {
       contractor: 'Công ty TNHH Tập Đoàn Xây Dựng Delta',
       reporter: ''
     },
-    logos: { tvgs: '', cdt: '', nt: '' },
+    logos: loadSavedReportLogos(),
     sign: {
       cTitle: 'ĐẠI DIỆN NHÀ THẦU DELTA',
       cName: '',
@@ -651,6 +838,62 @@ export const createDefaultReport = (): DailyReportModel => {
       { id: uid(), type: 'row', url: '', caption: 'Ảnh 2' }
     ],
     aiSummary: null
+  };
+};
+/**
+ * Tự động kế thừa dữ liệu (Nhân lực, Máy móc, Thông tin chung, Lũy kế vật tư & công việc)
+ * từ báo cáo đã xuất bản gần nhất khi khởi tạo báo cáo ngày mới.
+ */
+export const createInheritedDraftFromPublished = (published?: DailyReportModel | null): DailyReportModel => {
+  const def = createDefaultReport();
+  if (!published || !published.g) return def;
+
+  const today = todayISO();
+  const prevDate = String(published.g.reportDate || '').trim();
+  let nextReportNo = String(published.g.reportNo || def.g.reportNo).trim();
+  if (prevDate && prevDate !== today) {
+    const numMatch = nextReportNo.match(/^(\d+)$/);
+    if (numMatch) {
+      const incremented = Number(numMatch[1]) + 1;
+      nextReportNo = String(incremented).padStart(numMatch[1].length, '0');
+    }
+  }
+
+  return {
+    ...def,
+    ...published,
+    g: {
+      ...def.g,
+      ...published.g,
+      reportDate: today,
+      reportNo: nextReportNo
+    },
+    cloud: {
+      ...def.cloud,
+      ...(published.cloud || {})
+    },
+    logos: mergeWithPermanentLogos(published.logos),
+    sign: {
+      ...def.sign,
+      ...(published.sign || {})
+    },
+    man: Array.isArray(published.man) && published.man.length > 0
+      ? published.man.map((m) => ({ ...m }))
+      : def.man,
+    mach: Array.isArray(published.mach) && published.mach.length > 0
+      ? published.mach.map((eq) => ({ ...eq }))
+      : def.mach,
+    mat: Array.isArray(published.mat) && published.mat.length > 0
+      ? published.mat.map((m) => (m.type === 'row' && prevDate !== today ? { ...m, today: '0' } : { ...m }))
+      : def.mat,
+    work: Array.isArray(published.work) && published.work.length > 0
+      ? published.work.map((w) => (
+          w.type === 'row' && prevDate !== today
+            ? { ...w, plan: w.next || w.plan || '0', today: '0' }
+            : { ...w }
+        ))
+      : def.work,
+    aiSummary: prevDate === today ? published.aiSummary : null
   };
 };
 
@@ -1040,3 +1283,4 @@ function doPost(e) {
 }
 `;
 };
+
