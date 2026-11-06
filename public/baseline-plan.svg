@@ -1,0 +1,338 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2600 1839" width="2600" height="1839">
+  <!-- Background Style -->
+  <style>
+    .bg { fill: #f8fafc; }
+    .grid-line { stroke: #e2e8f0; stroke-width: 2; stroke-dasharray: 8,8; }
+    .boundary-wall { stroke: #334155; stroke-width: 8; fill: #ffffff; }
+    .boundary-inner { stroke: #94a3b8; stroke-width: 2; fill: none; }
+    .axis-bubble { fill: #ffffff; stroke: #64748b; stroke-width: 2; }
+    .axis-text { font-family: 'Inter', 'Space Grotesk', sans-serif; font-size: 24px; font-weight: bold; fill: #334155; text-anchor: middle; dominant-baseline: middle; }
+    .title-text { font-family: 'Inter', sans-serif; font-size: 36px; font-weight: bold; fill: #0f172a; }
+    .subtitle-text { font-family: 'Inter', sans-serif; font-size: 22px; fill: #64748b; }
+    .footing { fill: #f1f5f9; stroke: #64748b; stroke-width: 3; }
+    .footing-text { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: bold; fill: #334155; text-anchor: middle; dominant-baseline: middle; }
+    
+    /* Zones style with shaded pastels */
+    .zone-1-bg { fill: rgba(16, 185, 129, 0.06); stroke: rgba(16, 185, 129, 0.25); stroke-width: 3; stroke-dasharray: 6,6; }
+    .zone-2-bg { fill: rgba(245, 158, 11, 0.06); stroke: rgba(245, 158, 11, 0.25); stroke-width: 3; stroke-dasharray: 6,6; }
+    .zone-3-bg { fill: rgba(239, 68, 68, 0.06); stroke: rgba(239, 68, 68, 0.25); stroke-width: 3; stroke-dasharray: 6,6; }
+    .zone-4-bg { fill: rgba(99, 102, 241, 0.06); stroke: rgba(99, 102, 241, 0.25); stroke-width: 3; stroke-dasharray: 6,6; }
+    
+    .zone-label { font-family: 'Inter', sans-serif; font-size: 36px; font-weight: 800; fill: #64748b; letter-spacing: 2px; }
+  </style>
+
+  <!-- Solid Canvas Background -->
+  <rect width="2600" height="1839" class="bg" rx="12" />
+
+  <!-- Title Banner on Drawing -->
+  <text x="130" y="55" class="title-text">MẶT BẰNG KẾ HOẠCH THI CÔNG BÊ TÔNG SÀN HẦM BF2 - DỰ ÁN C10</text>
+
+  <!-- Zone backgrounds for clear spatial division -->
+  <rect x="1058" y="452" width="523" height="1212" class="zone-1-bg" rx="8" />
+  <text x="1320" y="1050" class="zone-label" text-anchor="middle">ĐỢT 1 (ZONE 1)</text>
+
+  <rect x="1578" y="452" width="486" height="1212" class="zone-2-bg" rx="8" />
+  <text x="1820" y="1050" class="zone-label" text-anchor="middle">ĐỢT 2 (ZONE 2)</text>
+
+  <path d="M 135,454 L 1053,454 L 1053,855 L 763,855 L 763,1336 L 135,1336 Z" class="zone-3-bg" />
+  <text x="450" y="650" class="zone-label" text-anchor="middle">ĐỢT 3 (ZONE 3)</text>
+
+  <path d="M 135,855 L 763,855 L 763,1336 L 1053,1336 L 1053,1664 L 135,1664 Z" class="zone-4-bg" />
+  <text x="450" y="1150" class="zone-label" text-anchor="middle">ĐỢT 4 (ZONE 4)</text>
+
+  <g>
+  <!-- Grid Lines -->
+  <!-- Vertical Axes 1 to 18 -->
+  <line x1="130" y1="120" x2="130" y2="1719" class="grid-line" />
+<circle cx="130" cy="80" r="28" class="axis-bubble" />
+<text x="130" y="82" class="axis-text">1</text>
+<circle cx="130" cy="1759" r="28" class="axis-bubble" />
+<text x="130" y="1761" class="axis-text">1</text>
+<line x1="260" y1="120" x2="260" y2="1719" class="grid-line" />
+<circle cx="260" cy="80" r="28" class="axis-bubble" />
+<text x="260" y="82" class="axis-text">2</text>
+<circle cx="260" cy="1759" r="28" class="axis-bubble" />
+<text x="260" y="1761" class="axis-text">2</text>
+<line x1="390" y1="120" x2="390" y2="1719" class="grid-line" />
+<circle cx="390" cy="80" r="28" class="axis-bubble" />
+<text x="390" y="82" class="axis-text">3</text>
+<circle cx="390" cy="1759" r="28" class="axis-bubble" />
+<text x="390" y="1761" class="axis-text">3</text>
+<line x1="520" y1="120" x2="520" y2="1719" class="grid-line" />
+<circle cx="520" cy="80" r="28" class="axis-bubble" />
+<text x="520" y="82" class="axis-text">4</text>
+<circle cx="520" cy="1759" r="28" class="axis-bubble" />
+<text x="520" y="1761" class="axis-text">4</text>
+<line x1="650" y1="120" x2="650" y2="1719" class="grid-line" />
+<circle cx="650" cy="80" r="28" class="axis-bubble" />
+<text x="650" y="82" class="axis-text">5</text>
+<circle cx="650" cy="1759" r="28" class="axis-bubble" />
+<text x="650" y="1761" class="axis-text">5</text>
+<line x1="780" y1="120" x2="780" y2="1719" class="grid-line" />
+<circle cx="780" cy="80" r="28" class="axis-bubble" />
+<text x="780" y="82" class="axis-text">6</text>
+<circle cx="780" cy="1759" r="28" class="axis-bubble" />
+<text x="780" y="1761" class="axis-text">6</text>
+<line x1="910" y1="120" x2="910" y2="1719" class="grid-line" />
+<circle cx="910" cy="80" r="28" class="axis-bubble" />
+<text x="910" y="82" class="axis-text">7</text>
+<circle cx="910" cy="1759" r="28" class="axis-bubble" />
+<text x="910" y="1761" class="axis-text">7</text>
+<line x1="1040" y1="120" x2="1040" y2="1719" class="grid-line" />
+<circle cx="1040" cy="80" r="28" class="axis-bubble" />
+<text x="1040" y="82" class="axis-text">8</text>
+<circle cx="1040" cy="1759" r="28" class="axis-bubble" />
+<text x="1040" y="1761" class="axis-text">8</text>
+<line x1="1170" y1="120" x2="1170" y2="1719" class="grid-line" />
+<circle cx="1170" cy="80" r="28" class="axis-bubble" />
+<text x="1170" y="82" class="axis-text">9</text>
+<circle cx="1170" cy="1759" r="28" class="axis-bubble" />
+<text x="1170" y="1761" class="axis-text">9</text>
+<line x1="1300" y1="120" x2="1300" y2="1719" class="grid-line" />
+<circle cx="1300" cy="80" r="28" class="axis-bubble" />
+<text x="1300" y="82" class="axis-text">10</text>
+<circle cx="1300" cy="1759" r="28" class="axis-bubble" />
+<text x="1300" y="1761" class="axis-text">10</text>
+<line x1="1430" y1="120" x2="1430" y2="1719" class="grid-line" />
+<circle cx="1430" cy="80" r="28" class="axis-bubble" />
+<text x="1430" y="82" class="axis-text">11</text>
+<circle cx="1430" cy="1759" r="28" class="axis-bubble" />
+<text x="1430" y="1761" class="axis-text">11</text>
+<line x1="1560" y1="120" x2="1560" y2="1719" class="grid-line" />
+<circle cx="1560" cy="80" r="28" class="axis-bubble" />
+<text x="1560" y="82" class="axis-text">12</text>
+<circle cx="1560" cy="1759" r="28" class="axis-bubble" />
+<text x="1560" y="1761" class="axis-text">12</text>
+<line x1="1690" y1="120" x2="1690" y2="1719" class="grid-line" />
+<circle cx="1690" cy="80" r="28" class="axis-bubble" />
+<text x="1690" y="82" class="axis-text">13</text>
+<circle cx="1690" cy="1759" r="28" class="axis-bubble" />
+<text x="1690" y="1761" class="axis-text">13</text>
+<line x1="1820" y1="120" x2="1820" y2="1719" class="grid-line" />
+<circle cx="1820" cy="80" r="28" class="axis-bubble" />
+<text x="1820" y="82" class="axis-text">14</text>
+<circle cx="1820" cy="1759" r="28" class="axis-bubble" />
+<text x="1820" y="1761" class="axis-text">14</text>
+<line x1="1950" y1="120" x2="1950" y2="1719" class="grid-line" />
+<circle cx="1950" cy="80" r="28" class="axis-bubble" />
+<text x="1950" y="82" class="axis-text">15</text>
+<circle cx="1950" cy="1759" r="28" class="axis-bubble" />
+<text x="1950" y="1761" class="axis-text">15</text>
+<line x1="2080" y1="120" x2="2080" y2="1719" class="grid-line" />
+<circle cx="2080" cy="80" r="28" class="axis-bubble" />
+<text x="2080" y="82" class="axis-text">16</text>
+<circle cx="2080" cy="1759" r="28" class="axis-bubble" />
+<text x="2080" y="1761" class="axis-text">16</text>
+<line x1="120" y1="367.8" x2="2100" y2="367.8" class="grid-line" />
+<circle cx="80" cy="367.8" r="28" class="axis-bubble" />
+<text x="80" y="369.8" class="axis-text">F</text>
+<circle cx="2100" cy="367.8" r="28" class="axis-bubble" />
+<text x="2100" y="369.8" class="axis-text">F</text>
+<line x1="120" y1="551.7" x2="2100" y2="551.7" class="grid-line" />
+<circle cx="80" cy="551.7" r="28" class="axis-bubble" />
+<text x="80" y="553.7" class="axis-text">E</text>
+<circle cx="2100" cy="551.7" r="28" class="axis-bubble" />
+<text x="2100" y="553.7" class="axis-text">E</text>
+<line x1="120" y1="735.6" x2="2100" y2="735.6" class="grid-line" />
+<circle cx="80" cy="735.6" r="28" class="axis-bubble" />
+<text x="80" y="737.6" class="axis-text">D</text>
+<circle cx="2100" cy="735.6" r="28" class="axis-bubble" />
+<text x="2100" y="737.6" class="axis-text">D</text>
+<line x1="120" y1="919.5" x2="2100" y2="919.5" class="grid-line" />
+<circle cx="80" cy="919.5" r="28" class="axis-bubble" />
+<text x="80" y="921.5" class="axis-text">C</text>
+<circle cx="2100" cy="919.5" r="28" class="axis-bubble" />
+<text x="2100" y="921.5" class="axis-text">C</text>
+<line x1="120" y1="1103.4" x2="2100" y2="1103.4" class="grid-line" />
+<circle cx="80" cy="1103.4" r="28" class="axis-bubble" />
+<text x="80" y="1105.4" class="axis-text">B</text>
+<circle cx="2100" cy="1103.4" r="28" class="axis-bubble" />
+<text x="2100" y="1105.4" class="axis-text">B</text>
+<line x1="120" y1="1287.3" x2="2100" y2="1287.3" class="grid-line" />
+<circle cx="80" cy="1287.3" r="28" class="axis-bubble" />
+<text x="80" y="1289.3" class="axis-text">A</text>
+<circle cx="2100" cy="1287.3" r="28" class="axis-bubble" />
+<text x="2100" y="1289.3" class="axis-text">A</text>
+
+  <!-- Diaphragm Wall (Boundary Wall) -->
+  <rect x="120" y="160" width="1980" height="1519" class="boundary-wall" rx="15" />
+  <rect x="135" y="175" width="1950" height="1489" class="boundary-inner" rx="10" />
+
+  </g>
+
+  <!-- Concrete Footings (Under the marker dots to make it look highly authentic) -->
+  <!-- Footing N1 -->
+  <rect x="238.8" y="470.95400000000006" width="110" height="110" class="footing" rx="8" />
+  <rect x="247.96666666666667" y="480.12066666666675" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="293.8" y="525.9540000000001" class="footing-text">N1</text>
+  <!-- Footing N4 -->
+  <rect x="537.8" y="619.913" width="110" height="110" class="footing" rx="8" />
+  <rect x="546.9666666666666" y="629.0796666666666" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="592.8" y="674.913" class="footing-text">N4</text>
+  <!-- Footing N6 -->
+  <rect x="727.6" y="467.27599999999995" width="110" height="110" class="footing" rx="8" />
+  <rect x="736.7666666666667" y="476.44266666666664" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="782.6" y="522.276" class="footing-text">N6</text>
+  <!-- Footing S8 -->
+  <rect x="888.7999999999998" y="1180.808" width="110" height="110" class="footing" rx="8" />
+  <rect x="897.9666666666665" y="1189.9746666666667" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="943.7999999999998" y="1235.808" class="footing-text">S8</text>
+  <!-- Footing S2 -->
+  <rect x="212.8" y="1144.028" width="110" height="110" class="footing" rx="8" />
+  <rect x="221.96666666666667" y="1153.1946666666668" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="267.8" y="1199.028" class="footing-text">S2</text>
+  <!-- Footing C4 -->
+  <rect x="470.20000000000005" y="941.738" width="110" height="110" class="footing" rx="8" />
+  <rect x="479.36666666666673" y="950.9046666666667" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="525.2" y="996.738" class="footing-text">C4</text>
+  <!-- Footing S5 -->
+  <rect x="626.2" y="1180.808" width="110" height="110" class="footing" rx="8" />
+  <rect x="635.3666666666667" y="1189.9746666666667" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="681.2" y="1235.808" class="footing-text">S5</text>
+  <!-- Footing C7 -->
+  <rect x="800.4" y="947.255" width="110" height="110" class="footing" rx="8" />
+  <rect x="809.5666666666666" y="956.4216666666666" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="855.4" y="1002.255" class="footing-text">C7</text>
+  <!-- Footing N10 -->
+  <rect x="1172.2" y="478.30999999999995" width="110" height="110" class="footing" rx="8" />
+  <rect x="1181.3666666666668" y="487.47666666666663" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="1227.2" y="533.31" class="footing-text">N10</text>
+  <!-- Footing N12 -->
+  <rect x="1486.8" y="478.30999999999995" width="110" height="110" class="footing" rx="8" />
+  <rect x="1495.9666666666667" y="487.47666666666663" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="1541.8" y="533.31" class="footing-text">N12</text>
+  <!-- Footing S9 -->
+  <rect x="1031.8" y="1195.52" width="110" height="110" class="footing" rx="8" />
+  <rect x="1040.9666666666667" y="1204.6866666666667" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="1086.8" y="1250.52" class="footing-text">S9</text>
+  <!-- Footing S10 -->
+  <rect x="1193" y="1195.52" width="110" height="110" class="footing" rx="8" />
+  <rect x="1202.1666666666667" y="1204.6866666666667" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="1248" y="1250.52" class="footing-text">S10</text>
+  <!-- Footing S11 -->
+  <rect x="1349" y="1195.52" width="110" height="110" class="footing" rx="8" />
+  <rect x="1358.1666666666667" y="1204.6866666666667" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="1404" y="1250.52" class="footing-text">S11</text>
+  <!-- Footing S12 -->
+  <rect x="1505" y="1195.52" width="110" height="110" class="footing" rx="8" />
+  <rect x="1514.1666666666667" y="1204.6866666666667" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="1560" y="1250.52" class="footing-text">S12</text>
+  <!-- Footing N14 -->
+  <rect x="1692.2" y="478.30999999999995" width="110" height="110" class="footing" rx="8" />
+  <rect x="1701.3666666666668" y="487.47666666666663" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="1747.2" y="533.31" class="footing-text">N14</text>
+  <!-- Footing N15 -->
+  <rect x="1858.5999999999997" y="478.30999999999995" width="110" height="110" class="footing" rx="8" />
+  <rect x="1867.7666666666664" y="487.47666666666663" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="1913.5999999999997" y="533.31" class="footing-text">N15</text>
+  <!-- Footing E16 -->
+  <rect x="2004.1999999999998" y="928.865" width="110" height="110" class="footing" rx="8" />
+  <rect x="2013.3666666666666" y="938.0316666666666" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="2059.2" y="983.865" class="footing-text">E16</text>
+  <!-- Footing S14 -->
+  <rect x="1681.8" y="1075.985" width="110" height="110" class="footing" rx="8" />
+  <rect x="1690.9666666666667" y="1085.1516666666666" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="1736.8" y="1130.985" class="footing-text">S14</text>
+  <!-- Footing S15 -->
+  <rect x="1830" y="1177.13" width="110" height="110" class="footing" rx="8" />
+  <rect x="1839.1666666666667" y="1186.2966666666669" width="91.66666666666667" height="91.66666666666667" fill="none" stroke="#94a3b8" stroke-dasharray="4,4" />
+  <text x="1885" y="1232.13" class="footing-text">S15</text>
+
+  <!-- Compass (North Arrow) -->
+  <g transform="translate(2020, 240) scale(1.3)">
+    <circle cx="0" cy="0" r="40" fill="none" stroke="#475569" stroke-width="3" />
+    <polygon points="0,-45 12,0 0,-8" fill="#1e293b" />
+    <polygon points="0,-45 -12,0 0,-8" fill="#64748b" />
+    <polygon points="0,45 12,0 0,8" fill="#cbd5e1" />
+    <polygon points="0,45 -12,0 0,8" fill="#e2e8f0" />
+    <text x="0" y="-55" font-family="'Inter', sans-serif" font-size="20" font-weight="bold" fill="#1e293b" text-anchor="middle">N</text>
+  </g>
+
+  <!-- Step Instruction Overlay Boxes (Matching Official PDF Shop Drawing) -->
+  <!-- Step 1 Box (Đợt 1) -->
+  <g transform="translate(1080, 160)">
+    <rect x="0" y="0" width="380" height="150" fill="#ffffff" stroke="#ef4444" stroke-width="3" rx="8" shadow="true" />
+    <rect x="0" y="0" width="380" height="36" fill="#ef4444" rx="6" />
+    <text x="12" y="24" font-family="'Inter', sans-serif" font-size="16" font-weight="bold" fill="#ffffff">ĐỔ ĐỢT 1: 1.420 m² (STEP 1)</text>
+    <text x="15" y="60" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">1. Đổ bê tông móng: 9/7 ➔ 16/7</text>
+    <text x="15" y="88" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">2. Làm đất &amp; đổ lót dầm, sàn: 11/7 ➔ 19/7</text>
+    <text x="15" y="116" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">3. Đi sắt &amp; đổ bê tông sàn: 16/7 ➔ 22/7</text>
+  </g>
+
+  <!-- Step 2 Box (Đợt 2) -->
+  <g transform="translate(1600, 160)">
+    <rect x="0" y="0" width="380" height="150" fill="#ffffff" stroke="#ef4444" stroke-width="3" rx="8" />
+    <rect x="0" y="0" width="380" height="36" fill="#ef4444" rx="6" />
+    <text x="12" y="24" font-family="'Inter', sans-serif" font-size="16" font-weight="bold" fill="#ffffff">ĐỔ ĐỢT 2: 1.285 m² (STEP 2)</text>
+    <text x="15" y="60" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">1. Đổ bê tông móng: 12/7 ➔ 26/7</text>
+    <text x="15" y="88" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">2. Làm đất &amp; đổ lót dầm, sàn: 18/7 ➔ 29/7</text>
+    <text x="15" y="116" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">3. Đi sắt &amp; đổ bê tông sàn: 25/7 ➔ 2/8</text>
+  </g>
+
+  <!-- Step 3 Box (Đợt 3) -->
+  <g transform="translate(150, 160)">
+    <rect x="0" y="0" width="380" height="200" fill="#ffffff" stroke="#0284c7" stroke-width="3" rx="8" />
+    <rect x="0" y="0" width="380" height="36" fill="#0284c7" rx="6" />
+    <text x="12" y="24" font-family="'Inter', sans-serif" font-size="16" font-weight="bold" fill="#ffffff">ĐỔ ĐỢT 3: 1.200 m² (STEP 3)</text>
+    <text x="15" y="60" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">1. Lắp hệ shoring: 12/7 ➔ 24/7</text>
+    <text x="15" y="88" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">2. Đào đất móng: 12/7 ➔ 26/7</text>
+    <text x="15" y="116" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">3. Đổ bê tông móng: 20/7 ➔ 1/8</text>
+    <text x="15" y="144" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">4. Làm đất &amp; đổ lót dầm, sàn: 26/7 ➔ 5/8</text>
+    <text x="15" y="172" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">5. Đi sắt &amp; đổ bê tông sàn: 3/8 ➔ 10/8</text>
+  </g>
+
+  <!-- Step 4 Box (Đợt 4) -->
+  <g transform="translate(150, 1450)">
+    <rect x="0" y="0" width="380" height="200" fill="#ffffff" stroke="#0284c7" stroke-width="3" rx="8" />
+    <rect x="0" y="0" width="380" height="36" fill="#0284c7" rx="6" />
+    <text x="12" y="24" font-family="'Inter', sans-serif" font-size="16" font-weight="bold" fill="#ffffff">ĐỔ ĐỢT 4: 1.250 m² (STEP 4)</text>
+    <text x="15" y="60" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">1. Lắp hệ shoring: 12/7 ➔ 24/7</text>
+    <text x="15" y="88" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">2. Đào đất móng: 12/7 ➔ 4/8</text>
+    <text x="15" y="116" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">3. Đổ bê tông móng: 20/7 ➔ 4/8</text>
+    <text x="15" y="144" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">4. Làm đất &amp; đổ lót dầm, sàn: 28/7 ➔ 10/8</text>
+    <text x="15" y="172" font-family="'Inter', sans-serif" font-size="14" fill="#1e293b" font-weight="600">5. Đi sắt &amp; đổ bê tông sàn: 7/8 ➔ 16/8</text>
+  </g>
+
+  <!-- Title Block (Khung tên bản vẽ chuẩn Shop Drawing) -->
+  <g transform="translate(2120, 160)">
+    <rect x="0" y="0" width="450" height="1520" fill="#ffffff" stroke="#1e293b" stroke-width="4" rx="4" />
+    <line x1="0" y1="120" x2="450" y2="120" stroke="#1e293b" stroke-width="2" />
+    <text x="225" y="45" font-family="'Inter', sans-serif" font-size="18" font-weight="bold" fill="#0f172a" text-anchor="middle">DỰ ÁN - PROJECT:</text>
+    <text x="225" y="75" font-family="'Inter', sans-serif" font-size="16" font-weight="800" fill="#2563eb" text-anchor="middle">KHU PHỨC HỢP C10</text>
+    <text x="225" y="98" font-family="'Inter', sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">C10 MIX-USE COMPLEX</text>
+
+    <line x1="0" y1="260" x2="450" y2="260" stroke="#1e293b" stroke-width="2" />
+    <text x="225" y="150" font-family="'Inter', sans-serif" font-size="16" font-weight="bold" fill="#0f172a" text-anchor="middle">CHỦ ĐẦU TƯ - OWNER:</text>
+    <text x="225" y="195" font-family="'Inter', sans-serif" font-size="28" font-weight="900" fill="#0284c7" text-anchor="middle">PMH</text>
+    <text x="225" y="225" font-family="'Inter', sans-serif" font-size="13" font-weight="bold" fill="#334155" text-anchor="middle">CÔNG TY TNHH PHÁT TRIỂN PHÚ MỸ HƯNG</text>
+
+    <line x1="0" y1="420" x2="450" y2="420" stroke="#1e293b" stroke-width="2" />
+    <text x="225" y="290" font-family="'Inter', sans-serif" font-size="15" font-weight="bold" fill="#0f172a" text-anchor="middle">TƯ VẤN GIÁM SÁT - CONSULTANCY:</text>
+    <text x="225" y="335" font-family="'Inter', sans-serif" font-size="22" font-weight="800" fill="#0d9488" text-anchor="middle">DSPcons</text>
+    <text x="225" y="365" font-family="'Inter', sans-serif" font-size="12" fill="#475569" text-anchor="middle">CÔNG TY TNHH THIẾT KẾ &amp; QUẢN LÝ DSPCONS</text>
+
+    <line x1="0" y1="580" x2="450" y2="580" stroke="#1e293b" stroke-width="2" />
+    <text x="225" y="450" font-family="'Inter', sans-serif" font-size="15" font-weight="bold" fill="#0f172a" text-anchor="middle">TỔNG THẦU - GENERAL CONTRACTOR:</text>
+    <text x="225" y="500" font-family="'Inter', sans-serif" font-size="32" font-weight="900" fill="#1d4ed8" text-anchor="middle">VICONS</text>
+    <text x="225" y="535" font-family="'Inter', sans-serif" font-size="12" font-weight="bold" fill="#334155" text-anchor="middle">CÔNG TY TNHH XÂY DỰNG - DVKT VIỄN ĐÔNG</text>
+
+    <line x1="0" y1="700" x2="450" y2="700" stroke="#1e293b" stroke-width="2" />
+    <text x="225" y="620" font-family="'Inter', sans-serif" font-size="22" font-weight="900" fill="#dc2626" text-anchor="middle">BIỆN PHÁP THI CÔNG</text>
+    <text x="225" y="660" font-family="'Inter', sans-serif" font-size="16" font-weight="bold" fill="#475569" text-anchor="middle">WORK ITEM: SHOP DRAWING</text>
+
+    <line x1="0" y1="880" x2="450" y2="880" stroke="#1e293b" stroke-width="2" />
+    <text x="20" y="740" font-family="'Inter', sans-serif" font-size="14" font-weight="bold" fill="#0f172a">DRAWING NAME / TÊN BẢN VẼ:</text>
+    <text x="225" y="790" font-family="'Inter', sans-serif" font-size="18" font-weight="800" fill="#0f172a" text-anchor="middle">KẾ HOẠCH THI CÔNG</text>
+    <text x="225" y="820" font-family="'Inter', sans-serif" font-size="18" font-weight="800" fill="#0f172a" text-anchor="middle">BÊ TÔNG SÀN HẦM BF2</text>
+
+    <line x1="0" y1="1020" x2="450" y2="1020" stroke="#1e293b" stroke-width="2" />
+    <text x="20" y="920" font-family="'Inter', sans-serif" font-size="14" font-weight="bold" fill="#0f172a">DRAWING NO / SỐ BẢN VẼ:</text>
+    <text x="225" y="970" font-family="'Inter', sans-serif" font-size="20" font-weight="900" fill="#2563eb" text-anchor="middle">C10/VC/SD/DS/06</text>
+
+    <text x="20" y="1060" font-family="'Inter', sans-serif" font-size="13" fill="#475569">SITE MANAGER: PHẠM MINH THƯƠNG</text>
+    <text x="20" y="1100" font-family="'Inter', sans-serif" font-size="13" fill="#475569">CHECK BY: PHẠM MINH THƯƠNG</text>
+    <text x="20" y="1140" font-family="'Inter', sans-serif" font-size="13" fill="#475569">DRAWING BY: LÊ QUỐC HUY</text>
+    <text x="20" y="1180" font-family="'Inter', sans-serif" font-size="13" fill="#475569">PROJECT: C10 MIX-USE COMPLEX</text>
+    <text x="20" y="1220" font-family="'Inter', sans-serif" font-size="13" fill="#475569">SCALE: N.T.S | DATE: 2026</text>
+  </g>
+</svg>

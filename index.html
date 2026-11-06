@@ -1,0 +1,48 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dự Án C10 - Phần Hầm</title>
+    <meta name="description" content="Hệ thống Quản lý Dự án C10 - Phần Hầm: Báo cáo tiến độ, quan trắc chuyển vị thời gian thực, theo dõi hồ sơ & chất lượng thi công." />
+    <meta property="og:title" content="Dự Án C10 - Phần Hầm" />
+    <meta property="og:description" content="Hệ thống Quản lý Dự án C10 - Phần Hầm: Báo cáo tiến độ, quan trắc chuyển vị thời gian thực, theo dõi hồ sơ & chất lượng thi công." />
+    <link rel="icon" type="image/png" href="https://drive.google.com/thumbnail?id=1hAUnKE-L3jF2lpTvVizHy_ms5Q3h3zlI&sz=s1000" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+      }
+      .animate-shake {
+        animation: shake 0.2s ease-in-out 0s 2;
+      }
+      @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .animate-fade-in {
+        animation: fade-in 0.3s ease-out forwards;
+      }
+      @keyframes scale-in {
+        from { transform: scale(0.95); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+      .animate-scale-in {
+        animation: scale-in 0.2s ease-out forwards;
+      }
+    </style>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-slate-50 text-slate-900 antialiased">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

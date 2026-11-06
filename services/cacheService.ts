@@ -1,0 +1,36 @@
+
+const CACHE_KEY_PREFIX = 'C10_CACHE_V9_';
+const ONE_DAY_MS = 24 * 60 * 60 * 1000; // Giữ cache đến khi có lệnh làm mới từ Admin
+
+export const setCache = (key: string, data: any) => {
+  const cacheObj = {
+    timestamp: Date.now(),
+    data: data
+  };
+  localStorage.setItem(CACHE_KEY_PREFIX + key, JSON.stringify(cacheObj));
+};
+
+export const getCache = (key: string) => {
+  const cached = localStorage.getItem(CACHE_KEY_PREFIX + key);
+  if (!cached) return null;
+
+  try {
+    const { timestamp, data } = JSON.parse(cached);
+    return { data, timestamp };
+  } catch (e) {
+    return null;
+  }
+};
+
+export const clearDataCacheKeys = () => {
+  try {
+    ['sheets', 'submittal', 'monitoring'].forEach(k => {
+      localStorage.removeItem(CACHE_KEY_PREFIX + k);
+    });
+  } catch {}
+};
+
+export const isCacheStale = (timestamp: number, forceRealtime: boolean = false) => {
+  if (forceRealtime) return true;
+  return (Date.now() - timestamp) > ONE_DAY_MS;
+};

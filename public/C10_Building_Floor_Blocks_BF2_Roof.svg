@@ -1,0 +1,343 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 1400 1140"
+     width="1400"
+     height="1140"
+     id="c10-building-floor-status"
+     role="img"
+     aria-labelledby="svg-title svg-description">
+  <title id="svg-title">Sơ đồ khối tầng dự án C10 từ BF2 đến Roof</title>
+  <desc id="svg-description">
+    Tháp A lớn hơn và nằm lệch về phía ngoài bên trái; tháp B nhỏ hơn và nằm lệch
+    về phía ngoài bên phải. Tầng trệt đến tầng 3 là podium liên tục.
+    Mỗi tầng là một nhóm SVG độc lập có thể đổi màu hoặc gắn sự kiện click.
+  </desc>
+
+  <defs>
+    <filter id="soft-shadow" x="-10%" y="-20%" width="120%" height="150%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.4" flood-color="#0f172a" flood-opacity=".10"/>
+    </filter>
+
+    <linearGradient id="page-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#eef2f7"/>
+    </linearGradient>
+
+    <linearGradient id="glass-a" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#dbeafe" stop-opacity=".34"/>
+      <stop offset=".5" stop-color="#ffffff" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#bfdbfe" stop-opacity=".30"/>
+    </linearGradient>
+
+    <linearGradient id="glass-b" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#dcfce7" stop-opacity=".30"/>
+      <stop offset=".5" stop-color="#ffffff" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#bbf7d0" stop-opacity=".28"/>
+    </linearGradient>
+
+    <pattern id="facade-grid-a" width="69.4" height="36" patternUnits="userSpaceOnUse">
+      <path d="M69.4 0V36" fill="none" stroke="#2563eb" stroke-opacity=".18" stroke-width="1"/>
+    </pattern>
+
+    <pattern id="facade-grid-b" width="52" height="36" patternUnits="userSpaceOnUse">
+      <path d="M52 0V36" fill="none" stroke="#059669" stroke-opacity=".18" stroke-width="1"/>
+    </pattern>
+
+    <g id="shape-tower-a">
+      <rect class="floor-block" width="347" height="36" rx="4"/>
+      <rect class="floor-glass" width="347" height="36" rx="4" fill="url(#glass-a)"/>
+      <rect class="floor-grid" width="347" height="36" rx="4" fill="url(#facade-grid-a)"/>
+    </g>
+
+    <g id="shape-tower-b">
+      <rect class="floor-block" width="260" height="36" rx="4"/>
+      <rect class="floor-glass" width="260" height="36" rx="4" fill="url(#glass-b)"/>
+      <rect class="floor-grid" width="260" height="36" rx="4" fill="url(#facade-grid-b)"/>
+    </g>
+
+    <g id="shape-roof-a">
+      <path class="floor-block" d="M20 44V14L55 0H292L327 14V44Z"/>
+      <path class="floor-glass" d="M20 44V14L55 0H292L327 14V44Z" fill="url(#glass-a)"/>
+      <path class="roof-line" d="M55 0V44M292 0V44M173.5 0V44"/>
+    </g>
+
+    <g id="shape-roof-b">
+      <path class="floor-block" d="M15 44V14L45 0H215L245 14V44Z"/>
+      <path class="floor-glass" d="M15 44V14L45 0H215L245 14V44Z" fill="url(#glass-b)"/>
+      <path class="roof-line" d="M45 0V44M215 0V44M130 0V44"/>
+    </g>
+
+    <g id="shape-podium">
+      <rect class="floor-block" width="1040" height="42"/>
+      <rect class="floor-glass" width="1040" height="42" fill="url(#glass-a)" opacity=".42"/>
+      <path class="basement-grid" d="M130 0V42M260 0V42M390 0V42M520 0V42M650 0V42M780 0V42M910 0V42"/>
+    </g>
+
+    <g id="shape-basement">
+      <rect class="floor-block" width="1040" height="42" rx="4"/>
+      <path class="basement-grid" d="M130 0V42M260 0V42M390 0V42M520 0V42M650 0V42M780 0V42M910 0V42"/>
+    </g>
+
+    <style><![CDATA[
+      text {
+        font-family: "Segoe UI", Arial, Tahoma, sans-serif;
+      }
+
+      .tower-heading {
+        fill: #0f172a;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: .10em;
+        text-anchor: middle;
+      }
+
+      .tower-subtitle {
+        fill: #64748b;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: .05em;
+        text-anchor: middle;
+      }
+
+      .floor {
+        color: #cbd5e1;
+        cursor: pointer;
+        outline: none;
+      }
+
+      .floor-block {
+        fill: currentColor;
+        fill-opacity: .80;
+        stroke: #334155;
+        stroke-width: 1.15;
+        vector-effect: non-scaling-stroke;
+        filter: url(#soft-shadow);
+        transition: fill .18s ease, fill-opacity .18s ease, stroke-width .18s ease;
+      }
+
+      .floor-glass,
+      .floor-grid,
+      .roof-line,
+      .basement-grid {
+        pointer-events: none;
+      }
+
+      .roof-line,
+      .basement-grid {
+        fill: none;
+        stroke: #334155;
+        stroke-opacity: .22;
+        stroke-width: 1;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .floor:hover .floor-block {
+        fill-opacity: 1;
+        stroke-width: 2;
+      }
+
+      .floor:focus-visible .floor-block,
+      .floor.is-selected .floor-block {
+        stroke: #2563eb;
+        stroke-width: 3;
+        fill-opacity: 1;
+      }
+
+      .floor[data-status="on-track"] { color: #22c55e; }
+      .floor[data-status="attention"] { color: #fbbf24; }
+      .floor[data-status="delayed"] { color: #ef4444; }
+      .floor[data-status="complete"] { color: #0ea5e9; }
+      .floor[data-status="not-started"] { color: #cbd5e1; }
+
+      .level-label {
+        fill: #0f172a;
+        font-size: 13px;
+        font-weight: 700;
+        text-anchor: end;
+        dominant-baseline: middle;
+      }
+
+      .level-line {
+        stroke: #94a3b8;
+        stroke-width: 1;
+        stroke-dasharray: 5 5;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .tower-outline {
+        fill: none;
+        stroke: #94a3b8;
+        stroke-width: 1.2;
+        stroke-dasharray: 6 5;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .podium-band {
+        fill: #f59e0b;
+        fill-opacity: .06;
+        stroke: #d97706;
+        stroke-opacity: .28;
+        stroke-width: 1;
+        pointer-events: none;
+      }
+
+      .ground-line {
+        stroke: #475569;
+        stroke-width: 2;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .ground-label {
+        fill: #475569;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .05em;
+      }
+
+      .basement-zone {
+        fill: #7c3aed;
+        fill-opacity: .045;
+        stroke: #7c3aed;
+        stroke-opacity: .22;
+        stroke-width: 1;
+        pointer-events: none;
+      }
+
+      .status-note {
+        fill: #64748b;
+        font-size: 11px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .floor-block { transition: none; }
+      }
+    ]]></style>
+  </defs>
+
+  <rect width="1400" height="1140" fill="url(#page-bg)"/>
+
+  <g id="tower-headings" aria-hidden="true">
+    <text class="tower-heading" x="453.5" y="44">THÁP A</text>
+    <text class="tower-heading" x="1150" y="44">THÁP B</text>
+  </g>
+
+  <g id="architectural-guides" aria-hidden="true">
+    <rect class="tower-outline" x="280" y="72" width="347" height="758" rx="8"/>
+    <rect class="tower-outline" x="1020" y="72" width="260" height="758" rx="8"/>
+    <rect class="podium-band" x="248" y="830" width="1064" height="132" rx="8"/>
+    <line class="ground-line" x1="248" y1="962" x2="1312" y2="962"/>
+    <text class="ground-label" x="1312" y="978" text-anchor="end">CỐT ±0.000</text>
+    <rect class="basement-zone" x="248" y="976" width="1064" height="96" rx="8"/>
+  </g>
+
+  <g id="level-labels" aria-label="Chú thích tên tầng bên trái">
+    <text class="level-label" x="220" y="94">ROOF</text><line class="level-line" x1="232" y1="94" x2="252" y2="94"/>
+    <text class="level-label" x="220" y="140">TẦNG 20</text><line class="level-line" x1="232" y1="140" x2="252" y2="140"/>
+    <text class="level-label" x="220" y="182">TẦNG 19</text><line class="level-line" x1="232" y1="182" x2="252" y2="182"/>
+    <text class="level-label" x="220" y="224">TẦNG 18</text><line class="level-line" x1="232" y1="224" x2="252" y2="224"/>
+    <text class="level-label" x="220" y="266">TẦNG 17</text><line class="level-line" x1="232" y1="266" x2="252" y2="266"/>
+    <text class="level-label" x="220" y="308">TẦNG 16</text><line class="level-line" x1="232" y1="308" x2="252" y2="308"/>
+    <text class="level-label" x="220" y="350">TẦNG 15</text><line class="level-line" x1="232" y1="350" x2="252" y2="350"/>
+    <text class="level-label" x="220" y="392">TẦNG 14</text><line class="level-line" x1="232" y1="392" x2="252" y2="392"/>
+    <text class="level-label" x="220" y="434">TẦNG 13</text><line class="level-line" x1="232" y1="434" x2="252" y2="434"/>
+    <text class="level-label" x="220" y="476">TẦNG 12</text><line class="level-line" x1="232" y1="476" x2="252" y2="476"/>
+    <text class="level-label" x="220" y="518">TẦNG 11</text><line class="level-line" x1="232" y1="518" x2="252" y2="518"/>
+    <text class="level-label" x="220" y="560">TẦNG 10</text><line class="level-line" x1="232" y1="560" x2="252" y2="560"/>
+    <text class="level-label" x="220" y="602">TẦNG 9</text><line class="level-line" x1="232" y1="602" x2="252" y2="602"/>
+    <text class="level-label" x="220" y="644">TẦNG 8</text><line class="level-line" x1="232" y1="644" x2="252" y2="644"/>
+    <text class="level-label" x="220" y="686">TẦNG 7</text><line class="level-line" x1="232" y1="686" x2="252" y2="686"/>
+    <text class="level-label" x="220" y="728">TẦNG 6</text><line class="level-line" x1="232" y1="728" x2="252" y2="728"/>
+    <text class="level-label" x="220" y="770">TẦNG 5</text><line class="level-line" x1="232" y1="770" x2="252" y2="770"/>
+    <text class="level-label" x="220" y="812">TẦNG 4</text><line class="level-line" x1="232" y1="812" x2="252" y2="812"/>
+    <text class="level-label" x="220" y="854">TẦNG 3</text><line class="level-line" x1="232" y1="854" x2="252" y2="854"/>
+    <text class="level-label" x="220" y="896">TẦNG 2</text><line class="level-line" x1="232" y1="896" x2="252" y2="896"/>
+    <text class="level-label" x="220" y="938">TẦNG 1 / TRỆT</text><line class="level-line" x1="232" y1="938" x2="252" y2="938"/>
+    <text class="level-label" x="220" y="997">BF1 · HẦM 1</text><line class="level-line" x1="232" y1="997" x2="252" y2="997"/>
+    <text class="level-label" x="220" y="1049">BF2 · HẦM 2</text><line class="level-line" x1="232" y1="1049" x2="252" y2="1049"/>
+  </g>
+
+  <g id="floors-roof">
+    <g class="floor tower-a" id="tower-a-roof" data-level="ROOF" data-tower="A" data-name="Roof" data-fl="+79.500" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Roof">
+      <title>Tháp A · Roof · FL +79.500</title>
+      <use href="#shape-roof-a" x="280" y="72"/>
+    </g>
+    <g class="floor tower-b" id="tower-b-roof" data-level="ROOF" data-tower="B" data-name="Roof" data-fl="+79.500" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Roof">
+      <title>Tháp B · Roof · FL +79.500</title>
+      <use href="#shape-roof-b" x="1020" y="72"/>
+    </g>
+  </g>
+
+    <g id="floors-tower-a" transform="translate(20 0)" aria-label="Các tầng Tháp A lớn, lệch về bên trái">
+    <g class="floor tower-a" id="tower-a-l20" data-level="L20" data-tower="A" data-name="Tầng 20" data-fl="+72.700" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 20"><title>Tháp A · Tầng 20 · FL +72.700</title><use href="#shape-tower-a" x="260" y="122"/></g>
+    <g class="floor tower-a" id="tower-a-l19" data-level="L19" data-tower="A" data-name="Tầng 19" data-fl="+68.600" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 19"><title>Tháp A · Tầng 19 · FL +68.600</title><use href="#shape-tower-a" x="260" y="164"/></g>
+    <g class="floor tower-a" id="tower-a-l18" data-level="L18" data-tower="A" data-name="Tầng 18" data-fl="+64.500" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 18"><title>Tháp A · Tầng 18 · FL +64.500</title><use href="#shape-tower-a" x="260" y="206"/></g>
+    <g class="floor tower-a" id="tower-a-l17" data-level="L17" data-tower="A" data-name="Tầng 17" data-fl="+60.800" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 17"><title>Tháp A · Tầng 17 · FL +60.800</title><use href="#shape-tower-a" x="260" y="248"/></g>
+    <g class="floor tower-a" id="tower-a-l16" data-level="L16" data-tower="A" data-name="Tầng 16" data-fl="+57.100" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 16"><title>Tháp A · Tầng 16 · FL +57.100</title><use href="#shape-tower-a" x="260" y="290"/></g>
+    <g class="floor tower-a" id="tower-a-l15" data-level="L15" data-tower="A" data-name="Tầng 15" data-fl="+53.400" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 15"><title>Tháp A · Tầng 15 · FL +53.400</title><use href="#shape-tower-a" x="260" y="332"/></g>
+    <g class="floor tower-a" id="tower-a-l14" data-level="L14" data-tower="A" data-name="Tầng 14" data-fl="+49.700" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 14"><title>Tháp A · Tầng 14 · FL +49.700</title><use href="#shape-tower-a" x="260" y="374"/></g>
+    <g class="floor tower-a" id="tower-a-l13" data-level="L13" data-tower="A" data-name="Tầng 13" data-fl="+46.000" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 13"><title>Tháp A · Tầng 13 · FL +46.000</title><use href="#shape-tower-a" x="260" y="416"/></g>
+    <g class="floor tower-a" id="tower-a-l12" data-level="L12" data-tower="A" data-name="Tầng 12" data-fl="+42.300" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 12"><title>Tháp A · Tầng 12 · FL +42.300</title><use href="#shape-tower-a" x="260" y="458"/></g>
+    <g class="floor tower-a" id="tower-a-l11" data-level="L11" data-tower="A" data-name="Tầng 11" data-fl="+38.600" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 11"><title>Tháp A · Tầng 11 · FL +38.600</title><use href="#shape-tower-a" x="260" y="500"/></g>
+    <g class="floor tower-a" id="tower-a-l10" data-level="L10" data-tower="A" data-name="Tầng 10" data-fl="+34.900" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 10"><title>Tháp A · Tầng 10 · FL +34.900</title><use href="#shape-tower-a" x="260" y="542"/></g>
+    <g class="floor tower-a" id="tower-a-l9" data-level="L9" data-tower="A" data-name="Tầng 9" data-fl="+31.200" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 9"><title>Tháp A · Tầng 9 · FL +31.200</title><use href="#shape-tower-a" x="260" y="584"/></g>
+    <g class="floor tower-a" id="tower-a-l8" data-level="L8" data-tower="A" data-name="Tầng 8" data-fl="+27.500" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 8"><title>Tháp A · Tầng 8 · FL +27.500</title><use href="#shape-tower-a" x="260" y="626"/></g>
+    <g class="floor tower-a" id="tower-a-l7" data-level="L7" data-tower="A" data-name="Tầng 7" data-fl="+23.800" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 7"><title>Tháp A · Tầng 7 · FL +23.800</title><use href="#shape-tower-a" x="260" y="668"/></g>
+    <g class="floor tower-a" id="tower-a-l6" data-level="L6" data-tower="A" data-name="Tầng 6" data-fl="+20.100" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 6"><title>Tháp A · Tầng 6 · FL +20.100</title><use href="#shape-tower-a" x="260" y="710"/></g>
+    <g class="floor tower-a" id="tower-a-l5" data-level="L5" data-tower="A" data-name="Tầng 5" data-fl="+16.400" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 5"><title>Tháp A · Tầng 5 · FL +16.400</title><use href="#shape-tower-a" x="260" y="752"/></g>
+    <g class="floor tower-a" id="tower-a-l4" data-level="L4" data-tower="A" data-name="Tầng 4" data-fl="+12.700" data-status="not-started" role="button" tabindex="0" aria-label="Tháp A, Tầng 4"><title>Tháp A · Tầng 4 · FL +12.700</title><use href="#shape-tower-a" x="260" y="794"/></g>
+  </g>
+
+    <g id="floors-tower-b" transform="translate(90 0)" aria-label="Các tầng Tháp B nhỏ, lệch về bên phải">
+    <g class="floor tower-b" id="tower-b-l20" data-level="L20" data-tower="B" data-name="Tầng 20" data-fl="+72.700" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 20"><title>Tháp B · Tầng 20 · FL +72.700</title><use href="#shape-tower-b" x="930" y="122"/></g>
+    <g class="floor tower-b" id="tower-b-l19" data-level="L19" data-tower="B" data-name="Tầng 19" data-fl="+68.600" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 19"><title>Tháp B · Tầng 19 · FL +68.600</title><use href="#shape-tower-b" x="930" y="164"/></g>
+    <g class="floor tower-b" id="tower-b-l18" data-level="L18" data-tower="B" data-name="Tầng 18" data-fl="+64.500" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 18"><title>Tháp B · Tầng 18 · FL +64.500</title><use href="#shape-tower-b" x="930" y="206"/></g>
+    <g class="floor tower-b" id="tower-b-l17" data-level="L17" data-tower="B" data-name="Tầng 17" data-fl="+60.800" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 17"><title>Tháp B · Tầng 17 · FL +60.800</title><use href="#shape-tower-b" x="930" y="248"/></g>
+    <g class="floor tower-b" id="tower-b-l16" data-level="L16" data-tower="B" data-name="Tầng 16" data-fl="+57.100" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 16"><title>Tháp B · Tầng 16 · FL +57.100</title><use href="#shape-tower-b" x="930" y="290"/></g>
+    <g class="floor tower-b" id="tower-b-l15" data-level="L15" data-tower="B" data-name="Tầng 15" data-fl="+53.400" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 15"><title>Tháp B · Tầng 15 · FL +53.400</title><use href="#shape-tower-b" x="930" y="332"/></g>
+    <g class="floor tower-b" id="tower-b-l14" data-level="L14" data-tower="B" data-name="Tầng 14" data-fl="+49.700" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 14"><title>Tháp B · Tầng 14 · FL +49.700</title><use href="#shape-tower-b" x="930" y="374"/></g>
+    <g class="floor tower-b" id="tower-b-l13" data-level="L13" data-tower="B" data-name="Tầng 13" data-fl="+46.000" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 13"><title>Tháp B · Tầng 13 · FL +46.000</title><use href="#shape-tower-b" x="930" y="416"/></g>
+    <g class="floor tower-b" id="tower-b-l12" data-level="L12" data-tower="B" data-name="Tầng 12" data-fl="+42.300" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 12"><title>Tháp B · Tầng 12 · FL +42.300</title><use href="#shape-tower-b" x="930" y="458"/></g>
+    <g class="floor tower-b" id="tower-b-l11" data-level="L11" data-tower="B" data-name="Tầng 11" data-fl="+38.600" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 11"><title>Tháp B · Tầng 11 · FL +38.600</title><use href="#shape-tower-b" x="930" y="500"/></g>
+    <g class="floor tower-b" id="tower-b-l10" data-level="L10" data-tower="B" data-name="Tầng 10" data-fl="+34.900" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 10"><title>Tháp B · Tầng 10 · FL +34.900</title><use href="#shape-tower-b" x="930" y="542"/></g>
+    <g class="floor tower-b" id="tower-b-l9" data-level="L9" data-tower="B" data-name="Tầng 9" data-fl="+31.200" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 9"><title>Tháp B · Tầng 9 · FL +31.200</title><use href="#shape-tower-b" x="930" y="584"/></g>
+    <g class="floor tower-b" id="tower-b-l8" data-level="L8" data-tower="B" data-name="Tầng 8" data-fl="+27.500" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 8"><title>Tháp B · Tầng 8 · FL +27.500</title><use href="#shape-tower-b" x="930" y="626"/></g>
+    <g class="floor tower-b" id="tower-b-l7" data-level="L7" data-tower="B" data-name="Tầng 7" data-fl="+23.800" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 7"><title>Tháp B · Tầng 7 · FL +23.800</title><use href="#shape-tower-b" x="930" y="668"/></g>
+    <g class="floor tower-b" id="tower-b-l6" data-level="L6" data-tower="B" data-name="Tầng 6" data-fl="+20.100" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 6"><title>Tháp B · Tầng 6 · FL +20.100</title><use href="#shape-tower-b" x="930" y="710"/></g>
+    <g class="floor tower-b" id="tower-b-l5" data-level="L5" data-tower="B" data-name="Tầng 5" data-fl="+16.400" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 5"><title>Tháp B · Tầng 5 · FL +16.400</title><use href="#shape-tower-b" x="930" y="752"/></g>
+    <g class="floor tower-b" id="tower-b-l4" data-level="L4" data-tower="B" data-name="Tầng 4" data-fl="+12.700" data-status="not-started" role="button" tabindex="0" aria-label="Tháp B, Tầng 4"><title>Tháp B · Tầng 4 · FL +12.700</title><use href="#shape-tower-b" x="930" y="794"/></g>
+  </g>
+
+  <g id="floors-podium" aria-label="Khối đế podium liên tục từ tầng trệt đến tầng 3">
+    <g class="floor podium" id="podium-l3" data-level="L3" data-tower="PODIUM" data-name="Tầng 3" data-fl="+9.000" data-status="not-started" role="button" tabindex="0" aria-label="Podium, Tầng 3">
+      <title>Podium · Tầng 3 · FL +9.000</title>
+      <use href="#shape-podium" x="260" y="836"/>
+    </g>
+    <g class="floor podium" id="podium-l2" data-level="L2" data-tower="PODIUM" data-name="Tầng 2" data-fl="+4.500" data-status="not-started" role="button" tabindex="0" aria-label="Podium, Tầng 2">
+      <title>Podium · Tầng 2 · FL +4.500</title>
+      <use href="#shape-podium" x="260" y="878"/>
+    </g>
+    <g class="floor podium" id="podium-l1" data-level="L1" data-tower="PODIUM" data-name="Tầng 1 / Trệt" data-fl="+0.000" data-status="not-started" role="button" tabindex="0" aria-label="Podium, Tầng 1, Tầng trệt">
+      <title>Podium · Tầng 1 / Trệt · FL ±0.000</title>
+      <use href="#shape-podium" x="260" y="920"/>
+    </g>
+  </g>
+
+  <g id="floors-basement" aria-label="Hai tầng hầm chung">
+    <g class="floor basement" id="building-bf1" data-level="BF1" data-tower="COMMON" data-name="Tầng hầm 1" data-fl="-4.500" data-status="not-started" role="button" tabindex="0" aria-label="BF1, Tầng hầm 1">
+      <title>BF1 · Tầng hầm 1 · FL -4.500</title>
+      <use href="#shape-basement" x="260" y="976"/>
+    </g>
+    <g class="floor basement" id="building-bf2" data-level="BF2" data-tower="COMMON" data-name="Tầng hầm 2" data-fl="-8.500" data-status="not-started" role="button" tabindex="0" aria-label="BF2, Tầng hầm 2">
+      <title>BF2 · Tầng hầm 2 · FL -8.500</title>
+      <use href="#shape-basement" x="260" y="1028"/>
+    </g>
+  </g>
+
+  <g id="status-legend" transform="translate(260 1098)" aria-label="Chú giải trạng thái">
+    <text class="status-note" x="0" y="0">Đổi thuộc tính data-status: </text>
+    <rect x="145" y="-11" width="14" height="14" rx="3" fill="#22c55e"/><text class="status-note" x="166" y="0">on-track</text>
+    <rect x="238" y="-11" width="14" height="14" rx="3" fill="#fbbf24"/><text class="status-note" x="259" y="0">attention</text>
+    <rect x="343" y="-11" width="14" height="14" rx="3" fill="#ef4444"/><text class="status-note" x="364" y="0">delayed</text>
+    <rect x="433" y="-11" width="14" height="14" rx="3" fill="#0ea5e9"/><text class="status-note" x="454" y="0">complete</text>
+    <rect x="541" y="-11" width="14" height="14" rx="3" fill="#cbd5e1"/><text class="status-note" x="562" y="0">not-started</text>
+  </g>
+</svg>

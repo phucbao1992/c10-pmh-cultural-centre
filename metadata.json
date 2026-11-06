@@ -1,0 +1,8 @@
+{
+  "name": " C10 Project- Lien ket tại khoan- phucbao1992-vercell",
+  "description": "A comprehensive construction project management dashboard tracking progress, safety, and quality.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

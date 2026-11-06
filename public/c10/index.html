@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b2630">
+  <title>C10 | Mặt bằng Đào đất & Lắp văng lớp 2</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/c10/styles.css">
+</head>
+<body>
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner-container">
+      <div class="spinner"></div>
+      <p id="loadingText">Đang tải mặt bằng đào đất &amp; văng lớp 2...</p>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-code">C10</span>
+      <div>
+        <strong id="topbarTitle">MẶT BẰNG ĐÀO ĐẤT - LẮP VĂNG LỚP 2 | THEO DÕI TIẾN ĐỘ</strong>
+        <small id="topbarSubtitle">Tiến độ chi tiết 9 Zone (27/10/2026 - 17/11/2026)</small>
+      </div>
+    </div>
+    <div class="actions">
+      <span class="saved"><span id="lblSavedAt">Cập nhật:</span> <b id="savedAt">chưa có</b></span>
+      <button class="button secondary" id="exportBtn">Xuất báo cáo</button>
+      <button class="button primary" id="todayBtn">Về hôm nay</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="briefing">
+      <div class="brief-copy">
+        <span class="eyebrow" id="briefEyebrow">EXECUTIVE CONTROL VIEW</span>
+        <h1 id="briefTitle">Tiến độ Đào đất &amp; Lắp văng Lớp 2</h1>
+        <p id="briefDesc">Bản đồ chi tiết 9 Zone đào đất &amp; hệ văng chống Shoring lớp 2 (Cos -3.5m đến -6.9m). Bấm trực tiếp vào từng Zone để làm nổi bật và hiển thị ngày Bắt đầu &amp; Kết thúc.</p>
+      </div>
+      <div class="status-summary">
+        <article class="summary green">
+          <i></i>
+          <div><strong id="phase1Count">4 Zone</strong><span id="lblPhase1">Giai đoạn 1 (Z1,3,8,9)</span></div>
+        </article>
+        <article class="summary purple">
+          <i></i>
+          <div><strong id="phase2Count">3 Zone</strong><span id="lblPhase2">Giai đoạn 2 (Z2,5,7)</span></div>
+        </article>
+        <article class="summary orange">
+          <i></i>
+          <div><strong id="phase3Count">2 Zone</strong><span id="lblPhase3">Giai đoạn 3 (Z4,6)</span></div>
+        </article>
+        <article class="summary red">
+          <i></i>
+          <div><strong id="totalVolumeStat">47.760 m³</strong><span id="lblTotalVol">Tổng đào đất lớp 2</span></div>
+        </article>
+        <article class="summary neutral">
+          <div><strong id="forecastDelay">21 ngày</strong><span id="lblTotalDays">Tổng thời gian thi công</span></div>
+        </article>
+      </div>
+      <div class="control-date">
+        <span id="lblControlDate">Ngày kiểm soát</span>
+        <input type="date" id="controlDate">
+        <small id="lblControlDateHint">Thay đổi ngày để xem tiến độ theo thời gian</small>
+      </div>
+    </section>
+
+    <section class="control-grid">
+      <article class="map-card">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow" id="mapEyebrow">01 · MẶT BẰNG THI CÔNG CHI TIẾT 9 ZONE</span>
+            <h2 id="mapHeading">Mặt bằng đào đất - Lắp văng lớp 2</h2>
+          </div>
+          <div class="legend">
+            <span><i class="green"></i><span id="legPhase1">Giai đoạn 1</span></span>
+            <span><i class="purple"></i><span id="legPhase2">Giai đoạn 2</span></span>
+            <span><i class="orange"></i><span id="legPhase3">Giai đoạn 3</span></span>
+          </div>
+        </div>
+
+        <div class="map-toolbar">
+          <div class="zone-quick-bar">
+            <span class="toolbar-label" id="lblChooseZone">Chọn Zone:</span>
+            <div class="zone-buttons-list" id="zoneButtonsList">
+              <!-- Rendered via app.js (Z1 to Z9) -->
+            </div>
+          </div>
+          <div class="map-hint" id="lblMapHint">💡 Bấm vào 1 Zone trên hình: Zone đó sẽ đậm màu lên và hiển thị ngày Bắt đầu - Kết thúc</div>
+        </div>
+
+        <!-- SVG PLAN STAGE: 100% FAITHFUL TO USER DRAWING -->
+        <div class="plan-stage" id="planStage">
+          <div class="svg-map-wrapper">
+            <svg 
+              id="cadMapSvg"
+              viewBox="0 0 1374 1192" 
+              preserveAspectRatio="xMidYMid meet"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <!-- 1. Actual CAD Drawing Base Image -->
+              <image 
+                href="/assets/aistudio/image_589a6b38.png" 
+                x="0" 
+                y="0" 
+                width="1374" 
+                height="1192" 
+                preserveAspectRatio="xMidYMid meet"
+              />
+
+              <!-- 2. Interactive SVG Polygons Layer For All 9 Zones -->
+              <g id="svgZonesLayer">
+                <!-- Injected via app.js -->
+              </g>
+
+              <!-- 3. Active Zone Info Card Badge Layer -->
+              <g id="svgBadgesLayer">
+                <!-- Injected via app.js on active zone -->
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <footer class="map-footer">
+          <span><b>Nguồn:</b> C10 - MẶT BẰNG ĐÀO ĐẤT - LẮP VĂNG LỚP 2</span>
+          <span id="mapStatus">9 Zone thi công độc lập ghép thành 1 mặt bằng hoàn chỉnh</span>
+        </footer>
+      </article>
+
+      <!-- Side Detail Card -->
+      <aside class="detail-card" id="detailCard">
+        <div class="empty-state" id="emptyState">
+          <span class="radar"></span>
+          <h2 id="emptyHeading">Chọn một Zone trên mặt bằng</h2>
+          <p id="emptyDesc">Bấm vào bất kỳ Zone 1, 2, 3, 4, 5, 6, 7, 8, 9 để xem chi tiết thời gian và 5 công tác.</p>
+        </div>
+
+        <div class="detail-content hidden" id="detailContent">
+          <div class="detail-header">
+            <div>
+              <span class="eyebrow" id="detailZoneTag">GIAI ĐOẠN 1</span>
+              <h2 id="detailName">ZONE 1</h2>
+            </div>
+            <span class="large-status green" id="detailStatus">ĐÚNG KẾ HOẠCH</span>
+          </div>
+
+          <div class="date-compare">
+            <div>
+              <span id="lblDetailStart">NGÀY BẮT ĐẦU</span>
+              <strong id="detailPlanStart">—</strong>
+            </div>
+            <i>→</i>
+            <div>
+              <span id="lblDetailEnd">NGÀY KẾT THÚC</span>
+              <strong id="detailPlanEnd">—</strong>
+            </div>
+          </div>
+
+          <div class="variance" id="varianceBox">
+            <span id="lblDetailVolTitle">KHỐI LƯỢNG ZONE</span>
+            <strong id="detailVolume">5.300 m³</strong>
+            <small id="detailMessage">Thời gian đào đất &amp; văng lớp 2</small>
+          </div>
+
+          <!-- 5 Sub-tasks Schedule Table -->
+          <div class="tasks-breakdown-section">
+            <h3 id="lblTasksTableTitle">Chi tiết 5 công tác trong Zone</h3>
+            <div class="tasks-table-container" id="tasksTableContainer">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Progress Update Form -->
+          <form id="updateForm" class="mt-4">
+            <input type="hidden" id="detailId">
+            <label><span id="lblFormStage">Trạng thái thi công Zone</span>
+              <select id="stageInput">
+                <option value="not-started">Chưa triển khai</option>
+                <option value="in-progress">Đang thi công</option>
+                <option value="done">Hoàn thành văng &amp; kích</option>
+              </select>
+            </label>
+
+            <div class="quantity-grid">
+              <label><span id="lblTotalQty">Tổng khối lượng (m³)</span>
+                <input type="number" id="totalQtyInput" value="5300" min="1" required>
+              </label>
+              <label><span id="lblDoneQty">Đã đào (m³)</span>
+                <input type="number" id="doneQtyInput" value="0" min="0" required>
+              </label>
+              <label><span id="lblUnit">Đơn vị</span>
+                <input type="text" id="unitInput" value="m³" readonly>
+              </label>
+            </div>
+
+            <div class="calculated-progress">
+              <span id="lblCalcProg">Tiến độ hoàn thành Zone</span>
+              <strong id="progressOutput">0%</strong>
+            </div>
+
+            <label><span id="lblFormNotes">Ghi chú hiện trường</span>
+              <textarea id="noteInput" rows="2" placeholder="Ghi chú đào đất, văng biên, kích văng..."></textarea>
+            </label>
+
+            <button class="button primary full" type="submit" id="btnSaveZone">Lưu tiến độ Zone &amp; Cập nhật Firebase</button>
+          </form>
+
+          <div class="history-note" id="historyNote">Chưa có lịch sử cập nhật.</div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- Lower Summary Grid -->
+    <section class="lower-grid">
+      <article class="panel zone-overview">
+        <div class="section-head">
+          <div><span class="eyebrow" id="lblGrid02">02 · DANH SÁCH 9 ZONE</span><h2 id="lblGrid02Title">Tiến độ chi tiết từng Zone</h2></div>
+          <span class="asof" id="asOfText">Tại ngày —</span>
+        </div>
+        <div class="zone-cards" id="zoneCards"></div>
+      </article>
+
+      <article class="panel watchlist">
+        <div class="section-head">
+          <div><span class="eyebrow" id="lblGrid03">03 · THEO DÕI GIAI ĐOẠN</span><h2 id="lblGrid03Title">Các mốc thời gian Zone</h2></div>
+          <span class="risk-count" id="riskCount">9 Zone</span>
+        </div>
+        <div id="riskList"></div>
+      </article>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="/c10/app.js"></script>
+</body>
+</html>
