@@ -443,37 +443,73 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
     setIsExportingPdf(true);
     showToast(`Đang kết xuất file ${fileNameToUse}.pdf chuẩn A4...`);
 
+    const loadScriptOnce = (src: string, checkFn: () => boolean): Promise<void> => {
+      if (checkFn()) return Promise.resolve();
+      return new Promise<void>((resolve, reject) => {
+        const existing = document.querySelector(`script[src="${src}"]`) as HTMLScriptElement | null;
+        if (existing) {
+          existing.addEventListener('load', () => resolve(), { once: true });
+          existing.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)), { once: true });
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error(`Failed to load ${src}`));
+        document.head.appendChild(script);
+      });
+    };
+
     try {
-      // Đảm bảo thư viện html2pdf đã sẵn sàng (tự động nạp nếu chưa có)
-      let h2p = (window as any).html2pdf;
-      if (!h2p) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error('Failed to load html2pdf.js'));
-          document.head.appendChild(script);
-        });
-        h2p = (window as any).html2pdf;
-      }
+      // Nạp trực tiếp html2canvas và jsPDF độc lập để đảm bảo 100% có sẵn constructor chuẩn trên window
+      await Promise.all([
+        loadScriptOnce(
+          'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+          () => typeof (window as any).html2canvas === 'function'
+        ),
+        loadScriptOnce(
+          'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+          () => Boolean((window as any).jspdf?.jsPDF || (window as any).jsPDF)
+        )
+      ]);
 
       const pageElements = Array.from(document.querySelectorAll<HTMLElement>('.c10-a4-page'));
       const jsPDFConstructor = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
 
-      if (jsPDFConstructor && (window as any).html2canvas && pageElements.length > 0) {
+      if (jsPDFConstructor && typeof (window as any).html2canvas === 'function' && pageElements.length > 0) {
+        // Chờ toàn bộ font chữ và hình ảnh trong khung A4 tải xong hoàn toàn trước khi chụp
+        if ((document as any).fonts?.ready) {
+          try {
+            await (document as any).fonts.ready;
+          } catch {}
+        }
+        const allSheetImgs = Array.from(sheetEl.querySelectorAll<HTMLImageElement>('img'));
+        await Promise.all(
+          allSheetImgs.map(
+            (img) =>
+              new Promise<void>((resolve) => {
+                if (!img.src || img.complete) return resolve();
+                img.onload = () => resolve();
+                img.onerror = () => resolve();
+              })
+          )
+        );
+
         const firstIsLandscape = pageElements[0].classList.contains('c10-a4-sheet-landscape');
         const pdf = new jsPDFConstructor({
           orientation: firstIsLandscape ? 'landscape' : 'portrait',
           unit: 'mm',
-          format: 'a4'
+          format: 'a4',
+          compress: true
         });
 
-        // Tạo render wrapper cố định tại (0,0) để html2canvas không bị lệch tọa độ do scroll hoặc container
+        // Tạo render wrapper đặt tại tọa độ tuyệt đối (0,0) của document.body để không bị ảnh hưởng bởi Sidebar hay cuộn trang
         const renderWrapper = document.createElement('div');
         renderWrapper.id = 'c10-pdf-render-wrapper';
-        renderWrapper.style.position = 'fixed';
-        renderWrapper.style.top = '0';
-        renderWrapper.style.left = '0';
+        renderWrapper.style.position = 'absolute';
+        renderWrapper.style.top = '0px';
+        renderWrapper.style.left = '0px';
         renderWrapper.style.zIndex = '-9999';
         renderWrapper.style.opacity = '1';
         renderWrapper.style.pointerEvents = 'none';
@@ -483,33 +519,17 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
         renderWrapper.style.boxSizing = 'border-box';
         document.body.appendChild(renderWrapper);
 
-        // FIX GỐC RỄ: Inject img { display: inline-block !important; } vào DOCUMENT CHÍNH
-        // để html2canvas khởi tạo FontMetrics chính xác, không bị Tailwind preflight làm tụt baseline font chữ!
+        // Đảm bảo img có display: inline-block để html2canvas đo chính xác FontMetrics baseline (không làm lệch chữ)
         const globalTailwindFix = document.createElement('style');
         globalTailwindFix.id = 'c10-h2c-tailwind-fix';
-        globalTailwindFix.textContent = 'img { display: inline-block !important; }';
+        globalTailwindFix.textContent = `
+          img { display: inline-block !important; }
+          #c10-pdf-render-wrapper, #c10-pdf-render-wrapper * {
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: normal !important;
+          }
+        `;
         document.head.appendChild(globalTailwindFix);
-
-        // HOOK FONT METRICS BASELINE: Khắc phục triệt để lỗi thâm căn cố đế của html2canvas
-        // khi render font chữ (html2canvas cộng fontMetrics.baseline + 2px hằng số vào bounds.top,
-        // khiến chữ trong mọi ô bảng bị tụt xuống 4px - 5px, chạm/đè đứt viền dưới của ô).
-        // Hook fillText & strokeText để nâng tọa độ Y lên 4.5px trong suốt quá trình html2canvas vẽ.
-        const origFillText = CanvasRenderingContext2D.prototype.fillText;
-        const origStrokeText = CanvasRenderingContext2D.prototype.strokeText;
-        (CanvasRenderingContext2D.prototype as any).fillText = function (text: any, x: any, y: any, maxWidth: any) {
-          const adjY = typeof y === 'number' ? y - 4.5 : y;
-          if (maxWidth !== undefined) {
-            return origFillText.call(this, text, x, adjY, maxWidth);
-          }
-          return origFillText.call(this, text, x, adjY);
-        };
-        (CanvasRenderingContext2D.prototype as any).strokeText = function (text: any, x: any, y: any, maxWidth: any) {
-          const adjY = typeof y === 'number' ? y - 4.5 : y;
-          if (maxWidth !== undefined) {
-            return origStrokeText.call(this, text, x, adjY, maxWidth);
-          }
-          return origStrokeText.call(this, text, x, adjY);
-        };
 
         try {
           for (let i = 0; i < pageElements.length; i++) {
@@ -523,20 +543,22 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
             clone.style.display = 'flex';
             clone.style.flexDirection = 'column';
             clone.style.justifyContent = 'space-between';
-            clone.style.padding = '8mm 12mm 12mm 12mm';
+            clone.style.padding = '34px 42px 34px 42px';
+            clone.style.background = '#ffffff';
 
             const targetWidth = isLandscape ? 1123 : 794;
-            const targetMinHeight = isLandscape ? 794 : 1123;
+            const targetHeight = isLandscape ? 794 : 1123;
             clone.style.width = `${targetWidth}px`;
-            clone.style.minHeight = `${targetMinHeight}px`;
+            clone.style.minHeight = `${targetHeight}px`;
+            clone.style.height = 'auto';
             clone.style.overflow = 'visible';
 
-            // Đảm bảo toàn bộ ô bảng giữ căn giữa tự nhiên, không gán padTop thủ công gây đè vạch
+            // Đảm bảo toàn bộ ô bảng giữ căn giữa tự nhiên
             clone.querySelectorAll<HTMLElement>('td, th').forEach((cell) => {
               cell.style.verticalAlign = 'middle';
             });
 
-            // Khắc phục triệt để lỗi html2canvas làm méo/kéo dãn ảnh thi công
+            // Giữ tỷ lệ chuẩn cho ảnh thi công
             const origImgs = pageEl.querySelectorAll<HTMLImageElement>('.c10-photo-frame img, img');
             const cloneImgs = clone.querySelectorAll<HTMLImageElement>('.c10-photo-frame img, img');
 
@@ -571,22 +593,31 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
             });
 
             renderWrapper.style.width = `${targetWidth}px`;
+            renderWrapper.style.height = 'auto';
             renderWrapper.innerHTML = '';
             renderWrapper.appendChild(clone);
+
+            const actualHeight = Math.max(targetHeight, clone.scrollHeight, clone.offsetHeight);
+            clone.style.height = `${actualHeight}px`;
+            renderWrapper.style.height = `${actualHeight}px`;
 
             const canvas = await (window as any).html2canvas(clone, {
               scale: 2,
               useCORS: true,
+              allowTaint: true,
               logging: false,
               backgroundColor: '#ffffff',
+              x: 0,
+              y: 0,
+              scrollX: 0,
+              scrollY: 0,
               width: targetWidth,
+              height: actualHeight,
               windowWidth: targetWidth,
+              windowHeight: actualHeight,
               onclone: (doc: Document) => {
-                // FIX GỐC lỗi chữ lệch xuống trong html2canvas: Tailwind preflight đặt
-                // img{display:block} làm html2canvas đo sai baseline font -> mọi dòng chữ
-                // bị vẽ thấp xuống, dính viền dưới ô. Trả img về inline-block trong bản clone.
                 const st = doc.createElement('style');
-                st.textContent = 'img{display:inline-block !important;}';
+                st.textContent = 'img { display: inline-block !important; }';
                 doc.head.appendChild(st);
               }
             });
@@ -595,27 +626,33 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
               pdf.addPage('a4', isLandscape ? 'landscape' : 'portrait');
             }
 
-            const imgData = canvas.toDataURL('image/jpeg', 0.98);
+            const imgData = canvas.toDataURL('image/jpeg', 0.96);
             const pageW = isLandscape ? 297 : 210;
             const pageH = isLandscape ? 210 : 297;
 
-            // Luôn chừa lề an toàn phía dưới 8mm và trên 5mm để footer không bao giờ bị cắt hay chạm mép giấy:
-            const marginSide = isLandscape ? 8 : 6;
-            const marginTop = 5;
-            const marginBottom = 8;
-            const usableW = pageW - marginSide * 2;
-            const usableH = pageH - marginTop - marginBottom;
+            // Tự động co giãn tỷ lệ vừa khít 100% trong trang A4 nếu chiều cao thực tế lớn hơn 1123px (không bao giờ tràn sang trang trắng thứ 2)
+            const imgRatio = canvas.width / canvas.height;
+            const pageRatio = pageW / pageH;
+            let drawW = pageW;
+            let drawH = pageH;
+            let offsetX = 0;
+            let offsetY = 0;
 
-            const ratio = Math.min(usableW / canvas.width, usableH / canvas.height);
-            const drawW = canvas.width * ratio;
-            const drawH = canvas.height * ratio;
-            const posX = marginSide + (usableW - drawW) / 2;
-            const posY = marginTop;
+            if (actualHeight > targetHeight + 6) {
+              if (imgRatio < pageRatio) {
+                drawH = pageH;
+                drawW = drawH * imgRatio;
+                offsetX = (pageW - drawW) / 2;
+              } else {
+                drawW = pageW;
+                drawH = drawW / imgRatio;
+              }
+            }
 
-            pdf.addImage(imgData, 'JPEG', posX, posY, drawW, drawH);
+            pdf.addImage(imgData, 'JPEG', offsetX, offsetY, drawW, drawH, undefined, 'FAST');
           }
 
-          // 1. Tạo blob chuẩn trực tiếp từ jsPDF (không phụ thuộc vào save() có bị hook hay không)
+          // 1. Tạo blob chuẩn trực tiếp từ jsPDF
           const blob = pdf.output('blob');
           const blobUrl = URL.createObjectURL(blob);
           const fullPdfName = `${fileNameToUse}.pdf`;
@@ -635,11 +672,6 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
             console.warn('Auto download error:', dlErr);
           }
 
-          // Vẫn gọi pdf.save() để đảm bảo tương thích mọi trình duyệt
-          try {
-            pdf.save(fullPdfName);
-          } catch {}
-
           // 3. Hiển thị popup / modal trực tiếp để người dùng bấm tải hoặc mở xem ngay 100% thành công
           setExportedPdfModal({
             url: blobUrl,
@@ -647,11 +679,9 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
             pageCount: pageElements.length
           });
 
-          showToast(`Đã xuất thành công: ${fullPdfName} (${pageElements.length} trang chuẩn)`);
+          showToast(`Đã xuất thành công: ${fullPdfName} (${pageElements.length} trang chuẩn A4)`);
           return;
         } finally {
-          (CanvasRenderingContext2D.prototype as any).fillText = origFillText;
-          (CanvasRenderingContext2D.prototype as any).strokeText = origStrokeText;
           if (document.body.contains(renderWrapper)) {
             document.body.removeChild(renderWrapper);
           }
@@ -660,112 +690,17 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
           }
         }
       }
-
-      // Dự phòng nếu không có jsPDF: Dùng html2pdf với container
-      if (h2p && sheetEl) {
-        const opt = {
-          margin: 0,
-          filename: `${fileNameToUse}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#ffffff',
-            width: 794,
-            windowWidth: 794
-          },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'] }
-        };
-        const worker = h2p().set(opt).from(sheetEl);
-        const blob = await worker.output('blob');
-        const blobUrl = URL.createObjectURL(blob);
-        const fullPdfName = `${fileNameToUse}.pdf`;
-
-        try {
-          const downloadLink = document.createElement('a');
-          downloadLink.href = blobUrl;
-          downloadLink.download = fullPdfName;
-          downloadLink.style.display = 'none';
-          document.body.appendChild(downloadLink);
-          downloadLink.click();
-          setTimeout(() => {
-            if (document.body.contains(downloadLink)) document.body.removeChild(downloadLink);
-          }, 1000);
-        } catch {}
-
-        setExportedPdfModal({
-          url: blobUrl,
-          name: fullPdfName,
-          pageCount: pageElements.length || 5
-        });
-
-        showToast(`Đã xuất thành công: ${fullPdfName}`);
-        return;
-      }
     } catch (err) {
-      console.warn('Direct PDF export fallback to print window:', err);
+      console.error('Direct PDF export error:', err);
+      showToast('Có lỗi khi kết xuất PDF. Vui lòng thử lại!');
     } finally {
       setIsExportingPdf(false);
     }
-
-    // Dự phòng: Mở cửa sổ in độc lập nếu được phép
-    const printWin = window.open('', '_blank', 'width=900,height=1100');
-    if (printWin && sheetEl) {
-      printWin.document.write(`<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8" />
-<title>${fileNameToUse}</title>
-<style>
-  @page { size: A4 portrait; margin: 0; }
-  @page landscape-page { size: A4 landscape; margin: 0; }
-  body { font-family: "Times New Roman", Times, serif; font-size: 9.5pt; color: #000; margin: 0; padding: 0; line-height: 1.35; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .c10-a4-sheet { width: 210mm; min-height: 297mm; padding: 10mm 12mm; box-sizing: border-box; page-break-after: always; break-after: page; display: flex; flex-direction: column; justify-content: space-between; }
-  .c10-a4-sheet-landscape { width: 297mm !important; min-height: 210mm !important; max-width: 297mm !important; page: landscape-page !important; }
-  .c10-page-content { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: flex-start; }
-  .c10-page-footer { flex-shrink: 0; margin-top: auto; }
-  table { width: 100%; border-collapse: separate !important; border-spacing: 0 !important; border-top: 1px solid #000 !important; border-left: 1px solid #000 !important; margin-bottom: 6px; }
-  td, th { border-top: none !important; border-left: none !important; border-right: 1px solid #000 !important; border-bottom: 1px solid #000 !important; padding: 5px 6px; text-align: center; vertical-align: middle; box-sizing: border-box; line-height: 1.35; }
-  th { vertical-align: middle; background: #a9c9ec !important; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  i { font-weight: 400; }
-  .l { text-align: left; }
-  .b { font-weight: 700; }
-  .sec td { background: #dbe8f7 !important; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .c10-a4-ttl { font-weight: 700; color: #1b2a49; font-size: 10.5pt; margin: 5px 0 3px; }
-</style>
-</head>
-<body>
-${sheetEl.innerHTML}
-<script>
-  window.onload = function() {
-    setTimeout(function() { window.print(); }, 300);
-  };
-</script>
-</body>
-</html>`);
-      printWin.document.close();
-      return;
-    }
-
-    // Dự phòng cuối cùng
-    const prevTitle = document.title;
-    document.title = fileNameToUse;
-    window.print();
-    setTimeout(() => {
-      document.title = prevTitle;
-    }, 1200);
   };
 
-  // 1. In PDF (Phương án 1: Native Browser Print Vector chuẩn A4 không bao giờ lệch lề)
+  // 1. In PDF
   const handlePrintPDF = () => {
-    const prevTitle = document.title;
-    document.title = fullReportFileName;
-    window.print();
-    setTimeout(() => {
-      document.title = prevTitle;
-    }, 1500);
+    triggerPrintWithFileName(fullReportFileName);
   };
 
   // Gửi dữ liệu tới cổng Webhook Google Apps Script (1 nút bấm: Lưu PDF vào Drive + Tự động điền số lượng lên Google Sheet C10)
@@ -1065,74 +1000,69 @@ ${sheetEl.innerHTML}
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 animate-fade-in pb-20">
       {/* Print Styles for A4 Sheet */}
       <style>{`
+        body > div > img {
+          display: inline-block !important;
+        }
         @media print {
-          /* Ẩn hoàn toàn UI web, sidebar 256px, header, nút bấm */
-          aside, nav, header, .no-print, button, form, .c10-header-bar, [role="navigation"] {
+          aside, nav, header, .no-print {
             display: none !important;
           }
-          body, html, #root {
-            background: #ffffff !important;
+          body, html, #root, main {
             margin: 0 !important;
             padding: 0 !important;
+            background: #fff !important;
             width: 100% !important;
             height: auto !important;
             overflow: visible !important;
           }
-          /* Căn lề chuẩn A4 ISO */
+          #c10-printable-a4-sheet, #c10-printable-a4-sheet * {
+            visibility: visible !important;
+          }
           @page {
             size: A4 portrait;
-            margin: 6mm 8mm 6mm 8mm;
+            margin: 0;
           }
           @page landscape-page {
             size: A4 landscape;
-            margin: 6mm 8mm 6mm 8mm;
-          }
-          /* Container báo cáo căn thẳng 100% không lệch lề */
-          #c10-printable-a4-sheet {
-            position: static !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            margin: 0 auto !important;
-            padding: 0 !important;
-            display: block !important;
-            visibility: visible !important;
+            margin: 0;
           }
           .c10-a4-sheet {
             box-shadow: none !important;
             margin: 0 auto !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            min-height: 284mm !important;
-            padding: 4mm 6mm 6mm 6mm !important;
+            width: 210mm !important;
+            height: 296mm !important;
+            min-height: 296mm !important;
+            max-height: 296mm !important;
             page-break-after: always !important;
             break-after: page !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
+          .c10-a4-sheet:last-child {
+            page-break-after: auto !important;
+            break-after: auto !important;
+          }
           .c10-a4-sheet-landscape {
             page: landscape-page !important;
-            min-height: 198mm !important;
-          }
-          /* Bảng biểu và hàng không bị cắt giữa trang */
-          table {
-            width: 100% !important;
-          }
-          tr {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
+            width: 297mm !important;
+            height: 209mm !important;
+            min-height: 209mm !important;
+            max-height: 209mm !important;
           }
         }
-        .c10-a4-sheet {
+        .c10-a4-sheet, .a4-page-portrait {
           background: #fff;
           color: #000;
           font-family: "Times New Roman", Times, serif;
           font-size: 9.5pt;
-          width: 210mm;
-          min-height: 297mm;
-          padding: 10mm 12mm 10mm 12mm;
+          width: 794px;
+          height: 1123px;
+          min-height: 1123px;
+          padding: 38px 45px 38px 45px;
           box-sizing: border-box;
+          overflow: hidden;
           margin: 0 auto 24px auto;
+
           box-shadow: 0 4px 18px rgba(0,0,0,0.18);
           line-height: 1.35;
           display: flex;
