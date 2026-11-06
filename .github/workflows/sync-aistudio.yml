@@ -1,0 +1,42 @@
+name: Auto-sync from AI Studio (diem251a080210-del/c10-pmh-cultural-centre-sync)
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout destination repo (phucbao1992)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch and sync changes from AI Studio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Clone upstream AI Studio into a temporary directory
+          git clone --depth 1 https://github.com/diem251a080210-del/c10-pmh-cultural-centre-sync.git /tmp/aistudio-sync
+          UPSTREAM_SHA=$(cd /tmp/aistudio-sync && git rev-parse HEAD)
+          echo "AI Studio Upstream SHA: $UPSTREAM_SHA"
+          
+          # Sync all files from AI Studio to workspace except .git and .github
+          rsync -av --delete --exclude='.git' --exclude='.github' /tmp/aistudio-sync/ ./
+          
+          # Check if there are changes
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Changes detected from AI Studio. Committing and pushing..."
+            git add -A
+            git commit -m "sync: auto-sync updates from Google AI Studio ($UPSTREAM_SHA)"
+            git push origin main
+            echo "Sync completed successfully!"
+          else
+            echo "All files already perfectly in sync with Google AI Studio."
+          fi
