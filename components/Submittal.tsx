@@ -6756,7 +6756,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
            ======================================================== */
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {data && data.submittals && data.submittals.map((item, idx) => {
+            {data && (data as any).submittals && ((data as any).submittals as any[]).map((item, idx) => {
               const chartData = [
                 { name: t(item.name), value: item.approved },
                 { name: t('unapproved'), value: item.unapproved }

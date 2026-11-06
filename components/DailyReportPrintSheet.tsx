@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { Printer } from 'lucide-react';
 import {
   DailyReportModel,
   formatVNDate,
@@ -14,9 +15,28 @@ import {
 
 export type SignRecord = DailyReportModel['sign'];
 
-interface DailyReportPrintSheetProps {
+export interface DailyReportPrintSheetProps {
   report: DailyReportModel;
+  onPrint?: () => void;
 }
+
+/**
+ * Phương án 1: Native Browser Print (In Vector gốc chuẩn A4 không bao giờ bị lệch lề)
+ * - Tự động đặt document.title chuẩn trước khi window.print()
+ * - Trình duyệt render vector 100% sắc nét, chuẩn khổ A4 portrait / landscape
+ * - Khắc phục triệt để lỗi lệch lề trái và mờ chữ của html2canvas / html2pdf / jsPDF
+ */
+export const handleExportPdf = (report: any) => {
+  const reportNo = report?.reportNo || report?.g?.reportNo || 'C10';
+  const rawDate = report?.date || report?.g?.reportDate || '';
+  const cleanDate = String(rawDate).replace(/[/\\?%*:|"<>]/g, '-');
+  const prevTitle = document.title;
+  document.title = `${reportNo}_Bao_Cao_Ngay_${cleanDate}`;
+  window.print();
+  setTimeout(() => {
+    document.title = prevTitle;
+  }, 1200);
+};
 
 // -------------------------------------------------------------
 // Sub-types for grouped materials and works
@@ -800,14 +820,222 @@ const SectionPhotosView: React.FC<{
 // -------------------------------------------------------------
 // Main Component
 // -------------------------------------------------------------
-export const DailyReportPrintSheet: React.FC<DailyReportPrintSheetProps> = ({ report }) => {
+export const DailyReportPrintSheet: React.FC<DailyReportPrintSheetProps> = ({ report, onPrint }) => {
   const pages = useMemo(() => buildDynamicPages(report), [report]);
+
+  const handlePrintClick = () => {
+    if (onPrint) {
+      onPrint();
+    } else {
+      handleExportPdf(report);
+    }
+  };
 
   return (
     <div className="pt-4">
-      <div className="no-print text-center text-xs font-semibold text-slate-500 mb-3">
-        Bản xem trước mẫu in khổ A4 chuẩn ({pages.length} trang) — Bấm nút <b>"In PDF"</b> hoặc <b>"Lưu vào Drive"</b> trên thanh công cụ để xuất file
+      {/* Khối CSS @media print chuẩn hoá theo Phương án 1 (Native Vector A4 Print) */}
+      <style>{`
+        @page {
+          size: A4 portrait;
+          margin: 8mm 10mm 8mm 10mm;
+        }
+        @page landscape-page {
+          size: A4 landscape;
+          margin: 8mm 10mm 8mm 10mm;
+        }
+
+        @media print {
+          /* Ẩn toàn bộ thanh Sidebar, Navigation, Header, các nút điều khiển, thông báo */
+          aside,
+          nav,
+          header,
+          .no-print,
+          button,
+          .c10-header-bar {
+            display: none !important;
+          }
+
+          /* Đặt nền trang trắng */
+          body,
+          #root {
+            background: #ffffff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+
+          /* Khung chứa #c10-printable-a4-sheet */
+          #c10-printable-a4-sheet {
+            width: 100% !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            position: static !important;
+          }
+
+          /* Từng trang in .c10-a4-sheet */
+          .c10-a4-sheet {
+            width: 100% !important;
+            min-height: 280mm !important;
+            margin: 0 auto !important;
+            padding: 6mm 8mm !important;
+            box-shadow: none !important;
+            page-break-after: always !important;
+            break-after: page !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            box-sizing: border-box !important;
+          }
+
+          .c10-a4-sheet-landscape {
+            page: landscape-page !important;
+            min-height: 195mm !important;
+          }
+
+          /* Đảm bảo bảng biểu và các dòng không bị cắt đôi giữa trang */
+          table {
+            width: 100% !important;
+          }
+
+          tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+
+          /* Giữ nguyên màu nền xanh của tiêu đề bảng và thanh bar */
+          th {
+            background: #a9c9ec !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          .sec td {
+            background: #dbe8f7 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          .c10-a4-ttl {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        }
+
+        /* Screen Preview styles */
+        .c10-printable-container {
+          margin: 0 auto;
+        }
+        .c10-a4-sheet {
+          background: #fff;
+          color: #000;
+          font-family: "Times New Roman", Times, serif;
+          font-size: 9.5pt;
+          width: 210mm;
+          min-height: 297mm;
+          padding: 10mm 12mm;
+          box-sizing: border-box;
+          margin: 0 auto 24px auto;
+          box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+          line-height: 1.35;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          position: relative;
+        }
+        .c10-a4-sheet-landscape {
+          width: 297mm !important;
+          min-height: 210mm !important;
+          max-width: 297mm !important;
+          padding: 10mm 12mm !important;
+        }
+        .c10-page-content {
+          flex: 1 0 auto;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
+        }
+        .c10-page-footer {
+          flex-shrink: 0;
+          margin-top: auto;
+        }
+        .c10-a4-sheet table {
+          width: 100%;
+          border-collapse: separate !important;
+          border-spacing: 0 !important;
+          border-top: 1px solid #000 !important;
+          border-left: 1px solid #000 !important;
+          margin-bottom: 4px;
+        }
+        .c10-a4-sheet td, .c10-a4-sheet th {
+          border-top: none !important;
+          border-left: none !important;
+          border-right: 1px solid #000 !important;
+          border-bottom: 1px solid #000 !important;
+          padding: 5px 6px;
+          text-align: center;
+          vertical-align: middle;
+          box-sizing: border-box;
+          line-height: 1.35;
+        }
+        .c10-a4-sheet img {
+          display: inline-block !important;
+        }
+        .c10-a4-sheet tr {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .c10-a4-sheet th {
+          background: #a9c9ec !important;
+          font-weight: 700;
+          vertical-align: middle;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .c10-a4-sheet i {
+          font-weight: 400;
+        }
+        .c10-a4-sheet .l {
+          text-align: left;
+        }
+        .c10-a4-sheet .b {
+          font-weight: 700;
+        }
+        .c10-a4-sheet .sec td {
+          background: #dbe8f7 !important;
+          font-weight: 700;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .c10-a4-ttl {
+          font-weight: 700;
+          color: #1b2a49;
+          font-size: 10pt;
+          margin: 4px 0 2px;
+        }
+      `}</style>
+
+      {/* Action / Notification Banner */}
+      <div className="no-print bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="text-left">
+          <div className="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <span>Bản xem trước mẫu in khổ A4 chuẩn ({pages.length} trang)</span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+              Phương án 1: Vector Native Print
+            </span>
+          </div>
+          <div className="text-xs text-slate-500 mt-0.5">
+            In trực tiếp Vector chuẩn A4 từ trình duyệt — không bao giờ lệch lề, không mờ chữ, sắc nét 100%.
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handlePrintClick}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer whitespace-nowrap"
+        >
+          <Printer className="w-4 h-4" />
+          <span>In PDF (Vector Chuẩn A4)</span>
+        </button>
       </div>
+
       <div className="overflow-x-auto pb-6">
         <div id="c10-printable-a4-sheet" className="c10-printable-container">
           {pages.map((page) => (
