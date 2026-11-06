@@ -758,9 +758,14 @@ ${sheetEl.innerHTML}
     }, 1200);
   };
 
-  // 1. In PDF
+  // 1. In PDF (Phương án 1: Native Browser Print Vector chuẩn A4 không bao giờ lệch lề)
   const handlePrintPDF = () => {
-    triggerPrintWithFileName(fullReportFileName);
+    const prevTitle = document.title;
+    document.title = fullReportFileName;
+    window.print();
+    setTimeout(() => {
+      document.title = prevTitle;
+    }, 1500);
   };
 
   // Gửi dữ liệu tới cổng Webhook Google Apps Script (1 nút bấm: Lưu PDF vào Drive + Tự động điền số lượng lên Google Sheet C10)
@@ -1061,28 +1066,45 @@ ${sheetEl.innerHTML}
       {/* Print Styles for A4 Sheet */}
       <style>{`
         @media print {
-          body * {
-            visibility: hidden !important;
-          }
-          #c10-printable-a4-sheet, #c10-printable-a4-sheet * {
-            visibility: visible !important;
-          }
-          .no-print {
+          /* Ẩn hoàn toàn UI web, sidebar 256px, header, nút bấm */
+          aside, nav, header, .no-print, button, form, .c10-header-bar, [role="navigation"] {
             display: none !important;
           }
+          body, html, #root {
+            background: #ffffff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+          /* Căn lề chuẩn A4 ISO */
           @page {
             size: A4 portrait;
-            margin: 0;
+            margin: 6mm 8mm 6mm 8mm;
           }
           @page landscape-page {
             size: A4 landscape;
-            margin: 0;
+            margin: 6mm 8mm 6mm 8mm;
+          }
+          /* Container báo cáo căn thẳng 100% không lệch lề */
+          #c10-printable-a4-sheet {
+            position: static !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            display: block !important;
+            visibility: visible !important;
           }
           .c10-a4-sheet {
             box-shadow: none !important;
-            margin: 0 !important;
+            margin: 0 auto !important;
             width: 100% !important;
-            min-height: 297mm !important;
+            max-width: 100% !important;
+            min-height: 284mm !important;
+            padding: 4mm 6mm 6mm 6mm !important;
             page-break-after: always !important;
             break-after: page !important;
             -webkit-print-color-adjust: exact !important;
@@ -1090,7 +1112,15 @@ ${sheetEl.innerHTML}
           }
           .c10-a4-sheet-landscape {
             page: landscape-page !important;
-            min-height: 210mm !important;
+            min-height: 198mm !important;
+          }
+          /* Bảng biểu và hàng không bị cắt giữa trang */
+          table {
+            width: 100% !important;
+          }
+          tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
         }
         .c10-a4-sheet {
@@ -2553,7 +2583,7 @@ ${sheetEl.innerHTML}
             </div>
 
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
-              <button
+              <button 
                 type="button"
                 onClick={() => setShowPermissionsModal(false)}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl cursor-pointer"
