@@ -1190,15 +1190,7 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
           justify-content: space-between;
           position: relative;
         }
-        .c10-a4-sheet-landscape, .a4-page-landscape {
-          width: 794px !important;
-          height: 1123px !important;
-          min-height: 1123px !important;
-          max-width: 794px !important;
-          padding: 38px 45px 38px 45px !important;
-          box-sizing: border-box !important;
-          overflow: hidden !important;
-        }
+        
         .c10-page-content {
           flex: 1 0 auto;
           min-height: 0;
