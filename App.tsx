@@ -309,16 +309,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     showToast(language === 'VN' ? `Đã thu hồi quyền của: ${userEmail}` : `Revoked: ${userEmail}`);
   };
 
-  const handleRemoveUserPermission = async (userEmail: string) => {
-    if (!window.confirm(language === 'VN' ? `Bạn có chắc muốn thu hồi toàn bộ quyền của tài khoản ${userEmail}?` : `Revoke permissions for ${userEmail}?`)) {
-      return;
-    }
-    const nextList = userPermissions.filter(u => u.email.toLowerCase() !== userEmail.toLowerCase());
-    setUserPermissions(nextList);
-    await saveUserPermissions(nextList);
-    showToast(language === 'VN' ? `Đã thu hồi quyền của: ${userEmail}` : `Revoked: ${userEmail}`);
-  };
-
   // Input states for each resource row
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
   // Update counter to force re-render when local storage updates
