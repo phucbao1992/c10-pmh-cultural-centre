@@ -7,12 +7,12 @@ import {
   FileText, AlertTriangle, Clock, CheckCircle2, RefreshCw, ExternalLink,
   ChevronDown, ChevronUp, AlertCircle, Search, Filter, Layers, Package,
   ShieldCheck, HelpCircle, HardHat, Beaker, Truck, FileCheck, Eye,
-  Calendar, Check, ArrowRight, Table, BarChart3, Database, X, Sparkles, Plus, Edit3
+  Calendar, Check, ArrowRight, Table, BarChart3, Database, X, Sparkles, Edit3
 } from 'lucide-react';
 import { SubmittalData, SubmittalItem } from '../services/sheetsService';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../constants';
-const LOCAL_STORAGE_KEY_MASTER_SUBMITTALS = 'c10_master_submittals_cache';
+// old cache key replaced by LOCAL_STORAGE_KEY_MASTER_SUBMITTALS at line 6094
 export type SubmittalCategoryKey = 
   | 'sdw'             // Shopdrawing (Bản vẽ thi công)
   | 'mat'             // Vật tư & Mẫu vật liệu (Material & Samples)
