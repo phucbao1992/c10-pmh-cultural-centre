@@ -674,19 +674,31 @@ export const formatVNDate = (isoDate: string) => (isoDate ? isoDate.split('-').r
  * Trả về phần đầu cố định "YYMMDD-C10-" dựa trên ngày báo cáo
  */
 export const buildFixedReportPrefix = (reportDate: string): string => {
-  const parts = String(reportDate || '').split(/[\/.-]/).filter(Boolean);
+  const parts = String(reportDate || '').split(/[/.-]/).filter(Boolean);
   let year = '', month = '', day = '';
   if (parts.length >= 3) {
     if (parts[0].length === 4) {
+      // Dạng YYYY-MM-DD
       [year, month, day] = parts;
+    } else if (parts[2].length === 4) {
+      // Dạng DD-MM-YYYY hoặc MM-DD-YYYY
+      [day, month, year] = parts;
     } else {
       [day, month, year] = parts;
     }
   }
   const now = new Date();
   year = year || String(now.getFullYear());
-  month = String(month || now.getMonth() + 1).padStart(2, '0');
+  month = String(month || (now.getMonth() + 1)).padStart(2, '0');
   day = String(day || now.getDate()).padStart(2, '0');
+  // Đảm bảo không bị lộn giữa ngày và tháng
+  const mNum = parseInt(month, 10);
+  const dNum = parseInt(day, 10);
+  if (mNum > 12 && dNum <= 12) {
+    const tmp = month;
+    month = day;
+    day = tmp;
+  }
   return `${String(year).slice(-2)}${month}${day}-C10-`;
 };
 

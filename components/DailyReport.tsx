@@ -122,6 +122,8 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
   const [customSuffix, setCustomSuffix] = useState<string>(
     publishedReport.fileSuffix || DEFAULT_FILE_SUFFIX
   );
+  // Cho phép người dùng chỉnh sửa tự do toàn bộ tên file xuất (gồm cả ngày tháng và tên)
+  const [customFullFileName, setCustomFullFileName] = useState<string>('');
 
   // Mode: 'view' (8 synchronized web sections) vs 'edit' (Form Builder I-VII)
   const [isEditingReport, setIsEditingReport] = useState<boolean>(false);
@@ -307,9 +309,13 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
 
   const activeReport = isEditingReport ? draftReport : publishedReport;
   const fixedPrefix = useMemo(() => buildFixedReportPrefix(activeReport.g.reportDate), [activeReport.g.reportDate]);
-  const fullReportFileName = useMemo(
+  const defaultCalculatedFileName = useMemo(
     () => buildFullReportFileName(activeReport.g.reportDate, customSuffix),
     [activeReport.g.reportDate, customSuffix]
+  );
+  const fullReportFileName = useMemo(
+    () => (customFullFileName && customFullFileName.trim()) ? customFullFileName.trim() : defaultCalculatedFileName,
+    [customFullFileName, defaultCalculatedFileName]
   );
 
   // Trigger Gemini Flash Summary for a given report
@@ -1768,29 +1774,37 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
               </label>
             </div>
 
-            {/* Filename Control: Fixed "YYMMDD-C10-" + Editable "Delta-Báo cáo ngày" */}
+            {/* Filename Control: Cho phép chỉnh sửa tự do toàn bộ tên file xuất + Nút đặt lại mặc định */}
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
               <span className="text-slate-500 font-semibold mr-1">Tên file xuất:</span>
-              <div className="inline-flex items-center rounded-xl border border-slate-300 bg-slate-50 overflow-hidden shadow-2xs">
-                <span
-                  className="px-2.5 py-1.5 bg-slate-200/80 text-slate-800 font-mono font-bold text-xs select-none border-r border-slate-300"
-                  title="Phần cố định (YYMMDD-C10-)"
-                >
-                  {fixedPrefix}
-                </span>
+              <div className="inline-flex items-center rounded-xl border border-slate-300 bg-white overflow-hidden shadow-2xs">
                 <input
                   type="text"
-                  value={customSuffix}
-                  onChange={(e) => setCustomSuffix(e.target.value)}
-                  onBlur={() => {
-                    if (!customSuffix.trim()) {
-                      setCustomSuffix(DEFAULT_FILE_SUFFIX);
-                    }
+                  value={customFullFileName || fullReportFileName}
+                  onChange={(e) => {
+                    setCustomFullFileName(e.target.value);
                   }}
-                  placeholder={DEFAULT_FILE_SUFFIX}
-                  className="px-2.5 py-1.5 bg-white text-blue-700 font-mono font-bold text-xs w-44 focus:outline-none focus:bg-blue-50/40"
-                  title="Phần tên có thể chỉnh sửa (Mặc định: Delta-Báo cáo ngày)"
+                  placeholder={defaultCalculatedFileName}
+                  className="px-2.5 py-1.5 bg-white text-blue-700 font-mono font-bold text-xs w-60 sm:w-72 md:w-80 focus:outline-none focus:bg-blue-50/40"
+                  title="Tên file xuất PDF (Bạn có thể tự do chỉnh sửa trực tiếp cả phần ngày YYMMDD/YYDDMM và tên)"
                 />
+                <span className="px-2 py-1.5 bg-slate-100 text-slate-500 font-mono text-xs select-none border-l border-slate-300">
+                  .pdf
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const fresh = buildFullReportFileName(activeReport.g.reportDate);
+                    setCustomFullFileName(fresh);
+                    setCustomSuffix(DEFAULT_FILE_SUFFIX);
+                    showToast('Đã đặt lại tên file theo ngày làm báo cáo thực tế!');
+                  }}
+                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 border-l border-slate-300 text-xs transition-colors cursor-pointer flex items-center gap-1"
+                  title="Khôi phục tên file mặc định theo ngày làm báo cáo thực tế"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline font-semibold">Mặc định</span>
+                </button>
               </div>
             </div>
           </div>
