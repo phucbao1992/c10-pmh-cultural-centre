@@ -6418,29 +6418,41 @@ export const Submittal: React.FC<SubmittalProps> = ({
     return counts;
   }, [masterRecords]);
 
-  // 4B. Thống kê biểu đồ tròn (Donut Chart) & Hồ sơ trễ hạn chuẩn mẫu dự án CN8-2 cho từng phân hệ
+  // 4B. Thống kê biểu đồ tròn (Donut Chart) & Hồ sơ trễ hạn (> 7 ngày) chuẩn mẫu dự án CN8-2 cho từng phân hệ
   const [showOverdueList, setShowOverdueList] = useState<boolean>(true);
   const [showCategoryCharts, setShowCategoryCharts] = useState<boolean>(true);
-  const [showAllChartsWhenFiltered, setShowAllChartsWhenFiltered] = useState<boolean>(false);
 
-  const isRecordOverdue = (rec: MasterSubmittalRecord): boolean => {
-    if (rec.finalStatus === 'APPROVED') return false;
-    if (rec.finalStatus === 'REJECTED') return true;
-    if (rec.finalStatus === 'PENDING') {
-      if (rec.submissionDate) {
-        const subTime = new Date(rec.submissionDate).getTime();
-        const nowTime = Date.now();
-        if (!isNaN(subTime)) {
-          const diffDays = (nowTime - subTime) / (1000 * 3600 * 24);
-          if (diffDays > 14 && (!rec.tvgsDate || !rec.clientDate)) {
-            return true;
-          }
-        }
-      } else if (!rec.tvgsDate && !rec.clientDate) {
-        return true;
+  const parseSubmittalDateMs = (dateStr?: string): number | null => {
+    if (!dateStr) return null;
+    const raw = String(dateStr).trim();
+    if (!raw) return null;
+    if (raw.includes('/')) {
+      const parts = raw.split('/');
+      if (parts.length === 3) {
+        const year = parts[2].length === 2 ? ('20' + parts[2]) : parts[2];
+        const parsed = new Date(year + '-' + parts[1].padStart(2, '0') + '-' + parts[0].padStart(2, '0')).getTime();
+        return isNaN(parsed) ? null : parsed;
       }
     }
-    return false;
+    const parsed = new Date(raw).getTime();
+    return isNaN(parsed) ? null : parsed;
+  };
+
+  // Tính số ngày quá hạn: chỉ tính các hồ sơ chưa duyệt có ngày trình quá hạn > 7 ngày
+  const getOverdueDays = (rec: MasterSubmittalRecord): number => {
+    if (rec.finalStatus === 'APPROVED') return 0;
+    const subMs = parseSubmittalDateMs(rec.submissionDate);
+    if (subMs === null) return 0;
+    const diffDays = Math.floor((Date.now() - subMs) / (1000 * 3600 * 24));
+    if (diffDays > 7 && (rec.finalStatus === 'REJECTED' || rec.finalStatus === 'PENDING' || !rec.tvgsDate || !rec.clientDate)) {
+      return diffDays;
+    }
+    return 0;
+  };
+
+  // Hồ sơ quá hạn trên 7 ngày mới được liệt kê là chậm tiến độ
+  const isRecordOverdue = (rec: MasterSubmittalRecord): boolean => {
+    return getOverdueDays(rec) > 7;
   };
 
   const categoryAnalytics = useMemo(() => {
@@ -6463,20 +6475,8 @@ export const Submittal: React.FC<SubmittalProps> = ({
   }, [masterRecords]);
 
   const allOverdueRecords = useMemo(() => {
-    return masterRecords.filter((rec) => {
-      if (selectedCategory !== 'all' && !showAllChartsWhenFiltered && rec.category !== selectedCategory) {
-        return false;
-      }
-      return isRecordOverdue(rec);
-    });
-  }, [masterRecords, selectedCategory, showAllChartsWhenFiltered]);
-
-  const displayedCategoryAnalytics = useMemo(() => {
-    if (selectedCategory === 'all' || showAllChartsWhenFiltered) {
-      return categoryAnalytics;
-    }
-    return categoryAnalytics.filter((item) => item.cat.key === selectedCategory);
-  }, [categoryAnalytics, selectedCategory, showAllChartsWhenFiltered]);
+    return masterRecords.filter((rec) => isRecordOverdue(rec));
+  }, [masterRecords]);
 
   const getCategoryShortLabel = (key: SubmittalCategoryKey): string => {
     const found = SUBMITTAL_CATEGORIES.find((c) => c.key === key);
@@ -6507,7 +6507,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
                 fill="transparent"
                 stroke="#10b981"
                 strokeWidth="14"
-                strokeDasharray={`${approvedLength} ${circumference}`}
+                strokeDasharray={approvedLength + ' ' + circumference}
                 strokeDashoffset={0}
                 strokeLinecap="butt"
               />
@@ -6520,7 +6520,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
                 fill="transparent"
                 stroke="#f59e0b"
                 strokeWidth="14"
-                strokeDasharray={`${unapprovedLength} ${circumference}`}
+                strokeDasharray={unapprovedLength + ' ' + circumference}
                 strokeDashoffset={unapprovedOffset}
                 strokeLinecap="butt"
               />
@@ -6531,6 +6531,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">TỔNG CỘNG</span>
           </div>
         </div>
+
         <div className="flex items-center justify-center gap-4 mt-2 text-xs font-bold">
           <span className="inline-flex items-center gap-1.5 text-amber-500">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
@@ -6545,7 +6546,203 @@ export const Submittal: React.FC<SubmittalProps> = ({
     );
   };
 
+  // Render toàn bộ cụm:
+  // - Khi ở tab "Tất cả hồ sơ" (selectedCategory === 'all'): Hiện Khung tổng hợp trễ hạn + Lưới 3 cột 9 Biểu đồ tròn chuẩn CN8-2
+  // - Khi bấm vào từng Tab phân hệ riêng (Shopdrawing, Vật tư, Biện pháp...): Bên trái là Biểu đồ tròn, Bên phải là Hồ sơ chậm tiến độ (> 7 ngày)
   const renderCN82CategoryChartsSection = () => {
+    if (selectedCategory !== 'all') {
+      const singleItem = categoryAnalytics.find((c) => c.cat.key === selectedCategory);
+      if (!singleItem) return null;
+      const hasOverdue = singleItem.overdue > 0;
+
+      return (
+        <div className="space-y-3.5">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2.5">
+              <h3 className="text-sm md:text-base font-black text-slate-800">
+                Biểu đồ tiến độ & Hồ sơ chậm tiến độ — {singleItem.cat.label}
+              </h3>
+              <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold">
+                Quá hạn &gt; 7 ngày: {singleItem.overdue} hồ sơ
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedCategory('all')}
+                className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold transition-all cursor-pointer"
+              >
+                Xem tất cả 9 nhóm
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCategoryCharts((prev) => !prev)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+              >
+                {showCategoryCharts ? (
+                  <>
+                    <ChevronUp className="w-3.5 h-3.5" />
+                    <span>Thu gọn biểu đồ</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-3.5 h-3.5" />
+                    <span>Hiển thị biểu đồ</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {showCategoryCharts && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+              {/* CỘT TRÁI (5/12): BIỂU ĐỒ TRÒN PHÂN HỆ */}
+              <div
+                className={'lg:col-span-5 bg-white rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-all ' + (hasOverdue ? 'border-rose-200/90' : 'border-slate-200/90')}
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={'w-2.5 h-2.5 rounded-full shrink-0 ' + (hasOverdue ? 'bg-rose-500' : 'bg-emerald-500')}
+                      />
+                      <h4 className="font-black text-slate-800 text-base">
+                        {singleItem.cat.shortLabel}
+                      </h4>
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-400">
+                      {singleItem.cat.label}
+                    </span>
+                  </div>
+
+                  {/* Thanh chỉ số: Tổng | Đã duyệt | Chờ duyệt | Trễ */}
+                  <div className="mt-3 bg-slate-50/90 border border-slate-100 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs font-medium text-slate-600">
+                    <span>
+                      Tổng: <b className="font-black text-slate-900">{singleItem.total}</b>
+                    </span>
+                    <span>
+                      Đã duyệt: <b className="font-black text-emerald-600">{singleItem.approved}</b>
+                    </span>
+                    <span>
+                      Chờ duyệt: <b className="font-black text-amber-600">{singleItem.unapproved}</b>
+                    </span>
+                    <span>
+                      Trễ:{' '}
+                      <b className={'font-black ' + (hasOverdue ? 'text-rose-600' : 'text-slate-600')}>
+                        {singleItem.overdue}
+                      </b>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Biểu đồ tròn ở trung tâm cột trái */}
+                <div className="my-auto py-2">
+                  {renderCN82DonutChart(singleItem.total, singleItem.approved, singleItem.unapproved)}
+                </div>
+
+                <div className="text-center text-[11px] text-slate-400 font-medium pt-2 border-t border-slate-100">
+                  Tỷ lệ hoàn thành phê duyệt:{' '}
+                  <b className="text-emerald-600">
+                    {singleItem.total > 0
+                      ? Math.round((singleItem.approved / singleItem.total) * 100)
+                      : 0}
+                    %
+                  </b>
+                </div>
+              </div>
+
+              {/* CỘT PHẢI (7/12): DANH SÁCH HỒ SƠ CHẬM TIẾN ĐỘ (QUÁ HẠN TRÊN 7 NGÀY) */}
+              <div
+                className={'lg:col-span-7 rounded-2xl border p-5 shadow-xs flex flex-col justify-between ' + (hasOverdue ? 'bg-rose-50/35 border-rose-200/90' : 'bg-white border-slate-200/90')}
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-3 flex-wrap pb-3.5 border-b border-rose-200/60">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs ' + (hasOverdue ? 'bg-rose-600 text-white' : 'bg-emerald-50 text-emerald-600 border border-emerald-200')}
+                      >
+                        {hasOverdue ? (
+                          <AlertTriangle className="w-5 h-5" />
+                        ) : (
+                          <CheckCircle2 className="w-5 h-5" />
+                        )}
+                      </div>
+                      <div>
+                        <h4
+                          className={'text-sm md:text-base font-black ' + (hasOverdue ? 'text-rose-950' : 'text-slate-800')}
+                        >
+                          Hồ sơ chậm tiến độ ({singleItem.cat.shortLabel})
+                        </h4>
+                        <p
+                          className={'text-xs mt-0.5 ' + (hasOverdue ? 'text-rose-700/85' : 'text-slate-500')}
+                        >
+                          Chỉ liệt kê các hồ sơ chưa duyệt đã quá hạn trên 7 ngày kể từ ngày đệ trình
+                        </p>
+                      </div>
+                    </div>
+
+                    <span
+                      className={'px-3 py-1 rounded-full text-xs font-black shadow-2xs ' + (hasOverdue ? 'bg-rose-600 text-white' : 'bg-emerald-100 text-emerald-700')}
+                    >
+                      {singleItem.overdue} hồ sơ trễ (&gt; 7 ngày)
+                    </span>
+                  </div>
+
+                  {hasOverdue ? (
+                    <div className="mt-4 space-y-2.5 max-h-[250px] overflow-y-auto pr-1">
+                      {singleItem.overdueRecords.map((rec) => {
+                        const overdueDays = getOverdueDays(rec);
+                        return (
+                          <div
+                            key={rec.id}
+                            onClick={() => setSelectedRecord(rec)}
+                            className="bg-white hover:bg-rose-50/60 border border-rose-100 hover:border-rose-300 rounded-xl p-3 transition-all cursor-pointer shadow-2xs text-left group"
+                          >
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-wider border border-rose-200/70">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                  Quá hạn {overdueDays} ngày
+                                </span>
+                                <span className="text-xs font-black text-rose-900 group-hover:text-rose-600 transition-colors">
+                                  {rec.code}
+                                </span>
+                              </div>
+                              {rec.submissionDate && (
+                                <span className="text-[11px] font-semibold text-slate-400">
+                                  Ngày trình: {rec.submissionDate}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs font-semibold text-slate-800 mt-1.5 line-clamp-2 leading-relaxed">
+                              {rec.title}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="my-auto py-12 px-4 text-center flex flex-col items-center justify-center">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 border border-emerald-200">
+                        <CheckCircle2 className="w-6 h-6" />
+                      </div>
+                      <p className="text-sm font-bold text-slate-700">
+                        Không có hồ sơ chậm tiến độ quá 7 ngày
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Tất cả hồ sơ thuộc phân hệ {singleItem.cat.shortLabel} đều đang trong hạn hoặc đã được phê duyệt.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-5">
         {allOverdueRecords.length > 0 && (
@@ -6557,13 +6754,14 @@ export const Submittal: React.FC<SubmittalProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm md:text-base font-black text-rose-950">
-                    Danh sách tổng hợp hồ sơ trễ hạn
+                    Danh sách tổng hợp hồ sơ trễ hạn (&gt; 7 ngày)
                   </h3>
                   <p className="text-xs text-rose-700/85 mt-0.5">
-                    Các hồ sơ vượt quá mốc quy định cần ưu tiên đôn đốc xử lý
+                    Các hồ sơ vượt quá mốc 7 ngày kể từ ngày trình cần ưu tiên đôn đốc xử lý
                   </p>
                 </div>
               </div>
+
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-black shadow-xs">
                   {allOverdueRecords.length} hồ sơ
@@ -6572,11 +6770,13 @@ export const Submittal: React.FC<SubmittalProps> = ({
                   type="button"
                   onClick={() => setShowOverdueList((prev) => !prev)}
                   className="p-1.5 rounded-xl bg-white/80 hover:bg-white text-rose-700 border border-rose-200 transition-all cursor-pointer"
+                  title={showOverdueList ? 'Thu gọn danh sách trễ hạn' : 'Mở rộng danh sách trễ hạn'}
                 >
                   {showOverdueList ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
               </div>
             </div>
+
             {showOverdueList && (
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto pr-1">
                 {allOverdueRecords.map((rec) => (
@@ -6611,19 +6811,11 @@ export const Submittal: React.FC<SubmittalProps> = ({
                 Nhóm hồ sơ đang triển khai / có tồn đọng
               </h3>
               <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold">
-                {displayedCategoryAnalytics.length} nhóm
+                {categoryAnalytics.length} nhóm
               </span>
             </div>
+
             <div className="flex items-center gap-2">
-              {selectedCategory !== 'all' && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllChartsWhenFiltered((prev) => !prev)}
-                  className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold transition-all cursor-pointer"
-                >
-                  {showAllChartsWhenFiltered ? 'Chỉ hiện nhóm đang chọn' : 'Xem tất cả 9 nhóm'}
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => setShowCategoryCharts((prev) => !prev)}
@@ -6637,7 +6829,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
                 ) : (
                   <>
                     <ChevronDown className="w-3.5 h-3.5" />
-                    <span>Hiển thị biểu đồ ({displayedCategoryAnalytics.length})</span>
+                    <span>Hiển thị biểu đồ ({categoryAnalytics.length})</span>
                   </>
                 )}
               </button>
@@ -6645,55 +6837,33 @@ export const Submittal: React.FC<SubmittalProps> = ({
           </div>
 
           {showCategoryCharts && (
-            <div
-              className={`grid grid-cols-1 ${
-                displayedCategoryAnalytics.length === 1
-                  ? 'md:grid-cols-1 max-w-xl'
-                  : 'md:grid-cols-2 lg:grid-cols-3'
-              } gap-5`}
-            >
-              {displayedCategoryAnalytics.map((item) => {
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {categoryAnalytics.map((item) => {
                 const hasOverdue = item.overdue > 0;
-                const isSelected = selectedCategory === item.cat.key;
                 return (
                   <div
                     key={item.cat.key}
-                    className={`bg-white rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-all hover:shadow-md ${
-                      isSelected
-                        ? 'border-blue-400 ring-2 ring-blue-500/15'
-                        : hasOverdue
-                        ? 'border-rose-200/90'
-                        : 'border-slate-200/90'
-                    }`}
+                    className={'bg-white rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-all hover:shadow-md ' + (hasOverdue ? 'border-rose-200/90' : 'border-slate-200/90')}
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2">
                         <div
-                          onClick={() =>
-                            setSelectedCategory(
-                              selectedCategory === item.cat.key ? 'all' : item.cat.key
-                            )
-                          }
+                          onClick={() => setSelectedCategory(item.cat.key)}
                           className="flex items-center gap-2 cursor-pointer group"
                         >
                           <span
-                            className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                              hasOverdue ? 'bg-rose-500' : 'bg-emerald-500'
-                            }`}
+                            className={'w-2.5 h-2.5 rounded-full shrink-0 ' + (hasOverdue ? 'bg-rose-500' : 'bg-emerald-500')}
                           />
                           <h4 className="font-black text-slate-800 text-sm md:text-base group-hover:text-blue-600 transition-colors">
                             {item.cat.shortLabel}
                           </h4>
                         </div>
+
                         <button
                           type="button"
-                          onClick={() =>
-                            setSelectedCategory(
-                              selectedCategory === item.cat.key ? 'all' : item.cat.key
-                            )
-                          }
+                          onClick={() => setSelectedCategory(item.cat.key)}
                           className="p-1.5 rounded-lg bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all cursor-pointer"
-                          title={`Lọc bảng theo phân hệ ${item.cat.label}`}
+                          title={'Xem chi tiết phân hệ ' + item.cat.label}
                         >
                           <ExternalLink className="w-4 h-4" />
                         </button>
@@ -6711,7 +6881,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
                         </span>
                         <span>
                           Trễ:{' '}
-                          <b className={`font-black ${hasOverdue ? 'text-rose-600' : 'text-slate-600'}`}>
+                          <b className={'font-black ' + (hasOverdue ? 'text-rose-600' : 'text-slate-600')}>
                             {item.overdue}
                           </b>
                         </span>
@@ -6724,14 +6894,10 @@ export const Submittal: React.FC<SubmittalProps> = ({
                       <div className="flex items-center gap-1.5 mb-2">
                         <AlertCircle className="w-3.5 h-3.5 text-slate-400" />
                         <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                          Hồ sơ chậm tiến độ
+                          Hồ sơ chậm tiến độ (&gt; 7 ngày)
                         </span>
                         <span
-                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                            hasOverdue
-                              ? 'bg-rose-100 text-rose-600'
-                              : 'bg-slate-100 text-slate-500'
-                          }`}
+                          className={'px-1.5 py-0.2 rounded-full text-[10px] font-black ' + (hasOverdue ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500')}
                         >
                           {item.overdue}
                         </span>
@@ -6745,7 +6911,9 @@ export const Submittal: React.FC<SubmittalProps> = ({
                               onClick={() => setSelectedRecord(rec)}
                               className="bg-rose-50/65 hover:bg-rose-100/75 border border-rose-100 rounded-xl p-2.5 text-xs text-slate-800 cursor-pointer transition-all flex items-start gap-1.5"
                             >
-                              <span className="text-rose-500 font-black leading-tight mt-0.5">•</span>
+                              <span className="text-rose-500 font-black leading-tight mt-0.5">
+                                •
+                              </span>
                               <span className="line-clamp-2 font-medium leading-snug">
                                 <b className="text-rose-900">{rec.code}:</b> {rec.title}
                               </span>
