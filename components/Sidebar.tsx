@@ -210,27 +210,46 @@ const Sidebar: React.FC<SidebarProps> = ({
               })}
 
               {/* Admin Button - Only visible when logged in as Admin, placed directly below SITE_PHOTOS */}
-              {isAuth && (
-                <button
-                  key="admin-tab"
-                  onClick={() => handleTabClick(Tab.ADMIN)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 border ${
-                    activeTab === Tab.ADMIN
-                      ? 'bg-emerald-600 text-white shadow-md translate-x-1 border-emerald-500'
-                      : 'text-emerald-400 hover:bg-emerald-950/40 hover:text-emerald-300 bg-emerald-500/10 border-emerald-500/30'
+              <button
+                key="admin-tab"
+                onClick={() => {
+                  if (isAuth) {
+                    setActiveTab(Tab.ADMIN);
+                  } else {
+                    setPendingTab(Tab.ADMIN);
+                    setIsPasswordModalOpen(true);
+                  }
+                }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 border ${
+                  activeTab === Tab.ADMIN
+                    ? 'bg-emerald-600 text-white shadow-md translate-x-1 border-emerald-500'
+                    : isAuth
+                    ? 'text-emerald-400 hover:bg-emerald-950/40 hover:text-emerald-300 bg-emerald-500/10 border-emerald-500/30'
+                    : 'text-amber-300 hover:bg-slate-700 hover:text-white bg-slate-800/80 border-amber-500/30'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className={`w-5 h-5 flex-shrink-0 ${isAuth ? 'text-emerald-400' : 'text-amber-400'}`} />
+                  <span className="font-semibold text-sm">
+                    {isAuth
+                      ? language === 'VN'
+                        ? 'Quyền Admin'
+                        : 'Admin Panel'
+                      : language === 'VN'
+                      ? 'Đăng nhập Admin'
+                      : 'Admin Login'}
+                  </span>
+                </div>
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold border ${
+                    isAuth
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                      : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <ShieldCheck className="w-5 h-5 flex-shrink-0 text-emerald-400" />
-                    <span className="font-semibold text-sm">
-                      {language === 'VN' ? 'Quyền Admin' : 'Admin Panel'}
-                    </span>
-                  </div>
-                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded font-mono font-bold">
-                    Admin
-                  </span>
-                </button>
-              )}
+                  {isAuth ? 'Admin' : language === 'VN' ? 'Mở khóa' : 'Login'}
+                </span>
+              </button>
           </nav>
 
           {/* Footer with Language Toggle */}
