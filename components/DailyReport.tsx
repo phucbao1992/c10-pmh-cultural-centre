@@ -595,7 +595,7 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
         try {
           for (let i = 0; i < pageElements.length; i++) {
             const pageEl = pageElements[i];
-            const isLandscape = pageEl.classList.contains('c10-a4-sheet-landscape');
+            const isLandscape = false;
 
             const clone = pageEl.cloneNode(true) as HTMLElement;
             clone.style.margin = '0';
@@ -1058,9 +1058,13 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 animate-fade-in pb-20">
+    <div className="c10-daily-report-root p-4 md:p-8 max-w-7xl mx-auto space-y-6 animate-fade-in pb-20">
       {/* Print Styles for A4 Sheet */}
       <style>{`
+        @page {
+          size: A4 portrait;
+          margin: 8mm 9mm;
+        }
         body > div > img {
           display: inline-block !important;
         }
@@ -1068,47 +1072,47 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
           aside, nav, header, .no-print {
             display: none !important;
           }
-          body, html, #root, main {
+          html, body, #root, #root > div, main,
+          .c10-daily-report-root, .c10-daily-report-root > *,
+          .c10-print-sheet-root, .c10-print-scroll-wrap,
+          #c10-printable-a4-sheet {
+            display: block !important;
             margin: 0 !important;
             padding: 0 !important;
+            border: none !important;
             background: #fff !important;
             width: 100% !important;
+            max-width: 100% !important;
             height: auto !important;
+            min-height: 0 !important;
             overflow: visible !important;
+            box-shadow: none !important;
           }
           #c10-printable-a4-sheet, #c10-printable-a4-sheet * {
             visibility: visible !important;
           }
-          @page {
-            size: A4 portrait;
-            margin: 0;
-          }
-          @page landscape-page {
-            size: A4 landscape;
-            margin: 0;
-          }
-          .c10-a4-sheet {
+          .c10-a4-sheet, .c10-a4-page, .a4-page-portrait,
+          .c10-a4-sheet-landscape, .a4-page-landscape {
             box-shadow: none !important;
             margin: 0 auto !important;
-            width: 210mm !important;
-            height: 296mm !important;
-            min-height: 296mm !important;
-            max-height: 296mm !important;
+            width: 100% !important;
+            max-width: 192mm !important;
+            height: 274mm !important;
+            min-height: 274mm !important;
+            max-height: 274mm !important;
+            padding: 2mm 3mm !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
             page-break-after: always !important;
             break-after: page !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          .c10-a4-sheet:last-child {
+          .c10-a4-sheet:last-child, .c10-a4-page:last-child {
             page-break-after: auto !important;
             break-after: auto !important;
-          }
-          .c10-a4-sheet-landscape {
-            page: landscape-page !important;
-            width: 297mm !important;
-            height: 209mm !important;
-            min-height: 209mm !important;
-            max-height: 209mm !important;
           }
         }
         .c10-a4-sheet, .a4-page-portrait {
@@ -1123,7 +1127,6 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
           box-sizing: border-box;
           overflow: hidden;
           margin: 0 auto 24px auto;
-
           box-shadow: 0 4px 18px rgba(0,0,0,0.18);
           line-height: 1.35;
           display: flex;
@@ -1131,11 +1134,14 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
           justify-content: space-between;
           position: relative;
         }
-        .c10-a4-sheet-landscape {
-          width: 297mm !important;
-          min-height: 210mm !important;
-          max-width: 297mm !important;
-          padding: 10mm 12mm 10mm 12mm !important;
+        .c10-a4-sheet-landscape, .a4-page-landscape {
+          width: 794px !important;
+          height: 1123px !important;
+          min-height: 1123px !important;
+          max-width: 794px !important;
+          padding: 38px 45px 38px 45px !important;
+          box-sizing: border-box !important;
+          overflow: hidden !important;
         }
         .c10-page-content {
           flex: 1 0 auto;

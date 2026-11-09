@@ -325,7 +325,7 @@ export function buildDynamicPages(report: DailyReportModel): ReportPageDef[] {
     const isLastBatch = batchIdx === photoBatches.length - 1;
 
     // Trang hình ảnh luôn độc lập sang trang khổ ngang Landscape
-    currentPage = createNewPage(true);
+    currentPage = createNewPage(false);
     pages.push(currentPage);
 
     currentPage.photoBlocks.push({
@@ -710,8 +710,8 @@ const SectionPhotosView: React.FC<{
   // - Trường hợp 1-2 ảnh: nếu có chữ ký cao 245px, không có chữ ký cao 320px.
   const isSingleRow = photos.length <= 2;
   const frameHeight = hasSign
-    ? (isSingleRow ? '245px' : '205px')
-    : (isSingleRow ? '320px' : '265px');
+    ? (isSingleRow ? '280px' : '235px')
+    : (isSingleRow ? '340px' : '285px');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: '1 0 auto', justifyContent: 'space-between' }}>
@@ -837,7 +837,7 @@ export const DailyReportPrintSheet: React.FC<DailyReportPrintSheetProps> = ({ re
   };
 
   return (
-    <div className="pt-4">
+    <div className="pt-4 c10-print-sheet-root">
       {/* Khối CSS @media print chuẩn hoá theo Phương án 1 (Native Vector A4 Print) */}
       <style>{`
         @page {
@@ -1041,7 +1041,7 @@ export const DailyReportPrintSheet: React.FC<DailyReportPrintSheetProps> = ({ re
         </button>
       </div>
 
-      <div className="overflow-x-auto pb-6">
+      <div className="overflow-x-auto pb-6 c10-print-scroll-wrap">
         <div id="c10-printable-a4-sheet" className="c10-printable-container">
           {pages.map((page) => (
             <div
