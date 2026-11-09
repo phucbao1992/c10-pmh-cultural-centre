@@ -3,7 +3,7 @@ import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import React, { useState, useMemo, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import {
-  Sliders,
+  Sliders, Plus,
   FileText, AlertTriangle, Clock, CheckCircle2, RefreshCw, ExternalLink,
   ChevronDown, ChevronUp, AlertCircle, Search, Filter, Layers, Package,
   ShieldCheck, HelpCircle, HardHat, Beaker, Truck, FileCheck, Eye,
@@ -382,7 +382,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "shopdrawing-13",
-    "category": "shopdrawing",
+    "category": "sdw",
     "stt": 1,
     "code": "C10-MC1-DTA-CV-SD-001",
     "tra": "004",
@@ -401,7 +401,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "shopdrawing-14",
-    "category": "shopdrawing",
+    "category": "sdw",
     "stt": 2,
     "code": "C10-MC1-DTA-CV-SD-002",
     "tra": "006",
@@ -420,7 +420,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "shopdrawing-15",
-    "category": "shopdrawing",
+    "category": "sdw",
     "stt": 3,
     "code": "C10-MC1-DTA-CV-SD-003",
     "tra": "024",
@@ -439,7 +439,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "shopdrawing-16",
-    "category": "shopdrawing",
+    "category": "sdw",
     "stt": 4,
     "code": "C10-MC1-DTA-CV-SD-004",
     "tra": "063",
@@ -457,7 +457,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "shopdrawing-17",
-    "category": "shopdrawing",
+    "category": "sdw",
     "stt": 5,
     "code": "C10-MC1-DTA-CV-SD-005",
     "tra": "063",
@@ -475,7 +475,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "shopdrawing-18",
-    "category": "shopdrawing",
+    "category": "sdw",
     "stt": 6,
     "code": "C10-MC1-DTA-CV-SD-006",
     "tra": "063",
@@ -493,7 +493,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "shopdrawing-19",
-    "category": "shopdrawing",
+    "category": "sdw",
     "stt": 7,
     "code": "C10-MC1-DTA-CV-SD-007",
     "tra": "063",
@@ -511,7 +511,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "shopdrawing-20",
-    "category": "shopdrawing",
+    "category": "sdw",
     "stt": 8,
     "code": "C10-MC1-DTA-CV-SD-008",
     "tra": "063",
@@ -529,7 +529,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "shopdrawing-21",
-    "category": "shopdrawing",
+    "category": "sdw",
     "stt": 9,
     "code": "C10-MC1-DTA-CV-SD-009",
     "tra": "063",
@@ -547,7 +547,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "shopdrawing-22",
-    "category": "shopdrawing",
+    "category": "sdw",
     "stt": 10,
     "code": "C10-MC1-DTA-CV-SD-010",
     "tra": "076",
@@ -5137,7 +5137,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-298",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 1,
     "code": "C10-MC1-DTA-MOA-M-STE-001",
     "title": "Nghiệm thu vật liệu đầu vào Thép thanh vằn: D10 CB400-V; D12 CB400-V; D16 CB500-V; D18 CB500-V; D20 CB500-V; D22 CB500-V; D25 CB500-V; D32 CB500-V.",
@@ -5151,7 +5151,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-299",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 2,
     "code": "C10-MC1-DTA-MOA-M-STE-002",
     "title": "Nghiệm thu vật liệu đầu vào Thép thanh vằn: D10 CB400-V; D16 CB500-V; D20 CB500-V; D32 CB500-V;",
@@ -5165,7 +5165,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-300",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 3,
     "code": "C10-MC1-DTA-MOA-M-STE-003",
     "title": "Nghiệm thu vật liệu đầu vào Thép thanh vằn: D14 CB500-V; D16 CB500-V; D25 CB500-V; D32 CB500-V;",
@@ -5179,7 +5179,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-301",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 4,
     "code": "C10-MC1-DTA-MOA-M-ANCHOR BOLT-001",
     "title": "Bulong neo M42x1400; Ren 200; Bẻ L-200  (1 Thân + 2 Tán + 1 Long đền)",
@@ -5193,7 +5193,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-302",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 5,
     "code": "C10-MC1-DTA-MOA-M-WP MAT-001",
     "title": "Nghiệm thu vật liệu: + Băng trương nở Hydrotite CJ + Sikaflex - 140 Contruction + Sika Latex TH + Sika grout 214 - 11",
@@ -5207,7 +5207,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-303",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 6,
     "code": "C10-MC1-DTA-MOA-M-STEEL PILE-001",
     "title": "Nghiệm thu vật liệu đầu vào Thép ống: -Thép ống D60x1.8x6m ĐSX STK 290 L1",
@@ -5221,7 +5221,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-304",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 7,
     "code": "C10-MC1-DTA-MOA-M-INCL-001",
     "title": "Nghiệm thu vật liệu đầu vào:  + Ống Inclinometer Casing GV2404-C0-2-70;  Đường kính 70mm, L= 3m  + Đầu nối GV2404-CP-4F-70;  Đường kính 70mm, L= 160mm  + Nắp bịt GV2404-CP-4C-70",
@@ -5235,7 +5235,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-305",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 8,
     "code": "C10-MC1-DTA-MOA-M-VTBP-001",
     "title": "Nghiệm thu vật liệu đầu vào vật liệu biện pháp: Thép cừ Larsen IV; L=6m",
@@ -5249,7 +5249,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-306",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 9,
     "code": "C10-MC1-DTA-MOA-M-VTBP-002",
     "title": "Nghiệm thu vật liệu đầu vào vật tư biện pháp: Ván phủ phim 1220x2440x12mm",
@@ -5263,7 +5263,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-307",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 10,
     "code": "C10-MC1-DTA-MOA-M-VTBP-003",
     "title": "Nghiệm thu vật liệu đầu vào vật tư biện pháp:  + Kingpost đỡ sàn đạo  + Kingpost hệ shoring",
@@ -5277,7 +5277,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-308",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 11,
     "code": "C10-MC1-DTA-MOA-M-VTBP-004",
     "title": "Nghiệm thu vật liệu đầu vào vật tư biện pháp:  + Kingpost hệ shoring",
@@ -5291,7 +5291,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-309",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 12,
     "code": "C10-MC1-DTA-MOA-M-VTBP-005",
     "title": "Nghiệm thu vật liệu đầu vào vật tư biện pháp:  + Hệ văng chống lớp 1 và phụ kiện đi kèm",
@@ -5305,7 +5305,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-310",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 13,
     "code": "C10-MC1-DTA-MOA-M-CA-001",
     "title": "Nghiệm thu vật liệu đầu vào:  + Fischer hộp keo FIS EB 390S và phụ kiện đi kèm",
@@ -5319,7 +5319,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-311",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 14,
     "code": "C10-MC1-DTA-MOA-W-COCCAUTHAP_01",
     "title": "Cọc CT1-A3",
@@ -5333,7 +5333,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-312",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 15,
     "code": "C10-MC1-DTA-MOA-W-COCCAUTHAP_02",
     "title": "Cọc CT2-B2",
@@ -5347,7 +5347,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-313",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 16,
     "code": "C10-MC1-DTA-MOA-W-COCCAUTHAP_03",
     "title": "Cọc CT1-A1",
@@ -5361,7 +5361,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-314",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 17,
     "code": "C10-MC1-DTA-MOA-W-COCCAUTHAP_04",
     "title": "Cọc CT2-B3",
@@ -5375,7 +5375,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-315",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 18,
     "code": "C10-MC1-DTA-MOA-W-COCCAUTHAP_05",
     "title": "Cọc CT1-A2",
@@ -5389,7 +5389,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-316",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 19,
     "code": "C10-MC1-DTA-MOA-W-COCCAUTHAP_06",
     "title": "Cọc CT2-B1",
@@ -5403,7 +5403,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-317",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 20,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_01",
     "title": "Cọc C1-7.6",
@@ -5417,7 +5417,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-318",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 21,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_02",
     "title": "Cọc C1-7.5",
@@ -5431,7 +5431,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-319",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 22,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_03",
     "title": "Cọc C1-6.2",
@@ -5445,7 +5445,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-320",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 23,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_04",
     "title": "Cọc C1-6.3",
@@ -5459,7 +5459,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-321",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 24,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_05",
     "title": "Cọc C1-7.8",
@@ -5473,7 +5473,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-322",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 25,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_06",
     "title": "Cọc C1-7.7",
@@ -5487,7 +5487,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-323",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 26,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_07",
     "title": "Cọc C1-6.1",
@@ -5501,7 +5501,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-324",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 27,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_08",
     "title": "Cọc C1-7.9",
@@ -5515,7 +5515,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-325",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 28,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_09",
     "title": "Cọc C1-7.4",
@@ -5529,7 +5529,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-326",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 29,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_10",
     "title": "Cọc C1-7.2",
@@ -5543,7 +5543,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-327",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 30,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_11",
     "title": "Cọc C3-E6",
@@ -5557,7 +5557,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-328",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 31,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_12",
     "title": "Cọc C3-E5",
@@ -5571,7 +5571,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-329",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 32,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_13",
     "title": "Cọc C1-7.1",
@@ -5585,7 +5585,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-330",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 33,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_14",
     "title": "Cọc C1-7.3",
@@ -5599,7 +5599,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-331",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 34,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_15",
     "title": "Cọc C2-B5",
@@ -5613,7 +5613,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-332",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 35,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_16",
     "title": "Cọc  C1-B6",
@@ -5627,7 +5627,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-333",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 36,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_17",
     "title": "Cọc  C1-E4",
@@ -5641,7 +5641,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-334",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 37,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_18",
     "title": "Cọc  C1-B4",
@@ -5655,7 +5655,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-335",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 38,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_19",
     "title": "Cọc  C1-B3",
@@ -5669,7 +5669,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-336",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 39,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_20",
     "title": "Cọc  C1-F4",
@@ -5683,7 +5683,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-337",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 40,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_21",
     "title": "Cọc  C1-F6",
@@ -5697,7 +5697,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-338",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 41,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_22",
     "title": "Cọc  C1-F5",
@@ -5711,7 +5711,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-339",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 42,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_23",
     "title": "Cọc  C1-F1",
@@ -5725,7 +5725,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-340",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 43,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_24",
     "title": "Cọc  C1-F3",
@@ -5739,7 +5739,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-341",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 44,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_25",
     "title": "Cọc  C1-F2",
@@ -5753,7 +5753,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-342",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 45,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_26",
     "title": "Cọc  C1-E1",
@@ -5767,7 +5767,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-343",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 46,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_27",
     "title": "Cọc  C1-E3",
@@ -5781,7 +5781,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-344",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 47,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_28",
     "title": "Cọc  C1-E2",
@@ -5795,7 +5795,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-345",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 48,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_29",
     "title": "Cọc  C1-B1",
@@ -5809,7 +5809,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-346",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 49,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_30",
     "title": "Cọc  C1-B2",
@@ -5823,7 +5823,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-347",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 50,
     "code": "C10-MC1-DTA-MOA-W-BTL-001",
     "title": "Bê tông lót móng cẩu tháp CT1",
@@ -5837,7 +5837,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-348",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 51,
     "code": "C10-MC1-DTA-MOA-W- MCT-001",
     "title": "Bê tông móng cẩu tháp CT1",
@@ -5851,7 +5851,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-349",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 52,
     "code": "C10-MC1--DTA-MOA-W-BTL-002",
     "title": "Bê tông lót móng cẩu tháp CT2",
@@ -5865,7 +5865,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-350",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 53,
     "code": "C10-MC1-DTA-MOA-W- MCT-002",
     "title": "Bê tông móng cẩu tháp CT2",
@@ -5879,7 +5879,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-351",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 54,
     "code": "C10-MC1-DTA-MOA-W-BTL-003",
     "title": "Bê tông lót dầm mũ: - Trục C -F/ Cách trục 1A + 10.290m - Trục 1-A",
@@ -5893,7 +5893,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-352",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 55,
     "code": "C10-MC1-DTA-MOA-W-BTL-004",
     "title": "Bê tông lót dầm mũ: - Trục F-GA/ Cách trục 1A + 10.290m",
@@ -5907,7 +5907,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-353",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 56,
     "code": "C10-MC1-DTA-MOA-W-CP-001",
     "title": "Thi công cốt thép, ván khuôn, bê tông dầm mũ: - Trục GA-D/ Cách trục 1A -10.290m",
@@ -5921,7 +5921,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-354",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 57,
     "code": "C10-MC1-DTA-MOA-W-CP-002",
     "title": "Thi công cốt thép, ván khuôn, bê tông dầm mũ: (Capping beam 3) - Trục B-F",
@@ -5935,7 +5935,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-355",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 58,
     "code": "C10-MC1-DTA-MOA-W-CP-003",
     "title": "Thi công cốt thép, ván khuôn, bê tông dầm mũ:(Capping beam 1) - Trục A-1",
@@ -5949,7 +5949,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-356",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 59,
     "code": "C10-MC1-DTA-MOA-W-CP-004",
     "title": "Thi công cốt thép, ván khuôn, bê tông dầm mũ:(Capping beam 2) -Trục 3-10",
@@ -5963,7 +5963,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-357",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 60,
     "code": "C10-MC1-DTA-MOA-W-CP-005",
     "title": "Thi công cốt thép, ván khuôn, bê tông dầm mũ:(Capping beam 3) -Trục F-10",
@@ -5977,7 +5977,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-358",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 61,
     "code": "C10-MC1-DTA-MOA-W-CP-006",
     "title": "Bê tông dầm mũ: (Capping beam 2) - Trục GA-3",
@@ -5991,7 +5991,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-359",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 62,
     "code": "C10-MC1-DTA-MOA-W-CP-007",
     "title": "Bê tông dầm mũ: (Capping beam 1) - Trục A-D",
@@ -6003,7 +6003,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-360",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 63,
     "code": "C10-MC1-DTA-MOA-W-CP-008",
     "title": "Bê tông dầm mũ: (Capping beam 3) - Trục B-10",
@@ -6015,7 +6015,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-361",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 64,
     "code": "C10-MC1-DTA-MOA-W-CP-009",
     "title": "Bê tông dầm mũ: (Capping beam 4) - Trục 1 - 10",
@@ -6027,7 +6027,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-362",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 65,
     "code": "C10-MC1-DTA-MOA-W-SS-001",
     "title": "Nghiệm thu Lắp đặt hệ văng chống, kích hệ văng lớp 1, Zone 3,  Zone 9",
@@ -6039,7 +6039,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-363",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 66,
     "code": "C10-MC1-DTA-MOA-W-SS-002",
     "title": "Nghiệm thu Lắp đặt hệ văng chống, kích hệ văng lớp 1, Zone 4, Zone 5, Zone 6",
@@ -6051,7 +6051,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-364",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 67,
     "code": "C10-MC1-DTA-MOA-W-SS-003",
     "title": "Nghiệm thu Lắp đặt hệ văng chống, kích hệ văng lớp 1, Zone 7, Zone 5, Zone 2",
@@ -6063,7 +6063,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-365",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 68,
     "code": "C10-MC1-DTA-MOA-W-SS-004",
     "title": "Nghiệm thu Lắp đặt hệ văng chống, kích hệ văng lớp 1, Zone 8, Zone 1",
@@ -6075,7 +6075,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   },
   {
     "id": "moa-366",
-    "category": "moa",
+    "category": "inspection_moa",
     "stt": 69,
     "code": "C10-MC1-DTA-MOA-W-EXC-001",
     "title": "Nghiệm thu công tác đào và vận chuyển đất: - Từ cao độ mặt đất tự nhiên đến cao độ -3.5m",
@@ -6091,16 +6091,42 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
 
 
 
+export const LOCAL_STORAGE_KEY_MASTER_SUBMITTALS = 'c10_master_submittals_v2';
+
+export const normalizeSubmittalCategory = (cat: string): SubmittalCategoryKey => {
+  const c = String(cat || '').trim().toLowerCase();
+  if (c === 'shopdrawing' || c === 'sd' || c === 'sdw') return 'sdw';
+  if (c === 'moa' || c === 'inspection_moa' || c === 'inspection') return 'inspection_moa';
+  if (c === 'material' || c === 'ma' || c === 'mat') return 'mat';
+  if (c === 'method_of_statement' || c === 'mos') return 'mos';
+  if (c === 'document_submit' || c === 'ots') return 'ots';
+  if (c === 'rfi' || c === 'rfc') return 'rfi';
+  if (c === 'hse' || c === 'safety') return 'hse';
+  if (c === 'concrete') return 'concrete';
+  if (c === 'material_import' || c === 'import') return 'material_import';
+  return (cat as SubmittalCategoryKey) || 'ots';
+};
+
+export const normalizeMasterSubmittalsList = (records: MasterSubmittalRecord[]): MasterSubmittalRecord[] => {
+  if (!Array.isArray(records)) return DEFAULT_MASTER_SUBMITTALS;
+  return records.map((r) => ({
+    ...r,
+    category: normalizeSubmittalCategory(r.category)
+  }));
+};
+
 // Đọc danh mục hồ sơ từ bộ nhớ máy
 export const loadLocalMasterSubmittals = (): MasterSubmittalRecord[] => {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY_MASTER_SUBMITTALS);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return normalizeMasterSubmittalsList(parsed);
+      }
     }
   } catch {}
-  return DEFAULT_MASTER_SUBMITTALS;
+  return normalizeMasterSubmittalsList(DEFAULT_MASTER_SUBMITTALS);
 };
 
 // Lưu danh mục hồ sơ vào bộ nhớ máy
@@ -6391,6 +6417,356 @@ export const Submittal: React.FC<SubmittalProps> = ({
     });
     return counts;
   }, [masterRecords]);
+
+  // 4B. Thống kê biểu đồ tròn (Donut Chart) & Hồ sơ trễ hạn chuẩn mẫu dự án CN8-2 cho từng phân hệ
+  const [showOverdueList, setShowOverdueList] = useState<boolean>(true);
+  const [showCategoryCharts, setShowCategoryCharts] = useState<boolean>(true);
+  const [showAllChartsWhenFiltered, setShowAllChartsWhenFiltered] = useState<boolean>(false);
+
+  const isRecordOverdue = (rec: MasterSubmittalRecord): boolean => {
+    if (rec.finalStatus === 'APPROVED') return false;
+    if (rec.finalStatus === 'REJECTED') return true;
+    if (rec.finalStatus === 'PENDING') {
+      if (rec.submissionDate) {
+        const subTime = new Date(rec.submissionDate).getTime();
+        const nowTime = Date.now();
+        if (!isNaN(subTime)) {
+          const diffDays = (nowTime - subTime) / (1000 * 3600 * 24);
+          if (diffDays > 14 && (!rec.tvgsDate || !rec.clientDate)) {
+            return true;
+          }
+        }
+      } else if (!rec.tvgsDate && !rec.clientDate) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const categoryAnalytics = useMemo(() => {
+    return SUBMITTAL_CATEGORIES.map((cat) => {
+      const catRecords = masterRecords.filter((r) => r.category === cat.key);
+      const total = catRecords.length;
+      const approved = catRecords.filter((r) => r.finalStatus === 'APPROVED').length;
+      const unapproved = total - approved;
+      const overdueRecords = catRecords.filter(isRecordOverdue);
+      const overdue = overdueRecords.length;
+      return {
+        cat,
+        total,
+        approved,
+        unapproved,
+        overdue,
+        overdueRecords
+      };
+    });
+  }, [masterRecords]);
+
+  const allOverdueRecords = useMemo(() => {
+    return masterRecords.filter((rec) => {
+      if (selectedCategory !== 'all' && !showAllChartsWhenFiltered && rec.category !== selectedCategory) {
+        return false;
+      }
+      return isRecordOverdue(rec);
+    });
+  }, [masterRecords, selectedCategory, showAllChartsWhenFiltered]);
+
+  const displayedCategoryAnalytics = useMemo(() => {
+    if (selectedCategory === 'all' || showAllChartsWhenFiltered) {
+      return categoryAnalytics;
+    }
+    return categoryAnalytics.filter((item) => item.cat.key === selectedCategory);
+  }, [categoryAnalytics, selectedCategory, showAllChartsWhenFiltered]);
+
+  const getCategoryShortLabel = (key: SubmittalCategoryKey): string => {
+    const found = SUBMITTAL_CATEGORIES.find((c) => c.key === key);
+    return found ? found.shortLabel : key.toUpperCase();
+  };
+
+  // Render Donut SVG chuẩn phong cách CN8-2 (Màu xanh lá #10b981 = Đã duyệt, Màu cam #f59e0b = Chưa duyệt)
+  const renderCN82DonutChart = (total: number, approved: number, unapproved: number) => {
+    const radius = 50;
+    const circumference = 2 * Math.PI * radius;
+    const approvedRatio = total > 0 ? approved / total : 0;
+    const unapprovedRatio = total > 0 ? unapproved / total : 0;
+    const gap = total > 0 && approved > 0 && unapproved > 0 ? 4 : 0;
+    const approvedLength = Math.max(0, approvedRatio * circumference - gap);
+    const unapprovedLength = Math.max(0, unapprovedRatio * circumference - gap);
+    const unapprovedOffset = -(approvedRatio * circumference);
+
+    return (
+      <div className="flex flex-col items-center justify-center my-3">
+        <div className="relative w-36 h-36 flex items-center justify-center">
+          <svg className="w-36 h-36 -rotate-90" viewBox="0 0 128 128">
+            <circle cx="64" cy="64" r={radius} fill="transparent" stroke="#f1f5f9" strokeWidth="14" />
+            {approved > 0 && (
+              <circle
+                cx="64"
+                cy="64"
+                r={radius}
+                fill="transparent"
+                stroke="#10b981"
+                strokeWidth="14"
+                strokeDasharray={`${approvedLength} ${circumference}`}
+                strokeDashoffset={0}
+                strokeLinecap="butt"
+              />
+            )}
+            {unapproved > 0 && (
+              <circle
+                cx="64"
+                cy="64"
+                r={radius}
+                fill="transparent"
+                stroke="#f59e0b"
+                strokeWidth="14"
+                strokeDasharray={`${unapprovedLength} ${circumference}`}
+                strokeDashoffset={unapprovedOffset}
+                strokeLinecap="butt"
+              />
+            )}
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+            <span className="text-2xl font-black text-slate-800 leading-none">{total}</span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">TỔNG CỘNG</span>
+          </div>
+        </div>
+        <div className="flex items-center justify-center gap-4 mt-2 text-xs font-bold">
+          <span className="inline-flex items-center gap-1.5 text-amber-500">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+            <span>Chưa duyệt</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-emerald-500">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+            <span>Đã duyệt</span>
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  const renderCN82CategoryChartsSection = () => {
+    return (
+      <div className="space-y-5">
+        {allOverdueRecords.length > 0 && (
+          <div className="bg-rose-50/40 border border-rose-200/90 rounded-2xl p-4 md:p-5 shadow-xs">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm md:text-base font-black text-rose-950">
+                    Danh sách tổng hợp hồ sơ trễ hạn
+                  </h3>
+                  <p className="text-xs text-rose-700/85 mt-0.5">
+                    Các hồ sơ vượt quá mốc quy định cần ưu tiên đôn đốc xử lý
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-black shadow-xs">
+                  {allOverdueRecords.length} hồ sơ
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowOverdueList((prev) => !prev)}
+                  className="p-1.5 rounded-xl bg-white/80 hover:bg-white text-rose-700 border border-rose-200 transition-all cursor-pointer"
+                >
+                  {showOverdueList ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            {showOverdueList && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto pr-1">
+                {allOverdueRecords.map((rec) => (
+                  <div
+                    key={rec.id}
+                    onClick={() => setSelectedRecord(rec)}
+                    className="bg-white hover:bg-rose-50/50 border border-rose-100 hover:border-rose-300 rounded-xl p-3 transition-all cursor-pointer shadow-2xs text-left group"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-wider border border-rose-200/70">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                        {getCategoryShortLabel(rec.category)}
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-400 group-hover:text-rose-600 transition-colors">
+                        {rec.code}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-slate-800 mt-1.5 line-clamp-2 leading-relaxed">
+                      {rec.title}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-3.5">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2.5">
+              <h3 className="text-sm md:text-base font-black text-slate-800">
+                Nhóm hồ sơ đang triển khai / có tồn đọng
+              </h3>
+              <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold">
+                {displayedCategoryAnalytics.length} nhóm
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {selectedCategory !== 'all' && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllChartsWhenFiltered((prev) => !prev)}
+                  className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold transition-all cursor-pointer"
+                >
+                  {showAllChartsWhenFiltered ? 'Chỉ hiện nhóm đang chọn' : 'Xem tất cả 9 nhóm'}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowCategoryCharts((prev) => !prev)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+              >
+                {showCategoryCharts ? (
+                  <>
+                    <ChevronUp className="w-3.5 h-3.5" />
+                    <span>Thu gọn biểu đồ</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-3.5 h-3.5" />
+                    <span>Hiển thị biểu đồ ({displayedCategoryAnalytics.length})</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {showCategoryCharts && (
+            <div
+              className={`grid grid-cols-1 ${
+                displayedCategoryAnalytics.length === 1
+                  ? 'md:grid-cols-1 max-w-xl'
+                  : 'md:grid-cols-2 lg:grid-cols-3'
+              } gap-5`}
+            >
+              {displayedCategoryAnalytics.map((item) => {
+                const hasOverdue = item.overdue > 0;
+                const isSelected = selectedCategory === item.cat.key;
+                return (
+                  <div
+                    key={item.cat.key}
+                    className={`bg-white rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-all hover:shadow-md ${
+                      isSelected
+                        ? 'border-blue-400 ring-2 ring-blue-500/15'
+                        : hasOverdue
+                        ? 'border-rose-200/90'
+                        : 'border-slate-200/90'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div
+                          onClick={() =>
+                            setSelectedCategory(
+                              selectedCategory === item.cat.key ? 'all' : item.cat.key
+                            )
+                          }
+                          className="flex items-center gap-2 cursor-pointer group"
+                        >
+                          <span
+                            className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                              hasOverdue ? 'bg-rose-500' : 'bg-emerald-500'
+                            }`}
+                          />
+                          <h4 className="font-black text-slate-800 text-sm md:text-base group-hover:text-blue-600 transition-colors">
+                            {item.cat.shortLabel}
+                          </h4>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedCategory(
+                              selectedCategory === item.cat.key ? 'all' : item.cat.key
+                            )
+                          }
+                          className="p-1.5 rounded-lg bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all cursor-pointer"
+                          title={`Lọc bảng theo phân hệ ${item.cat.label}`}
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="mt-3 bg-slate-50/90 border border-slate-100 rounded-xl px-3 py-2 flex items-center justify-between text-[11px] md:text-xs font-medium text-slate-600">
+                        <span>
+                          Tổng: <b className="font-black text-slate-900">{item.total}</b>
+                        </span>
+                        <span>
+                          Đã duyệt: <b className="font-black text-emerald-600">{item.approved}</b>
+                        </span>
+                        <span>
+                          Chờ duyệt: <b className="font-black text-amber-600">{item.unapproved}</b>
+                        </span>
+                        <span>
+                          Trễ:{' '}
+                          <b className={`font-black ${hasOverdue ? 'text-rose-600' : 'text-slate-600'}`}>
+                            {item.overdue}
+                          </b>
+                        </span>
+                      </div>
+
+                      {renderCN82DonutChart(item.total, item.approved, item.unapproved)}
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-slate-100">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <AlertCircle className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                          Hồ sơ chậm tiến độ
+                        </span>
+                        <span
+                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                            hasOverdue
+                              ? 'bg-rose-100 text-rose-600'
+                              : 'bg-slate-100 text-slate-500'
+                          }`}
+                        >
+                          {item.overdue}
+                        </span>
+                      </div>
+
+                      {hasOverdue ? (
+                        <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1">
+                          {item.overdueRecords.map((rec) => (
+                            <div
+                              key={rec.id}
+                              onClick={() => setSelectedRecord(rec)}
+                              className="bg-rose-50/65 hover:bg-rose-100/75 border border-rose-100 rounded-xl p-2.5 text-xs text-slate-800 cursor-pointer transition-all flex items-start gap-1.5"
+                            >
+                              <span className="text-rose-500 font-black leading-tight mt-0.5">•</span>
+                              <span className="line-clamp-2 font-medium leading-snug">
+                                <b className="text-rose-900">{rec.code}:</b> {rec.title}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="bg-slate-50/80 border border-slate-100 rounded-xl py-3.5 px-3 text-center text-xs italic text-slate-400">
+                          Không có hồ sơ chậm trễ.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   // 5. Lọc danh sách theo Tab, Search và Trạng thái
   const filteredRecords = useMemo(() => {
@@ -6866,6 +7242,9 @@ export const Submittal: React.FC<SubmittalProps> = ({
               );
             })}
           </div>
+
+          {/* TIER 2.5: BIỂU ĐỒ TRÒN CHO TỪNG LOẠI HỒ SƠ & DANH SÁCH TRỄ HẠN (CHUẨN DỰ ÁN CN8-2) */}
+          {renderCN82CategoryChartsSection()}
 
           {/* TIER 3: THANH CÔNG CỤ TÌM KIẾM & BỘ LỌC */}
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
