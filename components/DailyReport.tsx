@@ -1164,6 +1164,20 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
         .c10-a4-sheet img {
           display: inline-block !important;
         }
+        .c10-a4-sheet .c10-logo-box {
+          height: 48px !important;
+          min-height: 48px !important;
+          overflow: visible !important;
+        }
+        .c10-a4-sheet img.c10-logo-img {
+          display: block !important;
+          height: 44px !important;
+          max-height: 44px !important;
+          width: auto !important;
+          max-width: 100% !important;
+          object-fit: contain !important;
+          margin: 0 auto !important;
+        }
         .c10-a4-sheet tr {
           page-break-inside: avoid;
           break-inside: avoid;

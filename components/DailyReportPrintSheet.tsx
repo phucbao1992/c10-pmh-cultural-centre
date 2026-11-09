@@ -356,9 +356,14 @@ const PageOneHeader: React.FC<{ report: DailyReportModel }> = ({ report }) => (
       ] as const).map(([label, key]) => (
         <div key={key} style={{ flex: 1, textAlign: 'center' }}>
           <div style={{ fontSize: '7.5pt', color: '#6b7280', fontWeight: 700 }}>{label}</div>
-          <div style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="c10-logo-box" style={{ height: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'visible', marginTop: '2px' }}>
             {report.logos[key] ? (
-              <img src={report.logos[key]} alt={label} style={{ maxHeight: '48px', maxWidth: '100%', objectFit: 'contain' }} />
+              <img
+                className="c10-logo-img"
+                src={report.logos[key]}
+                alt={label}
+                style={{ height: '44px', width: 'auto', maxWidth: '100%', maxHeight: '44px', objectFit: 'contain', display: 'block', margin: '0 auto' }}
+              />
             ) : null}
           </div>
         </div>
