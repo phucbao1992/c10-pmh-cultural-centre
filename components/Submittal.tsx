@@ -3,16 +3,17 @@ import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import React, { useState, useMemo, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import {
-  Sliders, Plus,
+  Sliders, Plus, Edit3, KeyRound,
   FileText, AlertTriangle, Clock, CheckCircle2, RefreshCw, ExternalLink,
   ChevronDown, ChevronUp, AlertCircle, Search, Filter, Layers, Package,
   ShieldCheck, HelpCircle, HardHat, Beaker, Truck, FileCheck, Eye,
-  Calendar, Check, ArrowRight, Table, BarChart3, Database, X, Sparkles, Edit3
+  Calendar, Check, ArrowRight, Table, BarChart3, Database, X, Sparkles
 } from 'lucide-react';
 import { SubmittalData, SubmittalItem } from '../services/sheetsService';
+import { checkUserTabPermission, verifyAndActivateAccessCode } from '../services/userPermissionsService';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../constants';
-// old cache key replaced by LOCAL_STORAGE_KEY_MASTER_SUBMITTALS at line 6094
+
 export type SubmittalCategoryKey = 
   | 'sdw'             // Shopdrawing (Bản vẽ thi công)
   | 'mat'             // Vật tư & Mẫu vật liệu (Material & Samples)
@@ -22,25 +23,28 @@ export type SubmittalCategoryKey =
   | 'hse'             // An toàn lao động & Môi trường (Health, Safety & Environment)
   | 'concrete'        // Nhật ký đổ bê tông & Thí nghiệm mẫu (Casting & Concrete Tests)
   | 'material_import' // Vật tư nhập về công trường (Import Materials Tracking)
-  | 'inspection_moa' | 'shopdrawing' | 'moa'; // Biên bản nghiệm thu MOA-M & MOA-W (Inspection Records)
+  | 'inspection_moa'; // Biên bản nghiệm thu MOA-M & MOA-W (Inspection Records)
+
+export type SubmittalDelayType = 'NONE' | 'TVGS_DELAY' | 'CDT_DELAY' | 'CONTRACTOR_DELAY';
 
 export interface MasterSubmittalRecord {
   id: string;
   category: SubmittalCategoryKey;
   stt: string | number;
   code: string;                 // Mã đệ trình / Mã phiếu
-  tra?: string;                  // Mã TRA đối chiếu
+  tra?: string;                 // Mã TRA đối chiếu
   rev?: string;                 // Phiên bản Rev
   title: string;                // Nội dung / Hạng mục
   detail?: string;              // Nội dung chi tiết
-  submissionDate?: string;      // Ngày trình
+  plannedDate?: string;         // Ngày kế hoạch trình hồ sơ
+  submissionDate?: string;      // Ngày trình thực tế
   tvgsStatus?: string;          // Trạng thái TVGS (Duyệt, Từ chối, Đang trình)
   tvgsCode?: string;            // Code TVGS (A, B, C...)
   tvgsDate?: string;            // Ngày TVGS duyệt
   clientStatus?: string;        // Trạng thái CĐT (Duyệt, Từ chối, Đang trình)
   clientCode?: string;          // Code CĐT (A, B, C...)
   clientDate?: string;          // Ngày CĐT duyệt
-  finalStatus: 'APPROVED' | 'PENDING' | 'REJECTED' | 'NOT_STARTED'; // Chuẩn hóa trạng thái
+  finalStatus: 'APPROVED' | 'PENDING' | 'REJECTED' | 'NOT_STARTED'; // Chuẩn hóa trạng thái dựa trên cột CĐT
   linkUrl?: string;             // Link SharePoint / Drive
   notes?: string;               // Ghi chú
 
@@ -64,6 +68,59 @@ export interface MasterSubmittalRecord {
   moaType?: 'MOA-M' | 'MOA-W';  // Nghiệm thu Vật liệu hoặc Công việc
   volumeNo?: string | number;   // Số quyển lưu trữ
 }
+
+export interface SubmittalFilterConfig {
+  tvgsLimitDays: number;        // Mặc định: 7 ngày (Quá X ngày TVGS chưa duyệt -> TVGS chậm)
+  cdtLimitDays: number;         // Mặc định: 20 ngày (Quá Y ngày CĐT chưa duyệt từ ngày trình CĐT -> CĐT chậm)
+  defaultDelayFilter: 'ALL' | 'OVERDUE_ALL' | 'TVGS_DELAY' | 'CDT_DELAY' | 'CONTRACTOR_DELAY';
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export const DEFAULT_SUBMITTAL_FILTER_CONFIG: SubmittalFilterConfig = {
+  tvgsLimitDays: 7,
+  cdtLimitDays: 20,
+  defaultDelayFilter: 'ALL'
+};
+
+export const FILTER_CONFIG_STORAGE_KEY = 'c10_submittal_filter_config_v1';
+
+export const loadSubmittalFilterConfig = (): SubmittalFilterConfig => {
+  try {
+    const raw = localStorage.getItem(FILTER_CONFIG_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        ...DEFAULT_SUBMITTAL_FILTER_CONFIG,
+        ...parsed,
+        tvgsLimitDays: Math.max(1, Number(parsed.tvgsLimitDays) || 7),
+        cdtLimitDays: Math.max(1, Number(parsed.cdtLimitDays) || 20)
+      };
+    }
+  } catch {}
+  return DEFAULT_SUBMITTAL_FILTER_CONFIG;
+};
+
+export const saveSubmittalFilterConfig = async (cfg: SubmittalFilterConfig): Promise<void> => {
+  const normalized: SubmittalFilterConfig = {
+    ...DEFAULT_SUBMITTAL_FILTER_CONFIG,
+    ...cfg,
+    tvgsLimitDays: Math.max(1, Number(cfg.tvgsLimitDays) || 7),
+    cdtLimitDays: Math.max(1, Number(cfg.cdtLimitDays) || 20),
+    updatedAt: new Date().toISOString(),
+    updatedBy: localStorage.getItem('c10_user_email') || 'Admin'
+  };
+  try {
+    localStorage.setItem(FILTER_CONFIG_STORAGE_KEY, JSON.stringify(normalized));
+  } catch {}
+  if (db) {
+    try {
+      await setDoc(doc(db, 'c10', 'submittal_filter_config'), normalized, { merge: true });
+    } catch (e) {
+      console.warn('Lưu cấu hình bộ lọc hồ sơ lên Firestore thất bại:', e);
+    }
+  }
+};
 
 export interface SubmittalCategoryMeta {
   key: SubmittalCategoryKey;
@@ -159,7 +216,7 @@ export const SUBMITTAL_CATEGORIES: SubmittalCategoryMeta[] = [
   }
 ];
 
-// DỮ LIỆU CƠ SỞ CHUẨN XÁC TỪ FILE DỰ ÁN C10 CỦA ANH
+// DỮ LIỆU CƠ SỞ CHUẨN XÁC TỪ FILE DỰ ÁN C10 (ĐÃ CHUẨN HÓA TRẠNG THÁI CĐT & LOẠI BỎ HỒ SƠ CHƯA TRÌNH)
 export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
   {
     "id": "rfi-1",
@@ -6091,7 +6148,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
 
 
 
-export const LOCAL_STORAGE_KEY_MASTER_SUBMITTALS = 'c10_master_submittals_v2';
+export const LOCAL_STORAGE_KEY_MASTER_SUBMITTALS = 'c10_master_submittals_v4';
 
 export const normalizeSubmittalCategory = (cat: string): SubmittalCategoryKey => {
   const c = String(cat || '').trim().toLowerCase();
@@ -6107,12 +6164,123 @@ export const normalizeSubmittalCategory = (cat: string): SubmittalCategoryKey =>
   return (cat as SubmittalCategoryKey) || 'ots';
 };
 
+export const isRejectedStatusText = (str?: string): boolean => {
+  const s = String(str || '').trim().toLowerCase();
+  if (!s) return false;
+  return (
+    s.includes('từ chối') ||
+    s.includes('tu choi') ||
+    s.includes('reject') ||
+    s.includes('rejcet') ||
+    s.includes('hủy') ||
+    s.includes('không trình lại') ||
+    s.includes('đã thay thế') ||
+    s === 'c'
+  );
+};
+
+export const isApprovedStatusText = (str?: string): boolean => {
+  const s = String(str || '').trim().toLowerCase();
+  if (!s || isRejectedStatusText(s)) return false;
+  return (
+    s === 'duyệt' ||
+    s.includes('đã duyệt') ||
+    s.includes('không cần trình') ||
+    s.includes('đã kí') ||
+    s.includes('đã ký') ||
+    s.includes('đạt') ||
+    s === 'a' ||
+    s === 'b'
+  );
+};
+
+// Chuẩn hóa trạng thái dựa trên cột Trạng thái CĐT phê duyệt (và Từ chối = Đã đóng)
+export const computeNormalizedFinalStatus = (rec: Partial<MasterSubmittalRecord>): MasterSubmittalRecord['finalStatus'] => {
+  const cat = normalizeSubmittalCategory(String(rec.category || 'ots'));
+  if (cat === 'concrete' || cat === 'material_import') return 'APPROVED';
+  if (
+    isRejectedStatusText(rec.clientStatus) ||
+    isRejectedStatusText(rec.clientCode) ||
+    isRejectedStatusText(rec.tvgsStatus) ||
+    isRejectedStatusText(rec.tvgsCode) ||
+    isRejectedStatusText(rec.notes) ||
+    isRejectedStatusText(rec.title)
+  ) {
+    return 'REJECTED';
+  }
+  if (isApprovedStatusText(rec.clientStatus) || isApprovedStatusText(rec.clientCode)) {
+    return 'APPROVED';
+  }
+  if ((cat === 'hse' || cat === 'inspection_moa') && !rec.clientStatus && !rec.clientCode) {
+    if (isApprovedStatusText(rec.tvgsStatus) || isApprovedStatusText(rec.tvgsCode)) {
+      return 'APPROVED';
+    }
+  }
+  return 'PENDING';
+};
+
+const defaultRecordByCodeMap = new Map<string, MasterSubmittalRecord>();
+DEFAULT_MASTER_SUBMITTALS.forEach((r) => {
+  defaultRecordByCodeMap.set(String(r.code || '').trim().toUpperCase(), r);
+});
+
 export const normalizeMasterSubmittalsList = (records: MasterSubmittalRecord[]): MasterSubmittalRecord[] => {
-  if (!Array.isArray(records)) return DEFAULT_MASTER_SUBMITTALS;
-  return records.map((r) => ({
-    ...r,
-    category: normalizeSubmittalCategory(r.category)
-  }));
+  if (!Array.isArray(records) || records.length === 0) return DEFAULT_MASTER_SUBMITTALS;
+  const cleaned = records
+    .filter((r) => {
+      const code = String(r.code || '').trim();
+      if (!code || code === 'MẪU VẬT LIỆU' || code === 'STT' || code === 'CODE') return false;
+      // Loại bỏ các mục chưa có ngày đệ trình thực tế
+      const def = defaultRecordByCodeMap.get(code.toUpperCase());
+      const subDate = r.submissionDate || def?.submissionDate || r.acceptanceDate;
+      return Boolean(subDate && String(subDate).trim());
+    })
+    .map((r) => {
+      const codeKey = String(r.code || '').trim().toUpperCase();
+      const def = defaultRecordByCodeMap.get(codeKey);
+      const merged: MasterSubmittalRecord = {
+        ...(def || {}),
+        ...r,
+        category: normalizeSubmittalCategory(r.category || def?.category || 'ots'),
+        submissionDate: r.submissionDate || def?.submissionDate || r.acceptanceDate,
+        plannedDate: r.plannedDate || def?.plannedDate,
+        tvgsStatus: r.tvgsStatus !== undefined && r.tvgsStatus !== '' ? r.tvgsStatus : (def?.tvgsStatus || ''),
+        tvgsDate: r.tvgsDate || def?.tvgsDate || '',
+        tvgsCode: r.tvgsCode || def?.tvgsCode || '',
+        clientStatus: r.clientStatus !== undefined && r.clientStatus !== '' ? r.clientStatus : (def?.clientStatus || ''),
+        clientDate: r.clientDate || def?.clientDate || '',
+        clientCode: r.clientCode || def?.clientCode || '',
+        linkUrl: r.linkUrl || def?.linkUrl,
+        notes: r.notes || def?.notes,
+        finalStatus: 'PENDING'
+      };
+      // Nếu def đã được đánh dấu Đã thay thế (Đóng) do có bản Rev mới hơn thì giữ trạng thái REJECTED (Đã đóng)
+      if (def?.finalStatus === 'REJECTED' && String(def.clientStatus || '').includes('Đã thay thế')) {
+        merged.finalStatus = 'REJECTED';
+        merged.clientStatus = def.clientStatus;
+      } else {
+        merged.finalStatus = computeNormalizedFinalStatus(merged);
+      }
+      return merged;
+    });
+
+  // Đóng các bản trình cũ (Rev00) nếu đã có bản trình mới hơn (.Rev001 / .Rev002) trong danh sách
+  const getBaseCode = (c: string) => String(c || '').trim().replace(/\.Rev\d+$/i, '').toUpperCase();
+  cleaned.forEach((rec, idx) => {
+    if (rec.finalStatus !== 'PENDING') return;
+    const base = getBaseCode(rec.code);
+    const hasNewer = cleaned.some((other, oIdx) => {
+      if (oIdx === idx || other.category !== rec.category) return false;
+      if (getBaseCode(other.code) !== base) return false;
+      return oIdx > idx && (/\.Rev\d+$/i.test(other.code) || Number(other.rev || 0) > Number(rec.rev || 0));
+    });
+    if (hasNewer) {
+      rec.finalStatus = 'REJECTED';
+      rec.clientStatus = rec.clientStatus && rec.clientStatus !== 'Đang trình' ? rec.clientStatus : 'Đã thay thế (Đóng)';
+    }
+  });
+
+  return cleaned.length > 0 ? cleaned : DEFAULT_MASTER_SUBMITTALS;
 };
 
 // Đọc danh mục hồ sơ từ bộ nhớ máy
@@ -6132,23 +6300,26 @@ export const loadLocalMasterSubmittals = (): MasterSubmittalRecord[] => {
 // Lưu danh mục hồ sơ vào bộ nhớ máy
 export const saveLocalMasterSubmittals = (records: MasterSubmittalRecord[]) => {
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY_MASTER_SUBMITTALS, JSON.stringify(records));
+    const normalized = normalizeMasterSubmittalsList(records);
+    localStorage.setItem(LOCAL_STORAGE_KEY_MASTER_SUBMITTALS, JSON.stringify(normalized));
   } catch {}
 };
 
 export const GOOGLE_SHEET_SUBMITTAL_URL = 'https://docs.google.com/spreadsheets/d/1SpDbFSAhllWb8g-XxTJ6wxqWYtT2EP9D/edit?usp=sharing';
 export const GOOGLE_SHEET_ID = '1SpDbFSAhllWb8g-XxTJ6wxqWYtT2EP9D';
+export const MAX_ROWS_PER_SHEET = 1000;
 
 export const FIRESTORE_DOC_PATH = 'c10/master_submittals';
 
 // Lưu hồ sơ lên Firestore (chia sẻ realtime cho toàn dự án)
 export const saveSubmittalsToFirestore = async (records: MasterSubmittalRecord[]): Promise<boolean> => {
   try {
-    saveLocalMasterSubmittals(records);
+    const normalized = normalizeMasterSubmittalsList(records);
+    saveLocalMasterSubmittals(normalized);
     if (!db) return true;
     const docRef = doc(db, 'c10', 'master_submittals');
     await setDoc(docRef, {
-      records,
+      records: normalized,
       updatedAt: new Date().toISOString(),
       updatedBy: localStorage.getItem('c10_user_email') || 'Admin'
     }, { merge: true });
@@ -6161,7 +6332,6 @@ export const saveSubmittalsToFirestore = async (records: MasterSubmittalRecord[]
 
 // Đăng ký nhận cập nhật realtime từ Firestore
 export const subscribeMasterSubmittals = (callback: (records: MasterSubmittalRecord[]) => void) => {
-  // Trả về dữ liệu local ngay lập tức
   const localData = loadLocalMasterSubmittals();
   callback(localData);
 
@@ -6173,8 +6343,9 @@ export const subscribeMasterSubmittals = (callback: (records: MasterSubmittalRec
       if (snapshot.exists()) {
         const data = snapshot.data();
         if (data && Array.isArray(data.records) && data.records.length > 0) {
-          saveLocalMasterSubmittals(data.records);
-          callback(data.records);
+          const normalized = normalizeMasterSubmittalsList(data.records);
+          saveLocalMasterSubmittals(normalized);
+          callback(normalized);
         }
       }
     }, (err) => {
@@ -6186,35 +6357,172 @@ export const subscribeMasterSubmittals = (callback: (records: MasterSubmittalRec
   }
 };
 
-// Đồng bộ từ Google Sheet trực tiếp
+// Hàm chuẩn hóa ngày tháng từ GViz cell
+const parseGvizDateToISO = (cell: any): string => {
+  if (!cell) return '';
+  const val = cell.f || cell.v;
+  if (!val) return '';
+  const str = String(val).trim();
+  const dateMatch = str.match(/^Date\((\d+),(\d+),(\d+)\)$/);
+  if (dateMatch) {
+    const y = dateMatch[1];
+    const m = String(Number(dateMatch[2]) + 1).padStart(2, '0');
+    const d = String(dateMatch[3]).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  const dmy = str.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
+  if (dmy) {
+    const year = dmy[3].length === 2 ? `20${dmy[3]}` : dmy[3];
+    return `${year}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`;
+  }
+  return '';
+};
+
+const getGvizStr = (row: any, colIdx: number): string => {
+  if (!row || !row.c || !row.c[colIdx]) return '';
+  const c = row.c[colIdx];
+  return String(c.f ?? c.v ?? '').trim();
+};
+
+// Đồng bộ động từ tất cả các Sheet trong Google Sheet (Giới hạn tối đa 1.000 dòng/sheet, tự động đọc n dòng thực tế)
 export const syncFromGoogleSheet = async (): Promise<{ success: boolean; count: number; message: string }> => {
-  try {
-    // Thử truy vấn Google Sheet qua endpoint GViz JSON công khai
-    const gvizUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json`;
-    const res = await fetch(gvizUrl, { cache: 'no-store' });
-    if (res.ok) {
+  const existingRecords = loadLocalMasterSubmittals();
+  const existingByCode = new Map<string, MasterSubmittalRecord>();
+  existingRecords.forEach(r => existingByCode.set(String(r.code || '').trim().toUpperCase(), r));
+
+  const fetchSheetRows = async (sheetName: string): Promise<any[]> => {
+    try {
+      const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&range=A1:Z${MAX_ROWS_PER_SHEET}`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) return [];
       const text = await res.text();
       const jsonStart = text.indexOf('{');
       const jsonEnd = text.lastIndexOf('}');
-      if (jsonStart !== -1 && jsonEnd !== -1) {
-        const jsonStr = text.substring(jsonStart, jsonEnd + 1);
-        const data = JSON.parse(jsonStr);
-        if (data && data.table && data.table.rows && data.table.rows.length > 0) {
-          console.log('Đã kết nối và lấy dữ liệu thành công từ Google Sheet!');
+      if (jsonStart === -1 || jsonEnd === -1) return [];
+      const data = JSON.parse(text.substring(jsonStart, jsonEnd + 1));
+      return (data?.table?.rows || []).slice(0, MAX_ROWS_PER_SHEET);
+    } catch {
+      return [];
+    }
+  };
+
+  try {
+    // 1. Đọc ngày kế hoạch trình từ sheet 'Kế hoạch trình hồ sơ -C10' (tối đa 1000 dòng)
+    const plannedMap: Record<string, string> = {};
+    const planRows = await fetchSheetRows('Kế hoạch trình hồ sơ -C10');
+    planRows.forEach((row) => {
+      const code = getGvizStr(row, 1);
+      const pDate = parseGvizDateToISO(row?.c?.[5]);
+      if (code && pDate) plannedMap[code.toUpperCase()] = pDate;
+    });
+
+    // 2. Cấu hình các sheet tiêu chuẩn cần quét động (mỗi sheet tối đa 1000 dòng)
+    const sheetConfigs: Array<{
+      sheetName: string;
+      category: SubmittalCategoryKey;
+      cols: {
+        code: number; rev: number; title: number; detail?: number; subDate: number;
+        tvgsStatus: number; tvgsDate: number; tvgsCode: number;
+        clientStatus: number; clientDate: number; clientCode: number;
+        tra: number; link: number; notes: number;
+      };
+    }> = [
+      { sheetName: 'XD-RFI', category: 'rfi', cols: { code: 1, rev: 2, title: 3, subDate: 4, tvgsStatus: 5, tvgsDate: 6, tvgsCode: 7, clientStatus: 8, clientDate: 9, clientCode: 10, tra: 13, link: 14, notes: 15 } },
+      { sheetName: 'MEP-RFI', category: 'rfi', cols: { code: 1, rev: 2, title: 3, subDate: 4, tvgsStatus: 5, tvgsDate: 6, tvgsCode: 7, clientStatus: 8, clientDate: 9, clientCode: 10, tra: 13, link: 14, notes: 15 } },
+      { sheetName: 'XD-RFC', category: 'rfi', cols: { code: 1, rev: 2, title: 3, subDate: 4, tvgsStatus: 5, tvgsDate: 6, tvgsCode: 7, clientStatus: 8, clientDate: 9, clientCode: 10, tra: 13, link: 14, notes: 15 } },
+      { sheetName: 'MEP-RFC', category: 'rfi', cols: { code: 1, rev: 2, title: 3, subDate: 4, tvgsStatus: 5, tvgsDate: 6, tvgsCode: 7, clientStatus: 8, clientDate: 9, clientCode: 10, tra: 13, link: 14, notes: 15 } },
+      { sheetName: 'XD-SHOP', category: 'sdw', cols: { code: 1, rev: 2, title: 3, subDate: 4, tvgsStatus: 5, tvgsDate: 6, tvgsCode: 7, clientStatus: 8, clientDate: 9, clientCode: 10, tra: 13, link: 14, notes: 15 } },
+      { sheetName: 'MEP-SHOP', category: 'sdw', cols: { code: 1, rev: 2, title: 3, subDate: 4, tvgsStatus: 5, tvgsDate: 6, tvgsCode: 7, clientStatus: 8, clientDate: 9, clientCode: 10, tra: 13, link: 14, notes: 15 } },
+      { sheetName: 'XD-MAT', category: 'mat', cols: { code: 1, rev: 2, title: 3, subDate: 4, tvgsStatus: 5, tvgsDate: 6, tvgsCode: 7, clientStatus: 9, clientDate: 10, clientCode: 11, tra: 15, link: 16, notes: 17 } },
+      { sheetName: 'MEP-MAT', category: 'mat', cols: { code: 1, rev: 2, title: 3, subDate: 4, tvgsStatus: 5, tvgsDate: 6, tvgsCode: 7, clientStatus: 8, clientDate: 9, clientCode: 10, tra: 13, link: 14, notes: 15 } },
+      { sheetName: 'XD-BPTC', category: 'mos', cols: { code: 1, rev: 2, title: 3, subDate: 4, tvgsStatus: 5, tvgsDate: 6, tvgsCode: 7, clientStatus: 8, clientDate: 9, clientCode: 10, tra: 13, link: 14, notes: 15 } },
+      { sheetName: 'MEP-BPTC', category: 'mos', cols: { code: 1, rev: 2, title: 3, subDate: 4, tvgsStatus: 5, tvgsDate: 6, tvgsCode: 7, clientStatus: 8, clientDate: 9, clientCode: 10, tra: 13, link: 14, notes: 15 } },
+      { sheetName: 'XD-OTS', category: 'ots', cols: { code: 1, rev: 2, title: 3, detail: 4, subDate: 5, tvgsStatus: 6, tvgsDate: 7, tvgsCode: 8, clientStatus: 9, clientDate: 10, clientCode: 11, tra: 14, link: 15, notes: 16 } },
+      { sheetName: 'MEP-OTS ', category: 'ots', cols: { code: 1, rev: 2, title: 3, detail: 4, subDate: 5, tvgsStatus: 6, tvgsDate: 7, tvgsCode: 8, clientStatus: 9, clientDate: 10, clientCode: 11, tra: 14, link: 15, notes: 16 } },
+      { sheetName: '11. HSE', category: 'hse', cols: { code: 1, rev: 2, title: 3, subDate: 4, tvgsStatus: 5, tvgsDate: 6, tvgsCode: 7, clientStatus: 8, clientDate: 9, clientCode: 10, tra: 13, link: 14, notes: 15 } }
+    ];
+
+    const syncedStandardRecords: MasterSubmittalRecord[] = [];
+    for (const cfg of sheetConfigs) {
+      const rows = await fetchSheetRows(cfg.sheetName);
+      rows.forEach((row) => {
+        const code = getGvizStr(row, cfg.cols.code);
+        if (!code || code.length < 3 || code === 'STT' || code.startsWith('HỒ SƠ') || code.startsWith('CODE') || code === '0' || code === 'MẪU VẬT LIỆU') return;
+        let subDate = parseGvizDateToISO(row?.c?.[cfg.cols.subDate]);
+        if (!subDate) return; // Loại bỏ mục chưa có ngày đệ trình
+
+        const tvgsStatus = getGvizStr(row, cfg.cols.tvgsStatus);
+        const tvgsDate = parseGvizDateToISO(row?.c?.[cfg.cols.tvgsDate]);
+        const tvgsCode = getGvizStr(row, cfg.cols.tvgsCode);
+        const clientStatus = getGvizStr(row, cfg.cols.clientStatus);
+        const clientDate = parseGvizDateToISO(row?.c?.[cfg.cols.clientDate]);
+        const clientCode = getGvizStr(row, cfg.cols.clientCode);
+
+        if (subDate.startsWith('2025-') && (tvgsDate.startsWith('2026-') || clientDate.startsWith('2026-'))) {
+          subDate = '2026-' + subDate.slice(5);
         }
-      }
+
+        const prev = existingByCode.get(code.toUpperCase());
+        let title = getGvizStr(row, cfg.cols.title).replace(/\r/g, '').replace(/\n+/g, ' ');
+        if (cfg.cols.detail !== undefined) {
+          const det = getGvizStr(row, cfg.cols.detail).replace(/\r/g, '').replace(/\n+/g, ' ');
+          if (det && det !== title) title = title ? `${title}: ${det}` : det;
+        }
+        const tra = getGvizStr(row, cfg.cols.tra) || prev?.tra;
+        const rev = getGvizStr(row, cfg.cols.rev) || prev?.rev || '00';
+        const rawLink = getGvizStr(row, cfg.cols.link);
+        const linkUrl = (rawLink && rawLink.startsWith('http')) ? rawLink : prev?.linkUrl;
+        const rawNotes = getGvizStr(row, cfg.cols.notes);
+
+        const rec: MasterSubmittalRecord = {
+          id: prev?.id || `${cfg.category}-${syncedStandardRecords.length + 1}`,
+          category: cfg.category,
+          stt: syncedStandardRecords.filter(x => x.category === cfg.category).length + 1,
+          code,
+          tra: tra || undefined,
+          rev,
+          title: title || prev?.title || code,
+          plannedDate: plannedMap[code.toUpperCase()] || prev?.plannedDate,
+          submissionDate: subDate,
+          tvgsStatus: tvgsStatus || prev?.tvgsStatus || '',
+          tvgsDate: tvgsDate || prev?.tvgsDate || '',
+          tvgsCode: tvgsCode || prev?.tvgsCode || '',
+          clientStatus: clientStatus || prev?.clientStatus || '',
+          clientDate: clientDate || prev?.clientDate || '',
+          clientCode: clientCode || prev?.clientCode || '',
+          finalStatus: 'PENDING',
+          linkUrl,
+          notes: rawNotes ? (tra ? `TRA ${tra} • ${rawNotes}` : rawNotes) : prev?.notes
+        };
+        rec.finalStatus = computeNormalizedFinalStatus(rec);
+        syncedStandardRecords.push(rec);
+      });
+    }
+
+    if (syncedStandardRecords.length > 0) {
+      // Giữ lại các phân hệ đặc thù (Bê tông, Vật tư nhập, MOA) hoặc hợp nhất cùng dữ liệu mới quét
+      const specialRecords = existingRecords.filter(r =>
+        r.category === 'concrete' || r.category === 'material_import' || r.category === 'inspection_moa'
+      );
+      const combined = normalizeMasterSubmittalsList([...syncedStandardRecords, ...specialRecords]);
+      await saveSubmittalsToFirestore(combined);
+      return {
+        success: true,
+        count: combined.length,
+        message: `Đã đồng bộ động thành công ${combined.length} hồ sơ từ Google Sheet (tối đa ${MAX_ROWS_PER_SHEET} dòng/sheet)!`
+      };
     }
   } catch (err) {
-    console.log('Google Sheet live query fetch note:', err);
+    console.warn('Google Sheet dynamic sync fallback:', err);
   }
 
-  // Tải dữ liệu master hiện hành và lưu đồng bộ
-  const currentRecords = loadLocalMasterSubmittals();
+  const currentRecords = normalizeMasterSubmittalsList(existingRecords);
   await saveSubmittalsToFirestore(currentRecords);
   return {
     success: true,
     count: currentRecords.length,
-    message: `Đã đồng bộ thành công ${currentRecords.length} hồ sơ từ Google Sheet & Hệ thống!`
+    message: `Đã đồng bộ và chuẩn hóa ${currentRecords.length} hồ sơ từ Google Sheet & Hệ thống!`
   };
 };
 
@@ -6226,27 +6534,11 @@ interface SubmittalProps {
   onProtectedAction?: (e: React.MouseEvent, url: string) => void;
 }
 
-const COLORS = ['#10b981', '#f59e0b', '#ef4444'];
-
-const FOLDER_LINKS: Record<string, string> = {
-  'document_submit': '1gg1Vs84zsW5YFr6YsT9czG448fvCKmXl',
-  'shopdrawing': '17UUoTVmOnkHI-kl_j3ExkiMk23fu-2IC',
-  'material': '1qCLMmNBHQppVb8CqJaz_XenkeDYLZ-mC',
-  'method_of_statement': '1m9-NyT-8qXN_hRriLT14O0Z0psVsO1hK',
-  'survey': '1B0EdwuvCbnyB6lCIDtr9McF1J5hmkvQO',
-  'document_submit_mep': '1JvmPqIXZk8nJUu9UTH0SxSJ1XdOhGgOo',
-  'shopdrawing_mep': '1JvmPqIXZk8nJUu9UTH0SxSJ1XdOhGgOo',
-  'material_mep': '1JvmPqIXZk8nJUu9UTH0SxSJ1XdOhGgOo',
-  'method_of_statement_mep': '1JvmPqIXZk8nJUu9UTH0SxSJ1XdOhGgOo',
-  'rfi': '1tReXE_fOrvjXHwPOeONYbfjUYaZcYhIz'
-};
-
-
 export interface AutoSyncConfig {
   enabled: boolean;
   frequencyType: 'interval' | 'fixed';
-  intervalMinutes: number; // 30, 60, 120, 240
-  fixedTimes: string[]; // ['08:00', '11:30', '14:00', '17:30']
+  intervalMinutes: number;
+  fixedTimes: string[];
   lastSyncedAt?: string;
 }
 
@@ -6282,23 +6574,28 @@ export const Submittal: React.FC<SubmittalProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<SubmittalCategoryKey | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'APPROVED' | 'PENDING' | 'REJECTED'>('ALL');
+  const [filterConfig, setFilterConfig] = useState<SubmittalFilterConfig>(loadSubmittalFilterConfig);
+  const [delayFilter, setDelayFilter] = useState<'ALL' | 'OVERDUE_ALL' | 'TVGS_DELAY' | 'CDT_DELAY' | 'CONTRACTOR_DELAY'>(() => loadSubmittalFilterConfig().defaultDelayFilter || 'ALL');
+  const [showFilterConfigModal, setShowFilterConfigModal] = useState<boolean>(false);
+
   const [viewMode, setViewMode] = useState<'edms' | 'charts'>('edms');
   const [syncing, setSyncing] = useState<boolean>(false);
   const [syncToast, setSyncToast] = useState<string | null>(null);
   const [selectedRecord, setSelectedRecord] = useState<MasterSubmittalRecord | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  // Phân quyền Admin & chế độ Xem thử khách (giống Báo cáo ngày)
+
+  // Mở khóa quyền chỉnh sửa bằng Email HOẶC Mã cấp quyền (Access Code)
   const computeCanEdit = () => {
     if (localStorage.getItem('c10_preview_as_viewer') === 'true') {
       return false;
     }
-    const isAdmin = 
+    if (checkUserTabPermission('submittal')) return true;
+    const isAdmin =
       localStorage.getItem('is_admin') === 'true' &&
       localStorage.getItem('c10_admin_unlocked') === 'true';
     if (isAdmin) return true;
     const email = (localStorage.getItem('c10_user_email') || '').trim().toLowerCase();
     if (!email) return false;
-    // Tài khoản có quyền lập báo cáo cũng có quyền quản lý hồ sơ
     const permRaw = localStorage.getItem('c10_daily_report_permissions');
     if (permRaw) {
       try {
@@ -6311,6 +6608,8 @@ export const Submittal: React.FC<SubmittalProps> = ({
     return false;
   };
   const [canEdit, setCanEdit] = useState<boolean>(computeCanEdit);
+  const [showQuickCodeInput, setShowQuickCodeInput] = useState<boolean>(false);
+  const [quickAccessCode, setQuickAccessCode] = useState<string>('');
 
   // Cấu hình đặt giờ tự động đồng bộ & các Modal Admin
   const [autoSyncConfig, setAutoSyncConfig] = useState<AutoSyncConfig>(loadAutoSyncConfig);
@@ -6318,16 +6617,63 @@ export const Submittal: React.FC<SubmittalProps> = ({
   const [showAddEditModal, setShowAddEditModal] = useState<boolean>(false);
   const [editingRecord, setEditingRecord] = useState<Partial<MasterSubmittalRecord> | null>(null);
 
-  // Lắng nghe thay đổi đăng nhập / chuyển quyền
+  // Lắng nghe thay đổi đăng nhập / chuyển quyền & đồng bộ cấu hình bộ lọc từ Firestore
   useEffect(() => {
     const handleAuth = () => setCanEdit(computeCanEdit());
     window.addEventListener('c10-auth-changed', handleAuth);
     window.addEventListener('storage', handleAuth);
+
+    let unsubFilterCfg = () => {};
+    if (db) {
+      try {
+        unsubFilterCfg = onSnapshot(doc(db, 'c10', 'submittal_filter_config'), (snap) => {
+          if (snap.exists()) {
+            const d = snap.data() as SubmittalFilterConfig;
+            const nextCfg: SubmittalFilterConfig = {
+              ...DEFAULT_SUBMITTAL_FILTER_CONFIG,
+              ...d,
+              tvgsLimitDays: Math.max(1, Number(d.tvgsLimitDays) || 7),
+              cdtLimitDays: Math.max(1, Number(d.cdtLimitDays) || 20)
+            };
+            setFilterConfig(nextCfg);
+            localStorage.setItem(FILTER_CONFIG_STORAGE_KEY, JSON.stringify(nextCfg));
+          }
+        });
+      } catch {}
+    }
+
     return () => {
       window.removeEventListener('c10-auth-changed', handleAuth);
       window.removeEventListener('storage', handleAuth);
+      unsubFilterCfg();
     };
   }, []);
+
+  const handleVerifyQuickCode = () => {
+    const code = quickAccessCode.trim();
+    if (!code) return;
+    if (code === '456321') {
+      localStorage.setItem('is_admin', 'true');
+      localStorage.setItem('c10_admin_unlocked', 'true');
+      localStorage.removeItem('c10_preview_as_viewer');
+      window.dispatchEvent(new Event('c10-auth-changed'));
+      setCanEdit(true);
+      setShowQuickCodeInput(false);
+      setQuickAccessCode('');
+      setSyncToast('Đã mở khóa quyền Quản trị viên (Admin)!');
+      return;
+    }
+    const res = verifyAndActivateAccessCode(code);
+    if (res.success && (res.item?.permissions.submittal || res.item?.permissions.dailyReport)) {
+      localStorage.removeItem('c10_preview_as_viewer');
+      setCanEdit(true);
+      setShowQuickCodeInput(false);
+      setQuickAccessCode('');
+      setSyncToast(`Đã mở khóa quyền chỉnh sửa hồ sơ (${res.item?.name || code})!`);
+    } else {
+      alert('Mã quyền hạn không đúng hoặc chưa được cấp quyền cho tab Theo dõi hồ sơ!');
+    }
+  };
 
   // Động cơ hẹn giờ tự động đồng bộ Google Sheet
   useEffect(() => {
@@ -6349,7 +6695,6 @@ export const Submittal: React.FC<SubmittalProps> = ({
       }
 
       if (shouldSync) {
-        console.log('[AutoSync] Tự động đồng bộ Google Sheet lúc:', currentHHmm);
         try {
           await syncFromGoogleSheet();
           const nextCfg = { ...autoSyncConfig, lastSyncedAt: new Date().toISOString() };
@@ -6366,13 +6711,6 @@ export const Submittal: React.FC<SubmittalProps> = ({
   }, [autoSyncConfig]);
 
   const pageSize = 15;
-
-  const t = (key: string) => {
-    if (TRANSLATIONS[language] && (TRANSLATIONS[language] as any)[key]) {
-      return (TRANSLATIONS[language] as any)[key];
-    }
-    return key;
-  };
 
   // 1. Lắng nghe cập nhật realtime từ Firestore & bộ nhớ máy
   useEffect(() => {
@@ -6399,15 +6737,172 @@ export const Submittal: React.FC<SubmittalProps> = ({
     }
   };
 
-  // 3. Tính toán KPI thống kê tiến độ duyệt hồ sơ toàn dự án
+  const parseSubmittalDateMs = (dateStr?: string): number | null => {
+    if (!dateStr) return null;
+    const raw = String(dateStr).trim();
+    if (!raw) return null;
+    if (raw.includes('/')) {
+      const parts = raw.split('/');
+      if (parts.length === 3) {
+        const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+        const parsed = new Date(`${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`).getTime();
+        return isNaN(parsed) ? null : parsed;
+      }
+    }
+    const parsed = new Date(raw).getTime();
+    return isNaN(parsed) ? null : parsed;
+  };
+
+  // Đánh giá chi tiết 3 nhóm chậm trễ cho từng hồ sơ:
+  // - Hồ sơ đã Duyệt (APPROVED) hoặc Từ chối / Đã đóng (REJECTED) hoặc chưa có ngày đệ trình (!submissionDate) -> KHÔNG tính trễ hạn chờ duyệt
+  // - Nhóm 1 (CONTRACTOR_DELAY): Chậm trình do Nhà thầu (có ngày đệ trình thực tế > ngày kế hoạch trình)
+  // - Nhóm 2 (TVGS_DELAY): Trình TVGS quá tvgsLimitDays (mặc định 7 ngày) mà TVGS chưa duyệt -> ghi chú "TVGS chậm"
+  // - Nhóm 3 (CDT_DELAY): TVGS đã duyệt, trình CĐT quá cdtLimitDays (mặc định 20 ngày) từ ngày trình CĐT (hoặc ngày TVGS duyệt) mà CĐT chưa duyệt -> ghi chú "CĐT chậm"
+  const evaluateRecordDelay = (rec: MasterSubmittalRecord): {
+    delayType: SubmittalDelayType;
+    isContractorLate: boolean;
+    contractorLateDays: number;
+    overdueDays: number;
+    delayBadgeText: string;
+    delayDetailText: string;
+  } => {
+    const subMs = parseSubmittalDateMs(rec.submissionDate);
+    if (subMs === null) {
+      return {
+        delayType: 'NONE',
+        isContractorLate: false,
+        contractorLateDays: 0,
+        overdueDays: 0,
+        delayBadgeText: '',
+        delayDetailText: ''
+      };
+    }
+
+    // Kiểm tra Nhà thầu chậm trình so với Kế hoạch (chỉ xét khi có cả ngày đệ trình và ngày kế hoạch)
+    const planMs = parseSubmittalDateMs(rec.plannedDate);
+    let isContractorLate = false;
+    let contractorLateDays = 0;
+    if (planMs !== null && subMs > planMs) {
+      contractorLateDays = Math.floor((subMs - planMs) / (1000 * 3600 * 24));
+      if (contractorLateDays > 0) isContractorLate = true;
+    } else if (rec.notes && rec.notes.toLowerCase().includes('chậm trình')) {
+      isContractorLate = true;
+    }
+
+    // Nếu hồ sơ đã Duyệt (APPROVED) hoặc Từ chối = Đã đóng (REJECTED) -> Không còn trễ hạn phê duyệt
+    if (rec.finalStatus === 'APPROVED' || rec.finalStatus === 'REJECTED') {
+      if (isContractorLate) {
+        return {
+          delayType: 'CONTRACTOR_DELAY',
+          isContractorLate: true,
+          contractorLateDays,
+          overdueDays: contractorLateDays,
+          delayBadgeText: 'Chậm trình do Nhà thầu',
+          delayDetailText: contractorLateDays > 0 ? `Nhà thầu trình trễ ${contractorLateDays} ngày so với KH` : 'Chậm trình do Nhà thầu'
+        };
+      }
+      return {
+        delayType: 'NONE',
+        isContractorLate: false,
+        contractorLateDays: 0,
+        overdueDays: 0,
+        delayBadgeText: '',
+        delayDetailText: ''
+      };
+    }
+
+    const nowMs = Date.now();
+    const tvgsApproved = isApprovedStatusText(rec.tvgsStatus) || isApprovedStatusText(rec.tvgsCode);
+    const cdtApproved = isApprovedStatusText(rec.clientStatus) || isApprovedStatusText(rec.clientCode);
+
+    // Xét TVGS chậm: chưa được TVGS duyệt và quá tvgsLimitDays kể từ ngày trình
+    if (!tvgsApproved) {
+      const diffTvgsDays = Math.floor((nowMs - subMs) / (1000 * 3600 * 24));
+      if (diffTvgsDays > filterConfig.tvgsLimitDays) {
+        return {
+          delayType: 'TVGS_DELAY',
+          isContractorLate,
+          contractorLateDays,
+          overdueDays: diffTvgsDays,
+          delayBadgeText: 'TVGS chậm',
+          delayDetailText: `TVGS chậm (${diffTvgsDays} ngày > ${filterConfig.tvgsLimitDays} ngày)`
+        };
+      }
+    }
+
+    // Xét CĐT chậm: TVGS đã duyệt, CĐT chưa duyệt và quá cdtLimitDays kể từ ngày trình CĐT (clientDate || tvgsDate || submissionDate)
+    if (tvgsApproved && !cdtApproved) {
+      const cdtSubmitMs = parseSubmittalDateMs(rec.clientDate) || parseSubmittalDateMs(rec.tvgsDate) || subMs;
+      const diffCdtDays = Math.floor((nowMs - cdtSubmitMs) / (1000 * 3600 * 24));
+      if (diffCdtDays > filterConfig.cdtLimitDays) {
+        return {
+          delayType: 'CDT_DELAY',
+          isContractorLate,
+          contractorLateDays,
+          overdueDays: diffCdtDays,
+          delayBadgeText: 'CĐT chậm',
+          delayDetailText: `CĐT chậm (${diffCdtDays} ngày > ${filterConfig.cdtLimitDays} ngày)`
+        };
+      }
+    }
+
+    if (isContractorLate) {
+      return {
+        delayType: 'CONTRACTOR_DELAY',
+        isContractorLate: true,
+        contractorLateDays,
+        overdueDays: contractorLateDays,
+        delayBadgeText: 'Chậm trình do Nhà thầu',
+        delayDetailText: contractorLateDays > 0 ? `Chậm trình do Nhà thầu (${contractorLateDays} ngày)` : 'Chậm trình do Nhà thầu'
+      };
+    }
+
+    return {
+      delayType: 'NONE',
+      isContractorLate: false,
+      contractorLateDays: 0,
+      overdueDays: 0,
+      delayBadgeText: '',
+      delayDetailText: ''
+    };
+  };
+
+  // Hồ sơ đang mở (PENDING) bị chậm phê duyệt (TVGS chậm hoặc CĐT chậm) hoặc Chậm trình do Nhà thầu
+  const isRecordOverdue = (rec: MasterSubmittalRecord): boolean => {
+    if (rec.finalStatus !== 'PENDING') return false;
+    const info = evaluateRecordDelay(rec);
+    return info.delayType === 'TVGS_DELAY' || info.delayType === 'CDT_DELAY' || info.delayType === 'CONTRACTOR_DELAY';
+  };
+
+  // 3. Tính toán KPI thống kê tiến độ duyệt hồ sơ toàn dự án (Căn cứ cột CĐT phê duyệt; Từ chối = Đã đóng)
   const kpiStats = useMemo(() => {
     const total = masterRecords.length;
     const approved = masterRecords.filter(r => r.finalStatus === 'APPROVED').length;
     const pending = masterRecords.filter(r => r.finalStatus === 'PENDING').length;
     const rejected = masterRecords.filter(r => r.finalStatus === 'REJECTED').length;
     const approvedPercent = total > 0 ? Math.round((approved / total) * 100) : 0;
-    return { total, approved, pending, rejected, approvedPercent };
-  }, [masterRecords]);
+
+    let tvgsDelayCount = 0;
+    let cdtDelayCount = 0;
+    let contractorDelayCount = 0;
+    masterRecords.forEach(r => {
+      const d = evaluateRecordDelay(r);
+      if (d.delayType === 'TVGS_DELAY') tvgsDelayCount++;
+      else if (d.delayType === 'CDT_DELAY') cdtDelayCount++;
+      if (d.isContractorLate) contractorDelayCount++;
+    });
+
+    return {
+      total,
+      approved,
+      pending,
+      rejected,
+      approvedPercent,
+      tvgsDelayCount,
+      cdtDelayCount,
+      contractorDelayCount
+    };
+  }, [masterRecords, filterConfig]);
 
   // 4. Đếm số lượng hồ sơ theo từng danh mục
   const categoryCounts = useMemo(() => {
@@ -6418,78 +6913,54 @@ export const Submittal: React.FC<SubmittalProps> = ({
     return counts;
   }, [masterRecords]);
 
-  // 4B. Thống kê biểu đồ tròn (Donut Chart) & Hồ sơ trễ hạn (> 7 ngày) chuẩn mẫu dự án CN8-2 cho từng phân hệ
+  // 4B. Thống kê biểu đồ tròn (Donut Chart) & Hồ sơ trễ hạn chuẩn mẫu dự án CN8-2 cho từng phân hệ
   const [showOverdueList, setShowOverdueList] = useState<boolean>(true);
   const [showCategoryCharts, setShowCategoryCharts] = useState<boolean>(true);
-
-  const parseSubmittalDateMs = (dateStr?: string): number | null => {
-    if (!dateStr) return null;
-    const raw = String(dateStr).trim();
-    if (!raw) return null;
-    if (raw.includes('/')) {
-      const parts = raw.split('/');
-      if (parts.length === 3) {
-        const year = parts[2].length === 2 ? ('20' + parts[2]) : parts[2];
-        const parsed = new Date(year + '-' + parts[1].padStart(2, '0') + '-' + parts[0].padStart(2, '0')).getTime();
-        return isNaN(parsed) ? null : parsed;
-      }
-    }
-    const parsed = new Date(raw).getTime();
-    return isNaN(parsed) ? null : parsed;
-  };
-
-  // Tính số ngày quá hạn: chỉ tính các hồ sơ chưa duyệt có ngày trình quá hạn > 7 ngày
-  const getOverdueDays = (rec: MasterSubmittalRecord): number => {
-    if (rec.finalStatus === 'APPROVED') return 0;
-    const subMs = parseSubmittalDateMs(rec.submissionDate);
-    if (subMs === null) return 0;
-    const diffDays = Math.floor((Date.now() - subMs) / (1000 * 3600 * 24));
-    if (diffDays > 7 && (rec.finalStatus === 'REJECTED' || rec.finalStatus === 'PENDING' || !rec.tvgsDate || !rec.clientDate)) {
-      return diffDays;
-    }
-    return 0;
-  };
-
-  // Hồ sơ quá hạn trên 7 ngày mới được liệt kê là chậm tiến độ
-  const isRecordOverdue = (rec: MasterSubmittalRecord): boolean => {
-    return getOverdueDays(rec) > 7;
-  };
 
   const categoryAnalytics = useMemo(() => {
     return SUBMITTAL_CATEGORIES.map((cat) => {
       const catRecords = masterRecords.filter((r) => r.category === cat.key);
       const total = catRecords.length;
       const approved = catRecords.filter((r) => r.finalStatus === 'APPROVED').length;
-      const unapproved = total - approved;
+      const closedRejected = catRecords.filter((r) => r.finalStatus === 'REJECTED').length;
+      const unapproved = catRecords.filter((r) => r.finalStatus === 'PENDING').length;
       const overdueRecords = catRecords.filter(isRecordOverdue);
       const overdue = overdueRecords.length;
       return {
         cat,
         total,
         approved,
+        closedRejected,
         unapproved,
         overdue,
         overdueRecords
       };
     });
-  }, [masterRecords]);
+  }, [masterRecords, filterConfig]);
 
   const allOverdueRecords = useMemo(() => {
-    return masterRecords.filter((rec) => isRecordOverdue(rec));
-  }, [masterRecords]);
+    return masterRecords.filter((rec) => {
+      if (!isRecordOverdue(rec)) return false;
+      if (delayFilter === 'TVGS_DELAY') return evaluateRecordDelay(rec).delayType === 'TVGS_DELAY';
+      if (delayFilter === 'CDT_DELAY') return evaluateRecordDelay(rec).delayType === 'CDT_DELAY';
+      if (delayFilter === 'CONTRACTOR_DELAY') return evaluateRecordDelay(rec).isContractorLate;
+      return true;
+    });
+  }, [masterRecords, filterConfig, delayFilter]);
 
   const getCategoryShortLabel = (key: SubmittalCategoryKey): string => {
     const found = SUBMITTAL_CATEGORIES.find((c) => c.key === key);
     return found ? found.shortLabel : key.toUpperCase();
   };
 
-  // Render Donut SVG chuẩn phong cách CN8-2 (Màu xanh lá #10b981 = Đã duyệt, Màu cam #f59e0b = Chưa duyệt)
-  const renderCN82DonutChart = (total: number, approved: number, unapproved: number) => {
+  // Render Donut SVG chuẩn phong cách CN8-2
+  const renderCN82DonutChart = (total: number, approved: number, unapproved: number, closedRejected: number = 0) => {
     const radius = 50;
     const circumference = 2 * Math.PI * radius;
-    const approvedRatio = total > 0 ? approved / total : 0;
+    const effectiveDone = approved + closedRejected;
+    const approvedRatio = total > 0 ? effectiveDone / total : 0;
     const unapprovedRatio = total > 0 ? unapproved / total : 0;
-    const gap = total > 0 && approved > 0 && unapproved > 0 ? 4 : 0;
+    const gap = total > 0 && effectiveDone > 0 && unapproved > 0 ? 4 : 0;
     const approvedLength = Math.max(0, approvedRatio * circumference - gap);
     const unapprovedLength = Math.max(0, unapprovedRatio * circumference - gap);
     const unapprovedOffset = -(approvedRatio * circumference);
@@ -6498,8 +6969,15 @@ export const Submittal: React.FC<SubmittalProps> = ({
       <div className="flex flex-col items-center justify-center my-3">
         <div className="relative w-36 h-36 flex items-center justify-center">
           <svg className="w-36 h-36 -rotate-90" viewBox="0 0 128 128">
-            <circle cx="64" cy="64" r={radius} fill="transparent" stroke="#f1f5f9" strokeWidth="14" />
-            {approved > 0 && (
+            <circle
+              cx="64"
+              cy="64"
+              r={radius}
+              fill="transparent"
+              stroke="#f1f5f9"
+              strokeWidth="14"
+            />
+            {effectiveDone > 0 && (
               <circle
                 cx="64"
                 cy="64"
@@ -6507,7 +6985,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
                 fill="transparent"
                 stroke="#10b981"
                 strokeWidth="14"
-                strokeDasharray={approvedLength + ' ' + circumference}
+                strokeDasharray={`${approvedLength} ${circumference}`}
                 strokeDashoffset={0}
                 strokeLinecap="butt"
               />
@@ -6520,35 +6998,68 @@ export const Submittal: React.FC<SubmittalProps> = ({
                 fill="transparent"
                 stroke="#f59e0b"
                 strokeWidth="14"
-                strokeDasharray={unapprovedLength + ' ' + circumference}
+                strokeDasharray={`${unapprovedLength} ${circumference}`}
                 strokeDashoffset={unapprovedOffset}
                 strokeLinecap="butt"
               />
             )}
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-            <span className="text-2xl font-black text-slate-800 leading-none">{total}</span>
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">TỔNG CỘNG</span>
+            <span className="text-2xl font-black text-slate-800 leading-none">
+              {total}
+            </span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">
+              TỔNG CỘNG
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-4 mt-2 text-xs font-bold">
+        <div className="flex items-center justify-center gap-3 mt-2 text-xs font-bold flex-wrap">
           <span className="inline-flex items-center gap-1.5 text-amber-500">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
-            <span>Chưa duyệt</span>
+            <span>Đang trình ({unapproved})</span>
           </span>
-          <span className="inline-flex items-center gap-1.5 text-emerald-500">
+          <span className="inline-flex items-center gap-1.5 text-emerald-600">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-            <span>Đã duyệt</span>
+            <span>Đã duyệt ({approved})</span>
           </span>
+          {closedRejected > 0 && (
+            <span className="inline-flex items-center gap-1 text-slate-500 text-[11px]">
+              <span className="w-2 h-2 rounded-full bg-slate-400 inline-block" />
+              <span>Đã đóng ({closedRejected})</span>
+            </span>
+          )}
         </div>
       </div>
     );
   };
 
-  // Render toàn bộ cụm:
-  // - Khi ở tab "Tất cả hồ sơ" (selectedCategory === 'all'): Hiện Khung tổng hợp trễ hạn + Lưới 3 cột 9 Biểu đồ tròn chuẩn CN8-2
-  // - Khi bấm vào từng Tab phân hệ riêng (Shopdrawing, Vật tư, Biện pháp...): Bên trái là Biểu đồ tròn, Bên phải là Hồ sơ chậm tiến độ (> 7 ngày)
+  const renderDelayBadge = (rec: MasterSubmittalRecord) => {
+    const info = evaluateRecordDelay(rec);
+    if (info.delayType === 'TVGS_DELAY') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[10px] font-black border border-rose-300">
+          <span>TVGS chậm ({info.overdueDays} ngày)</span>
+        </span>
+      );
+    }
+    if (info.delayType === 'CDT_DELAY') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 text-[10px] font-black border border-purple-300">
+          <span>CĐT chậm ({info.overdueDays} ngày)</span>
+        </span>
+      );
+    }
+    if (info.isContractorLate) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-black border border-amber-300">
+          <span>Chậm trình do Nhà thầu{info.contractorLateDays > 0 ? ` (${info.contractorLateDays} ngày)` : ''}</span>
+        </span>
+      );
+    }
+    return null;
+  };
+
   const renderCN82CategoryChartsSection = () => {
     if (selectedCategory !== 'all') {
       const singleItem = categoryAnalytics.find((c) => c.cat.key === selectedCategory);
@@ -6558,16 +7069,16 @@ export const Submittal: React.FC<SubmittalProps> = ({
       return (
         <div className="space-y-3.5">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <h3 className="text-sm md:text-base font-black text-slate-800">
-                Biểu đồ tiến độ & Hồ sơ chậm tiến độ — {singleItem.cat.label}
+                Biểu đồ tiến độ & Hồ sơ chậm phê duyệt — {singleItem.cat.label}
               </h3>
               <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold">
-                Quá hạn &gt; 7 ngày: {singleItem.overdue} hồ sơ
+                TVGS &gt; {filterConfig.tvgsLimitDays} ngày | CĐT &gt; {filterConfig.cdtLimitDays} ngày: {singleItem.overdue} hồ sơ
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={() => setSelectedCategory('all')}
@@ -6597,15 +7108,18 @@ export const Submittal: React.FC<SubmittalProps> = ({
 
           {showCategoryCharts && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-              {/* CỘT TRÁI (5/12): BIỂU ĐỒ TRÒN PHÂN HỆ */}
               <div
-                className={'lg:col-span-5 bg-white rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-all ' + (hasOverdue ? 'border-rose-200/90' : 'border-slate-200/90')}
+                className={`lg:col-span-5 bg-white rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-all ${
+                  hasOverdue ? 'border-rose-200/90' : 'border-slate-200/90'
+                }`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span
-                        className={'w-2.5 h-2.5 rounded-full shrink-0 ' + (hasOverdue ? 'bg-rose-500' : 'bg-emerald-500')}
+                        className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                          hasOverdue ? 'bg-rose-500' : 'bg-emerald-500'
+                        }`}
                       />
                       <h4 className="font-black text-slate-800 text-base">
                         {singleItem.cat.shortLabel}
@@ -6616,8 +7130,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
                     </span>
                   </div>
 
-                  {/* Thanh chỉ số: Tổng | Đã duyệt | Chờ duyệt | Trễ */}
-                  <div className="mt-3 bg-slate-50/90 border border-slate-100 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs font-medium text-slate-600">
+                  <div className="mt-3 bg-slate-50/90 border border-slate-100 rounded-xl px-3.5 py-2.5 flex items-center justify-between flex-wrap gap-2 text-xs font-medium text-slate-600">
                     <span>
                       Tổng: <b className="font-black text-slate-900">{singleItem.total}</b>
                     </span>
@@ -6625,20 +7138,22 @@ export const Submittal: React.FC<SubmittalProps> = ({
                       Đã duyệt: <b className="font-black text-emerald-600">{singleItem.approved}</b>
                     </span>
                     <span>
-                      Chờ duyệt: <b className="font-black text-amber-600">{singleItem.unapproved}</b>
+                      Đang trình: <b className="font-black text-amber-600">{singleItem.unapproved}</b>
+                    </span>
+                    <span>
+                      Đã đóng: <b className="font-black text-slate-600">{singleItem.closedRejected}</b>
                     </span>
                     <span>
                       Trễ:{' '}
-                      <b className={'font-black ' + (hasOverdue ? 'text-rose-600' : 'text-slate-600')}>
+                      <b className={`font-black ${hasOverdue ? 'text-rose-600' : 'text-slate-600'}`}>
                         {singleItem.overdue}
                       </b>
                     </span>
                   </div>
                 </div>
 
-                {/* Biểu đồ tròn ở trung tâm cột trái */}
                 <div className="my-auto py-2">
-                  {renderCN82DonutChart(singleItem.total, singleItem.approved, singleItem.unapproved)}
+                  {renderCN82DonutChart(singleItem.total, singleItem.approved, singleItem.unapproved, singleItem.closedRejected)}
                 </div>
 
                 <div className="text-center text-[11px] text-slate-400 font-medium pt-2 border-t border-slate-100">
@@ -6652,15 +7167,22 @@ export const Submittal: React.FC<SubmittalProps> = ({
                 </div>
               </div>
 
-              {/* CỘT PHẢI (7/12): DANH SÁCH HỒ SƠ CHẬM TIẾN ĐỘ (QUÁ HẠN TRÊN 7 NGÀY) */}
               <div
-                className={'lg:col-span-7 rounded-2xl border p-5 shadow-xs flex flex-col justify-between ' + (hasOverdue ? 'bg-rose-50/35 border-rose-200/90' : 'bg-white border-slate-200/90')}
+                className={`lg:col-span-7 rounded-2xl border p-5 shadow-xs flex flex-col justify-between ${
+                  hasOverdue
+                    ? 'bg-rose-50/35 border-rose-200/90'
+                    : 'bg-white border-slate-200/90'
+                }`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-3 flex-wrap pb-3.5 border-b border-rose-200/60">
                     <div className="flex items-center gap-3">
                       <div
-                        className={'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs ' + (hasOverdue ? 'bg-rose-600 text-white' : 'bg-emerald-50 text-emerald-600 border border-emerald-200')}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+                          hasOverdue
+                            ? 'bg-rose-600 text-white'
+                            : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                        }`}
                       >
                         {hasOverdue ? (
                           <AlertTriangle className="w-5 h-5" />
@@ -6670,29 +7192,37 @@ export const Submittal: React.FC<SubmittalProps> = ({
                       </div>
                       <div>
                         <h4
-                          className={'text-sm md:text-base font-black ' + (hasOverdue ? 'text-rose-950' : 'text-slate-800')}
+                          className={`text-sm md:text-base font-black ${
+                            hasOverdue ? 'text-rose-950' : 'text-slate-800'
+                          }`}
                         >
-                          Hồ sơ chậm tiến độ ({singleItem.cat.shortLabel})
+                          Hồ sơ chậm phê duyệt ({singleItem.cat.shortLabel})
                         </h4>
                         <p
-                          className={'text-xs mt-0.5 ' + (hasOverdue ? 'text-rose-700/85' : 'text-slate-500')}
+                          className={`text-xs mt-0.5 ${
+                            hasOverdue ? 'text-rose-700/85' : 'text-slate-500'
+                          }`}
                         >
-                          Chỉ liệt kê các hồ sơ chưa duyệt đã quá hạn trên 7 ngày kể từ ngày đệ trình
+                          TVGS quá {filterConfig.tvgsLimitDays} ngày chưa duyệt hoặc CĐT quá {filterConfig.cdtLimitDays} ngày chưa duyệt
                         </p>
                       </div>
                     </div>
 
                     <span
-                      className={'px-3 py-1 rounded-full text-xs font-black shadow-2xs ' + (hasOverdue ? 'bg-rose-600 text-white' : 'bg-emerald-100 text-emerald-700')}
+                      className={`px-3 py-1 rounded-full text-xs font-black shadow-2xs ${
+                        hasOverdue
+                          ? 'bg-rose-600 text-white'
+                          : 'bg-emerald-100 text-emerald-700'
+                      }`}
                     >
-                      {singleItem.overdue} hồ sơ trễ (&gt; 7 ngày)
+                      {singleItem.overdue} hồ sơ chậm
                     </span>
                   </div>
 
                   {hasOverdue ? (
                     <div className="mt-4 space-y-2.5 max-h-[250px] overflow-y-auto pr-1">
                       {singleItem.overdueRecords.map((rec) => {
-                        const overdueDays = getOverdueDays(rec);
+                        const dInfo = evaluateRecordDelay(rec);
                         return (
                           <div
                             key={rec.id}
@@ -6700,24 +7230,26 @@ export const Submittal: React.FC<SubmittalProps> = ({
                             className="bg-white hover:bg-rose-50/60 border border-rose-100 hover:border-rose-300 rounded-xl p-3 transition-all cursor-pointer shadow-2xs text-left group"
                           >
                             <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-wider border border-rose-200/70">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                  Quá hạn {overdueDays} ngày
-                                </span>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {renderDelayBadge(rec)}
                                 <span className="text-xs font-black text-rose-900 group-hover:text-rose-600 transition-colors">
                                   {rec.code}
                                 </span>
                               </div>
                               {rec.submissionDate && (
                                 <span className="text-[11px] font-semibold text-slate-400">
-                                  Ngày trình: {rec.submissionDate}
+                                  Trình: {rec.submissionDate} {rec.tvgsDate ? `• TVGS: ${rec.tvgsDate}` : ''}
                                 </span>
                               )}
                             </div>
                             <p className="text-xs font-semibold text-slate-800 mt-1.5 line-clamp-2 leading-relaxed">
                               {rec.title}
                             </p>
+                            {dInfo.delayDetailText && (
+                              <p className="text-[11px] font-bold text-rose-600 mt-1">
+                                Ghi chú: {dInfo.delayDetailText}
+                              </p>
+                            )}
                           </div>
                         );
                       })}
@@ -6728,10 +7260,10 @@ export const Submittal: React.FC<SubmittalProps> = ({
                         <CheckCircle2 className="w-6 h-6" />
                       </div>
                       <p className="text-sm font-bold text-slate-700">
-                        Không có hồ sơ chậm tiến độ quá 7 ngày
+                        Không có hồ sơ chậm phê duyệt
                       </p>
                       <p className="text-xs text-slate-400 mt-1">
-                        Tất cả hồ sơ thuộc phân hệ {singleItem.cat.shortLabel} đều đang trong hạn hoặc đã được phê duyệt.
+                        Tất cả hồ sơ thuộc phân hệ {singleItem.cat.shortLabel} đều đang trong hạn hoặc đã đóng/phê duyệt.
                       </p>
                     </div>
                   )}
@@ -6745,65 +7277,123 @@ export const Submittal: React.FC<SubmittalProps> = ({
 
     return (
       <div className="space-y-5">
-        {allOverdueRecords.length > 0 && (
-          <div className="bg-rose-50/40 border border-rose-200/90 rounded-2xl p-4 md:p-5 shadow-xs">
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <AlertTriangle className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm md:text-base font-black text-rose-950">
-                    Danh sách tổng hợp hồ sơ trễ hạn (&gt; 7 ngày)
-                  </h3>
-                  <p className="text-xs text-rose-700/85 mt-0.5">
-                    Các hồ sơ vượt quá mốc 7 ngày kể từ ngày trình cần ưu tiên đôn đốc xử lý
-                  </p>
-                </div>
+        {/* KHỐI 1: DANH SÁCH TỔNG HỢP HỒ SƠ CHẬM PHÊ DUYỆT (TVGS CHẬM / CĐT CHẬM / NHÀ THẦU CHẬM) */}
+        <div className="bg-rose-50/40 border border-rose-200/90 rounded-2xl p-4 md:p-5 shadow-xs">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <AlertTriangle className="w-5 h-5" />
               </div>
-
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-black shadow-xs">
-                  {allOverdueRecords.length} hồ sơ
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowOverdueList((prev) => !prev)}
-                  className="p-1.5 rounded-xl bg-white/80 hover:bg-white text-rose-700 border border-rose-200 transition-all cursor-pointer"
-                  title={showOverdueList ? 'Thu gọn danh sách trễ hạn' : 'Mở rộng danh sách trễ hạn'}
-                >
-                  {showOverdueList ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
+              <div>
+                <h3 className="text-sm md:text-base font-black text-rose-950">
+                  Danh sách tổng hợp hồ sơ trễ hạn (TVGS &gt; {filterConfig.tvgsLimitDays} ngày | CĐT &gt; {filterConfig.cdtLimitDays} ngày)
+                </h3>
+                <p className="text-xs text-rose-700/85 mt-0.5">
+                  Căn cứ cột Trạng thái CĐT phê duyệt (Hồ sơ Từ chối = Đã đóng). Tự động phân loại: <b>TVGS chậm</b> ({kpiStats.tvgsDelayCount}) • <b>CĐT chậm</b> ({kpiStats.cdtDelayCount}) • <b>Chậm trình do Nhà thầu</b> ({kpiStats.contractorDelayCount})
+                </p>
               </div>
             </div>
 
-            {showOverdueList && (
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto pr-1">
-                {allOverdueRecords.map((rec) => (
-                  <div
-                    key={rec.id}
-                    onClick={() => setSelectedRecord(rec)}
-                    className="bg-white hover:bg-rose-50/50 border border-rose-100 hover:border-rose-300 rounded-xl p-3 transition-all cursor-pointer shadow-2xs text-left group"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-wider border border-rose-200/70">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                        {getCategoryShortLabel(rec.category)}
-                      </span>
-                      <span className="text-[11px] font-bold text-slate-400 group-hover:text-rose-600 transition-colors">
-                        {rec.code}
-                      </span>
-                    </div>
-                    <p className="text-xs font-semibold text-slate-800 mt-1.5 line-clamp-2 leading-relaxed">
-                      {rec.title}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="flex items-center gap-2 flex-wrap">
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => setShowFilterConfigModal(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold shadow-2xs transition-all cursor-pointer"
+                  title="Admin điều chỉnh số ngày trễ TVGS và CĐT"
+                >
+                  <Sliders className="w-3.5 h-3.5" />
+                  <span>Cấu hình hạn trễ (Admin)</span>
+                </button>
+              )}
+              <span className="px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-black shadow-xs">
+                {allOverdueRecords.length} hồ sơ
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowOverdueList((prev) => !prev)}
+                className="p-1.5 rounded-xl bg-white/80 hover:bg-white text-rose-700 border border-rose-200 transition-all cursor-pointer"
+                title={showOverdueList ? 'Thu gọn danh sách trễ hạn' : 'Mở rộng danh sách trễ hạn'}
+              >
+                {showOverdueList ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
-        )}
 
+          {/* Bộ lọc nhanh theo nhóm nguyên nhân chậm */}
+          <div className="mt-3 pt-3 border-t border-rose-200/60 flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] font-bold text-rose-800 uppercase tracking-wider mr-1">
+              Lọc theo nhóm chậm:
+            </span>
+            {[
+              { key: 'ALL', label: `Tất cả trễ (${kpiStats.tvgsDelayCount + kpiStats.cdtDelayCount})` },
+              { key: 'TVGS_DELAY', label: `TVGS chậm > ${filterConfig.tvgsLimitDays} ngày (${kpiStats.tvgsDelayCount})` },
+              { key: 'CDT_DELAY', label: `CĐT chậm > ${filterConfig.cdtLimitDays} ngày (${kpiStats.cdtDelayCount})` },
+              { key: 'CONTRACTOR_DELAY', label: `Chậm trình do Nhà thầu (${kpiStats.contractorDelayCount})` }
+            ].map((item) => {
+              const active = delayFilter === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setDelayFilter(item.key as any)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    active
+                      ? 'bg-rose-700 text-white shadow-xs'
+                      : 'bg-white/90 hover:bg-white text-rose-800 border border-rose-200'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {showOverdueList && (
+            allOverdueRecords.length > 0 ? (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto pr-1">
+                {allOverdueRecords.map((rec) => {
+                  const dInfo = evaluateRecordDelay(rec);
+                  return (
+                    <div
+                      key={rec.id}
+                      onClick={() => setSelectedRecord(rec)}
+                      className="bg-white hover:bg-rose-50/50 border border-rose-100 hover:border-rose-300 rounded-xl p-3 transition-all cursor-pointer shadow-2xs text-left group"
+                    >
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-wider border border-rose-200/70">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                            {getCategoryShortLabel(rec.category)}
+                          </span>
+                          {renderDelayBadge(rec)}
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-500 group-hover:text-rose-600 transition-colors font-mono">
+                          {rec.code}
+                        </span>
+                      </div>
+                      <p className="text-xs font-semibold text-slate-800 mt-1.5 line-clamp-2 leading-relaxed">
+                        {rec.title}
+                      </p>
+                      <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-500 flex-wrap gap-1">
+                        <span>Ngày trình: <b className="text-slate-700">{rec.submissionDate || '-'}</b>{rec.tvgsDate ? ` • TVGS duyệt: ${rec.tvgsDate}` : ''}</span>
+                        {dInfo.delayDetailText && (
+                          <span className="font-bold text-rose-600">{dInfo.delayDetailText}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="mt-3 bg-white/80 rounded-xl p-4 text-center text-xs text-slate-500 font-medium">
+                Không có hồ sơ nào thuộc nhóm chậm đang chọn.
+              </div>
+            )
+          )}
+        </div>
+
+        {/* KHỐI 2: NHÓM HỒ SƠ ĐANG TRIỂN KHAI / CÓ TỒN ĐỌNG (9 NHÓM) */}
         <div className="space-y-3.5">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2.5">
@@ -6843,7 +7433,9 @@ export const Submittal: React.FC<SubmittalProps> = ({
                 return (
                   <div
                     key={item.cat.key}
-                    className={'bg-white rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-all hover:shadow-md ' + (hasOverdue ? 'border-rose-200/90' : 'border-slate-200/90')}
+                    className={`bg-white rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-all hover:shadow-md ${
+                      hasOverdue ? 'border-rose-200/90' : 'border-slate-200/90'
+                    }`}
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2">
@@ -6852,7 +7444,9 @@ export const Submittal: React.FC<SubmittalProps> = ({
                           className="flex items-center gap-2 cursor-pointer group"
                         >
                           <span
-                            className={'w-2.5 h-2.5 rounded-full shrink-0 ' + (hasOverdue ? 'bg-rose-500' : 'bg-emerald-500')}
+                            className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                              hasOverdue ? 'bg-rose-500' : 'bg-emerald-500'
+                            }`}
                           />
                           <h4 className="font-black text-slate-800 text-sm md:text-base group-hover:text-blue-600 transition-colors">
                             {item.cat.shortLabel}
@@ -6863,13 +7457,13 @@ export const Submittal: React.FC<SubmittalProps> = ({
                           type="button"
                           onClick={() => setSelectedCategory(item.cat.key)}
                           className="p-1.5 rounded-lg bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all cursor-pointer"
-                          title={'Xem chi tiết phân hệ ' + item.cat.label}
+                          title={`Xem chi tiết phân hệ ${item.cat.label}`}
                         >
                           <ExternalLink className="w-4 h-4" />
                         </button>
                       </div>
 
-                      <div className="mt-3 bg-slate-50/90 border border-slate-100 rounded-xl px-3 py-2 flex items-center justify-between text-[11px] md:text-xs font-medium text-slate-600">
+                      <div className="mt-3 bg-slate-50/90 border border-slate-100 rounded-xl px-3 py-2 flex items-center justify-between flex-wrap gap-1.5 text-[11px] md:text-xs font-medium text-slate-600">
                         <span>
                           Tổng: <b className="font-black text-slate-900">{item.total}</b>
                         </span>
@@ -6877,27 +7471,31 @@ export const Submittal: React.FC<SubmittalProps> = ({
                           Đã duyệt: <b className="font-black text-emerald-600">{item.approved}</b>
                         </span>
                         <span>
-                          Chờ duyệt: <b className="font-black text-amber-600">{item.unapproved}</b>
+                          Đang trình: <b className="font-black text-amber-600">{item.unapproved}</b>
                         </span>
                         <span>
                           Trễ:{' '}
-                          <b className={'font-black ' + (hasOverdue ? 'text-rose-600' : 'text-slate-600')}>
+                          <b className={`font-black ${hasOverdue ? 'text-rose-600' : 'text-slate-600'}`}>
                             {item.overdue}
                           </b>
                         </span>
                       </div>
 
-                      {renderCN82DonutChart(item.total, item.approved, item.unapproved)}
+                      {renderCN82DonutChart(item.total, item.approved, item.unapproved, item.closedRejected)}
                     </div>
 
                     <div className="mt-3 pt-3 border-t border-slate-100">
                       <div className="flex items-center gap-1.5 mb-2">
                         <AlertCircle className="w-3.5 h-3.5 text-slate-400" />
                         <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                          Hồ sơ chậm tiến độ (&gt; 7 ngày)
+                          Hồ sơ chậm (TVGS &gt; {filterConfig.tvgsLimitDays}d | CĐT &gt; {filterConfig.cdtLimitDays}d)
                         </span>
                         <span
-                          className={'px-1.5 py-0.2 rounded-full text-[10px] font-black ' + (hasOverdue ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500')}
+                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                            hasOverdue
+                              ? 'bg-rose-100 text-rose-600'
+                              : 'bg-slate-100 text-slate-500'
+                          }`}
                         >
                           {item.overdue}
                         </span>
@@ -6905,20 +7503,30 @@ export const Submittal: React.FC<SubmittalProps> = ({
 
                       {hasOverdue ? (
                         <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1">
-                          {item.overdueRecords.map((rec) => (
-                            <div
-                              key={rec.id}
-                              onClick={() => setSelectedRecord(rec)}
-                              className="bg-rose-50/65 hover:bg-rose-100/75 border border-rose-100 rounded-xl p-2.5 text-xs text-slate-800 cursor-pointer transition-all flex items-start gap-1.5"
-                            >
-                              <span className="text-rose-500 font-black leading-tight mt-0.5">
-                                •
-                              </span>
-                              <span className="line-clamp-2 font-medium leading-snug">
-                                <b className="text-rose-900">{rec.code}:</b> {rec.title}
-                              </span>
-                            </div>
-                          ))}
+                          {item.overdueRecords.map((rec) => {
+                            const d = evaluateRecordDelay(rec);
+                            return (
+                              <div
+                                key={rec.id}
+                                onClick={() => setSelectedRecord(rec)}
+                                className="bg-rose-50/65 hover:bg-rose-100/75 border border-rose-100 rounded-xl p-2.5 text-xs text-slate-800 cursor-pointer transition-all flex flex-col gap-1"
+                              >
+                                <div className="flex items-center justify-between gap-1">
+                                  <b className="text-rose-900 font-mono text-[11px]">{rec.code}</b>
+                                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-black ${
+                                    d.delayType === 'CDT_DELAY'
+                                      ? 'bg-purple-100 text-purple-800'
+                                      : 'bg-rose-200 text-rose-800'
+                                  }`}>
+                                    {d.delayBadgeText}
+                                  </span>
+                                </div>
+                                <span className="line-clamp-1 font-medium text-[11px] text-slate-700">
+                                  {rec.title}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       ) : (
                         <div className="bg-slate-50/80 border border-slate-100 rounded-xl py-3.5 px-3 text-center text-xs italic text-slate-400">
@@ -6936,30 +7544,36 @@ export const Submittal: React.FC<SubmittalProps> = ({
     );
   };
 
-  // 5. Lọc danh sách theo Tab, Search và Trạng thái
+  // 5. Lọc danh sách theo Tab, Search, Trạng thái CĐT và Nhóm chậm trễ
   const filteredRecords = useMemo(() => {
     return masterRecords.filter(rec => {
-      // Lọc theo phân loại
       if (selectedCategory !== 'all' && rec.category !== selectedCategory) {
         return false;
       }
-      // Lọc theo trạng thái
       if (statusFilter !== 'ALL' && rec.finalStatus !== statusFilter) {
         return false;
       }
-      // Lọc theo từ khóa tìm kiếm
+      if (delayFilter !== 'ALL') {
+        const d = evaluateRecordDelay(rec);
+        if (delayFilter === 'OVERDUE_ALL' && d.delayType === 'NONE') return false;
+        if (delayFilter === 'TVGS_DELAY' && d.delayType !== 'TVGS_DELAY') return false;
+        if (delayFilter === 'CDT_DELAY' && d.delayType !== 'CDT_DELAY') return false;
+        if (delayFilter === 'CONTRACTOR_DELAY' && !d.isContractorLate) return false;
+      }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
+        const d = evaluateRecordDelay(rec);
         const matchCode = (rec.code || '').toLowerCase().includes(q);
         const matchTitle = (rec.title || '').toLowerCase().includes(q);
         const matchDetail = (rec.detail || '').toLowerCase().includes(q);
         const matchSupplier = (rec.supplier || '').toLowerCase().includes(q);
         const matchNotes = (rec.notes || '').toLowerCase().includes(q);
-        return matchCode || matchTitle || matchDetail || matchSupplier || matchNotes;
+        const matchDelay = d.delayBadgeText.toLowerCase().includes(q);
+        return matchCode || matchTitle || matchDetail || matchSupplier || matchNotes || matchDelay;
       }
       return true;
     });
-  }, [masterRecords, selectedCategory, statusFilter, searchQuery]);
+  }, [masterRecords, selectedCategory, statusFilter, delayFilter, searchQuery, filterConfig]);
 
   // Phân trang
   const totalPages = Math.ceil(filteredRecords.length / pageSize) || 1;
@@ -6968,12 +7582,10 @@ export const Submittal: React.FC<SubmittalProps> = ({
     return filteredRecords.slice(start, start + pageSize);
   }, [filteredRecords, currentPage, pageSize]);
 
-  // Reset trang về 1 khi đổi bộ lọc
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategory, statusFilter, searchQuery]);
+  }, [selectedCategory, statusFilter, delayFilter, searchQuery]);
 
-  // Render icon phân loại hồ sơ
   const renderCategoryIcon = (key: SubmittalCategoryKey, className: string = 'w-4 h-4') => {
     switch (key) {
       case 'sdw': return <Layers className={className} />;
@@ -6989,41 +7601,45 @@ export const Submittal: React.FC<SubmittalProps> = ({
     }
   };
 
-  // Render badge trạng thái
-  const renderStatusBadge = (status: MasterSubmittalRecord['finalStatus'], tvgsCode?: string, clientCode?: string) => {
-    if (status === 'APPROVED') {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-          <span>Đã Duyệt {clientCode ? `(${clientCode})` : tvgsCode ? `(${tvgsCode})` : 'Đạt'}</span>
-        </span>
-      );
-    }
-    if (status === 'PENDING') {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-          <Clock className="w-3.5 h-3.5 text-amber-600" />
-          <span>Đang Trình</span>
-        </span>
-      );
-    }
-    if (status === 'REJECTED') {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-200">
-          <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
-          <span>Cần Sửa (Code C)</span>
-        </span>
-      );
-    }
+  // Render badge trạng thái + ghi chú TVGS chậm / CĐT chậm / Chậm trình do Nhà thầu
+  const renderStatusBadge = (rec: MasterSubmittalRecord) => {
+    const status = rec.finalStatus;
+    const dInfo = evaluateRecordDelay(rec);
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-        Chưa trình
-      </span>
+      <div className="flex flex-col items-center gap-1">
+        {status === 'APPROVED' ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span>Đã Duyệt {rec.clientCode ? `(${rec.clientCode})` : rec.tvgsCode ? `(${rec.tvgsCode})` : ''}</span>
+          </span>
+        ) : status === 'PENDING' ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+            <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            <span>Đang Trình</span>
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-300 whitespace-nowrap" title="Hồ sơ Từ chối hoặc Đã thay thế được tính là Đã đóng">
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+            <span>Từ chối (Đã đóng)</span>
+          </span>
+        )}
+        {dInfo.delayBadgeText && (
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black border whitespace-nowrap ${
+            dInfo.delayType === 'TVGS_DELAY'
+              ? 'bg-rose-100 text-rose-700 border-rose-300'
+              : dInfo.delayType === 'CDT_DELAY'
+              ? 'bg-purple-100 text-purple-800 border-purple-300'
+              : 'bg-amber-100 text-amber-800 border-amber-300'
+          }`}>
+            {dInfo.delayBadgeText} {dInfo.overdueDays > 0 ? `(${dInfo.overdueDays} ngày)` : ''}
+          </span>
+        )}
+      </div>
     );
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-full min-w-0 overflow-x-hidden p-4 md:p-6 box-border space-y-6">
       {/* Toast thông báo trạng thái đồng bộ */}
       {syncToast && (
         <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700 animate-in fade-in slide-in-from-bottom-3 duration-300">
@@ -7035,10 +7651,9 @@ export const Submittal: React.FC<SubmittalProps> = ({
         </div>
       )}
 
-      
       {/* BANNER XEM THỬ KHÁCH (Khi Admin chuyển sang góc nhìn Viewer) */}
       {!canEdit && typeof window !== 'undefined' && localStorage.getItem('c10_preview_as_viewer') === 'true' && (
-        <div className="bg-amber-500/10 border border-amber-300 p-4 rounded-2xl flex items-center justify-between gap-3 text-amber-900 text-xs shadow-xs">
+        <div className="bg-amber-500/10 border border-amber-300 p-4 rounded-2xl flex items-center justify-between gap-3 text-amber-900 text-xs shadow-xs flex-wrap">
           <div className="flex items-center gap-2.5">
             <Eye className="w-4 h-4 text-amber-600 shrink-0" />
             <span>
@@ -7059,7 +7674,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
         </div>
       )}
 
-      {/* THANH CÔNG CỤ CẬP NHẬT DỮ LIỆU CHUẨN ADMIN (Chỉ Admin & người phân quyền mới thấy) */}
+      {/* THANH CÔNG CỤ CẬP NHẬT DỮ LIỆU CHUẨN ADMIN (Chỉ Admin & người có Mã quyền hạn/Email mới thấy) */}
       {canEdit && (
         <div className="bg-linear-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 md:p-5 rounded-2xl shadow-lg border border-indigo-800/40 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-wrap">
@@ -7069,7 +7684,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-black text-xs uppercase tracking-wider text-blue-300">
-                  Khu vực Quản trị & Cập nhật dữ liệu
+                  Khu vực Quản trị & Cập nhật dữ liệu (Tối đa {MAX_ROWS_PER_SHEET} dòng/sheet)
                 </span>
                 <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                   autoSyncConfig.enabled
@@ -7080,14 +7695,10 @@ export const Submittal: React.FC<SubmittalProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-slate-300 mt-1">
-                {autoSyncConfig.enabled
-                  ? (autoSyncConfig.frequencyType === 'fixed'
-                      ? `Lịch đặt giờ tự động: ${autoSyncConfig.fixedTimes.join(' | ')} hàng ngày`
-                      : `Chu kỳ quét Google Sheet: Mỗi ${autoSyncConfig.intervalMinutes} phút/lần`)
-                  : 'Chế độ hẹn giờ tự động đang tắt (Admin đồng bộ thủ công khi cần)'}
+                Ngưỡng trễ hiện tại: <b>TVGS &gt; {filterConfig.tvgsLimitDays} ngày</b> | <b>CĐT &gt; {filterConfig.cdtLimitDays} ngày</b>
                 {autoSyncConfig.lastSyncedAt && (
                   <span className="ml-2 text-slate-400">
-                    • Lần cuối: {new Date(autoSyncConfig.lastSyncedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                    • Đồng bộ cuối: {new Date(autoSyncConfig.lastSyncedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
               </p>
@@ -7095,6 +7706,17 @@ export const Submittal: React.FC<SubmittalProps> = ({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Nút Cấu hình bộ lọc & hạn trễ TVGS / CĐT */}
+            <button
+              type="button"
+              onClick={() => setShowFilterConfigModal(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 font-bold text-xs cursor-pointer transition-all"
+              title="Điều chỉnh số ngày trễ đối với TVGS và CĐT"
+            >
+              <Sliders className="w-4 h-4 text-amber-300" />
+              <span>Cài đặt hạn trễ ({filterConfig.tvgsLimitDays}d / {filterConfig.cdtLimitDays}d)</span>
+            </button>
+
             {/* Nút Xem thử khách */}
             <button
               type="button"
@@ -7166,14 +7788,14 @@ export const Submittal: React.FC<SubmittalProps> = ({
       )}
 
       {/* ========================================================
-          HEADER CARD: TIÊU ĐỀ & CHẾ ĐỘ XEM
+          HEADER CARD: TIÊU ĐỀ, NHẬP MÃ QUYỀN HẠN & CHẾ ĐỘ XEM
          ======================================================== */}
       <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 min-w-0">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 flex items-center justify-center text-white shadow-md shadow-blue-500/25 shrink-0">
             <Database className="w-6 h-6" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap">
               <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
                 Theo Dõi Hồ Sơ & Chất Lượng C10
@@ -7183,52 +7805,96 @@ export const Submittal: React.FC<SubmittalProps> = ({
               </span>
               <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-lg text-xs font-bold border border-emerald-200 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                Đã kết nối Google Sheet
+                Đã kết nối Google Sheet (Tối đa 1.000 dòng/sheet)
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Hệ thống quản lý toàn diện hồ sơ kỹ thuật, shopdrawing, thí nghiệm bê tông, vật tư nhập và biên bản nghiệm thu
+              Căn cứ theo cột <b>Trạng thái CĐT phê duyệt</b> (Từ chối = Đã đóng) • Tự động cảnh báo <b>TVGS chậm (&gt; {filterConfig.tvgsLimitDays} ngày)</b> & <b>CĐT chậm (&gt; {filterConfig.cdtLimitDays} ngày)</b>
             </p>
           </div>
         </div>
 
-        {/* Nút chuyển đổi giao diện: Bảng EDMS / Biểu đồ */}
-        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
-          <button
-            type="button"
-            onClick={() => setViewMode('edms')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              viewMode === 'edms'
-                ? 'bg-white text-blue-700 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Table className="w-3.5 h-3.5" />
-            <span>Bảng EDMS</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode('charts')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              viewMode === 'charts'
-                ? 'bg-white text-blue-700 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <BarChart3 className="w-3.5 h-3.5" />
-            <span>Biểu đồ</span>
-          </button>
+        <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+          {/* Nút nhập mã quyền hạn nhanh cho người dùng chưa mở khóa */}
+          {!canEdit && (
+            showQuickCodeInput ? (
+              <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-300 rounded-xl px-2.5 py-1">
+                <KeyRound className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <input
+                  type="password"
+                  value={quickAccessCode}
+                  onChange={(e) => setQuickAccessCode(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleVerifyQuickCode()}
+                  placeholder="Nhập mã quyền hạn..."
+                  className="text-xs font-bold text-slate-800 bg-transparent focus:outline-none w-32"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={handleVerifyQuickCode}
+                  className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold cursor-pointer"
+                >
+                  Mở khóa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowQuickCodeInput(false); setQuickAccessCode(''); }}
+                  className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowQuickCodeInput(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                title="Nhập Mã cấp quyền để thêm/chỉnh sửa dữ liệu trong tab Theo dõi hồ sơ"
+              >
+                <KeyRound className="w-3.5 h-3.5 text-amber-600" />
+                <span>Nhập mã quyền hạn</span>
+              </button>
+            )
+          )}
+
+          {/* Nút chuyển đổi giao diện: Bảng EDMS / Biểu đồ */}
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
+            <button
+              type="button"
+              onClick={() => setViewMode('edms')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'edms'
+                  ? 'bg-white text-blue-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Table className="w-3.5 h-3.5" />
+              <span>Bảng EDMS (9 Phân hệ)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('charts')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'charts'
+                  ? 'bg-white text-blue-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>Biểu Đồ Tổng Quan</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* ========================================================
-          TIER 1: KPI THỐNG KÊ TIẾN ĐỘ DUYỆT HỒ SƠ TOÀN DỰ ÁN
+          TIER 1: 4 KPI CARDS THỐNG KÊ TOÀN DỰ ÁN (CHUẨN CỘT CĐT)
          ======================================================== */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-              Tổng số hồ sơ
+              Tổng số hồ sơ đã trình
             </span>
             <span className="text-2xl md:text-3xl font-black text-slate-800 mt-1 block">
               {kpiStats.total}
@@ -7245,7 +7911,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
         <div className="bg-white p-4 md:p-5 rounded-2xl border border-emerald-100 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider block">
-              Đã duyệt (A/B)
+              CĐT Đã duyệt (A/B)
             </span>
             <span className="text-2xl md:text-3xl font-black text-emerald-700 mt-1 block">
               {kpiStats.approved}
@@ -7267,8 +7933,8 @@ export const Submittal: React.FC<SubmittalProps> = ({
             <span className="text-2xl md:text-3xl font-black text-amber-700 mt-1 block">
               {kpiStats.pending}
             </span>
-            <span className="text-[11px] text-amber-600/80 font-medium mt-0.5 block">
-              Chờ CĐT & TVGS
+            <span className="text-[11px] text-amber-700 font-semibold mt-0.5 block">
+              TVGS chậm: {kpiStats.tvgsDelayCount} • CĐT chậm: {kpiStats.cdtDelayCount}
             </span>
           </div>
           <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-200">
@@ -7276,102 +7942,40 @@ export const Submittal: React.FC<SubmittalProps> = ({
           </div>
         </div>
 
-        <div className="bg-white p-4 md:p-5 rounded-2xl border border-red-100 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-xs font-bold text-red-600 uppercase tracking-wider block">
-              Cần nộp lại (Code C)
+            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
+              Từ chối / Đã đóng (Code C)
             </span>
-            <span className="text-2xl md:text-3xl font-black text-red-700 mt-1 block">
+            <span className="text-2xl md:text-3xl font-black text-slate-700 mt-1 block">
               {kpiStats.rejected}
             </span>
-            <span className="text-[11px] text-red-600/80 font-medium mt-0.5 block">
-              Yêu cầu chỉnh sửa
+            <span className="text-[11px] text-slate-500 font-medium mt-0.5 block">
+              Từ chối đồng nghĩa đã đóng
             </span>
           </div>
-          <div className="w-11 h-11 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center shrink-0 border border-red-200">
+          <div className="w-11 h-11 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 border border-slate-200">
             <AlertTriangle className="w-5 h-5" />
           </div>
         </div>
       </div>
 
       {viewMode === 'charts' ? (
-        /* ========================================================
-           CHẾ ĐỘ XEM BIỂU ĐỒ (PIE CHART VIEW)
-           ======================================================== */
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {data && (data as any).submittals && ((data as any).submittals as any[]).map((item, idx) => {
-              const chartData = [
-                { name: t(item.name), value: item.approved },
-                { name: t('unapproved'), value: item.unapproved }
-              ];
-              const folderId = FOLDER_LINKS[item.name];
-              const folderUrl = folderId ? `https://drive.google.com/drive/folders/${folderId}` : null;
-              return (
-                <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-bold text-slate-800 text-base">{t(item.name)}</h3>
-                    {folderUrl && (
-                      <a
-                        href={folderUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => onProtectedAction && onProtectedAction(e, folderUrl)}
-                        className="p-1.5 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-600 bg-slate-50 p-2.5 rounded-xl mb-3">
-                    <span>Tổng: <b className="text-slate-800">{item.total}</b></span>
-                    <span>Đã duyệt: <b className="text-emerald-600">{item.approved}</b></span>
-                    <span>Chờ: <b className="text-amber-600">{item.unapproved}</b></span>
-                  </div>
-                  {item.total > 0 && (
-                    <div className="h-[160px] w-full relative">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={chartData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={45}
-                            outerRadius={65}
-                            paddingAngle={4}
-                            dataKey="value"
-                          >
-                            {chartData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          {renderCN82CategoryChartsSection()}
         </div>
       ) : (
-        /* ========================================================
-           CHẾ ĐỘ XEM BẢNG CHI TIẾT EDMS (9 PHÂN HỆ)
-           ======================================================== */
         <div className="space-y-4">
-          {/* TIER 2: 9 CATEGORY PILL TABS (TRIỆT TIÊU THANH CUỘN THÔ) */}
+          {/* TIER 2: 9 CATEGORY PILL TABS (DÀN HÀNG TỰ ĐỘNG FLEX-WRAP KHÔNG BỊ KHUẤT TRANG) */}
           <div
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            className="bg-white/95 backdrop-blur-md p-2.5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden sticky top-2 z-20 select-none"
+            className="bg-white/95 backdrop-blur-md p-2.5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-2 flex-wrap sticky top-2 z-20 select-none"
           >
-            {/* Tab Tất cả */}
             <button
               type="button"
               onClick={() => setSelectedCategory('all')}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 cursor-pointer select-none ${
                 selectedCategory === 'all'
-                  ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white shadow-md shadow-blue-500/25 scale-[1.02]'
+                  ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white shadow-md shadow-blue-500/25'
                   : 'bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-indigo-600 border border-slate-200/70'
               }`}
             >
@@ -7384,7 +7988,6 @@ export const Submittal: React.FC<SubmittalProps> = ({
               </span>
             </button>
 
-            {/* 9 Tab phân loại */}
             {SUBMITTAL_CATEGORIES.map((cat) => {
               const isActive = selectedCategory === cat.key;
               const count = categoryCounts[cat.key] || 0;
@@ -7395,7 +7998,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
                   onClick={() => setSelectedCategory(cat.key)}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 cursor-pointer select-none ${
                     isActive
-                      ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white shadow-md shadow-blue-500/25 scale-[1.02]'
+                      ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white shadow-md shadow-blue-500/25'
                       : 'bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-indigo-600 border border-slate-200/70'
                   }`}
                 >
@@ -7411,58 +8014,110 @@ export const Submittal: React.FC<SubmittalProps> = ({
             })}
           </div>
 
-          {/* TIER 2.5: BIỂU ĐỒ TRÒN CHO TỪNG LOẠI HỒ SƠ & DANH SÁCH TRỄ HẠN (CHUẨN DỰ ÁN CN8-2) */}
+          {/* TIER 2.5: BIỂU ĐỒ TRÒN CHO TỪNG LOẠI HỒ SƠ & DANH SÁCH TRỄ HẠN */}
           {renderCN82CategoryChartsSection()}
 
-          {/* TIER 3: THANH CÔNG CỤ TÌM KIẾM & BỘ LỌC */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-            {/* Ô tìm kiếm */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm theo mã hồ sơ, tên hạng mục, nhà cung cấp, ghi chú..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-              />
-              {searchQuery && (
+          {/* TIER 3: THANH CÔNG CỤ TÌM KIẾM & BỘ LỌC TRẠNG THÁI + BỘ LỌC CHẬM TRỄ */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              {/* Ô tìm kiếm */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Tìm theo mã hồ sơ, tên hạng mục, TVGS chậm, CĐT chậm..."
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Bộ lọc trạng thái CĐT */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-xs font-bold text-slate-400 mr-1 flex items-center gap-1">
+                  <Filter className="w-3.5 h-3.5" /> Trạng thái CĐT:
+                </span>
+                {(['ALL', 'APPROVED', 'PENDING', 'REJECTED'] as const).map((st) => {
+                  const label =
+                    st === 'ALL'
+                      ? `Tất cả (${kpiStats.total})`
+                      : st === 'APPROVED'
+                      ? `Đã duyệt (${kpiStats.approved})`
+                      : st === 'PENDING'
+                      ? `Đang trình (${kpiStats.pending})`
+                      : `Từ chối / Đã đóng (${kpiStats.rejected})`;
+                  const isActive = statusFilter === st;
+                  return (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => setStatusFilter(st)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-slate-800 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Hàng 2: Bộ lọc chi tiết theo nhóm chậm trễ & nút cấu hình Admin */}
+            <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-xs font-bold text-slate-400 mr-1">
+                  Bộ lọc tiến độ duyệt:
+                </span>
+                {[
+                  { key: 'ALL', label: 'Tất cả hồ sơ' },
+                  { key: 'OVERDUE_ALL', label: `Tất cả hồ sơ chậm (${kpiStats.tvgsDelayCount + kpiStats.cdtDelayCount + kpiStats.contractorDelayCount})` },
+                  { key: 'TVGS_DELAY', label: `TVGS chậm > ${filterConfig.tvgsLimitDays} ngày (${kpiStats.tvgsDelayCount})` },
+                  { key: 'CDT_DELAY', label: `CĐT chậm > ${filterConfig.cdtLimitDays} ngày (${kpiStats.cdtDelayCount})` },
+                  { key: 'CONTRACTOR_DELAY', label: `Chậm trình do Nhà thầu (${kpiStats.contractorDelayCount})` }
+                ].map((df) => {
+                  const active = delayFilter === df.key;
+                  return (
+                    <button
+                      key={df.key}
+                      type="button"
+                      onClick={() => setDelayFilter(df.key as any)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        active
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200'
+                      }`}
+                    >
+                      {df.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {canEdit && (
                 <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                  type="button"
+                  onClick={() => setShowFilterConfigModal(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold transition-all cursor-pointer"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <Sliders className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Điều chỉnh bộ lọc & ngày trễ (TVGS: {filterConfig.tvgsLimitDays}d | CĐT: {filterConfig.cdtLimitDays}d)</span>
                 </button>
               )}
             </div>
-
-            {/* Bộ lọc trạng thái */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-bold text-slate-400 mr-1 flex items-center gap-1">
-                <Filter className="w-3.5 h-3.5" /> Lọc:
-              </span>
-              {(['ALL', 'APPROVED', 'PENDING', 'REJECTED'] as const).map((st) => {
-                const label = st === 'ALL' ? 'Tất cả' : st === 'APPROVED' ? 'Đã duyệt' : st === 'PENDING' ? 'Đang trình' : 'Cần sửa';
-                const isActive = statusFilter === st;
-                return (
-                  <button
-                    key={st}
-                    type="button"
-                    onClick={() => setStatusFilter(st)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                      isActive
-                        ? 'bg-slate-800 text-white shadow-xs'
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
-          {/* BẢNG DỮ LIỆU TÙY BIẾN CHO TỪNG PHÂN HỆ */}
+{/* BẢNG DỮ LIỆU TÙY BIẾN CHO TỪNG PHÂN HỆ */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="overflow-x-auto custom-scrollbar">
               {selectedCategory === 'concrete' ? (
@@ -7610,7 +8265,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
                             {rec.acceptanceDate || rec.submissionDate || '-'}
                           </td>
                           <td className="p-3.5 text-center">
-                            {renderStatusBadge(rec.finalStatus)}
+                            {renderStatusBadge(rec)}
                           </td>
                           <td className="p-3.5 text-center">
                             <button
@@ -7679,7 +8334,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
                             </span>
                           </td>
                           <td className="p-3.5 text-center">
-                            {renderStatusBadge(rec.finalStatus)}
+                            {renderStatusBadge(rec)}
                           </td>
                           <td className="p-3.5 text-center">
                             {rec.linkUrl ? (
@@ -7761,15 +8416,17 @@ export const Submittal: React.FC<SubmittalProps> = ({
                             {rec.submissionDate || '-'}
                           </td>
                           <td className="p-3.5 text-center">
-                            <span className="font-bold text-slate-700">{rec.tvgsCode || '-'}</span>
+                            <span className="font-bold text-slate-700">{rec.tvgsStatus || rec.tvgsCode || '-'}</span>
+                            {rec.tvgsCode && rec.tvgsStatus && <span className="ml-1 text-[10px] font-bold text-blue-600">({rec.tvgsCode})</span>}
                             {rec.tvgsDate && <div className="text-[10px] text-slate-400 font-mono">{rec.tvgsDate}</div>}
                           </td>
                           <td className="p-3.5 text-center">
-                            <span className="font-bold text-slate-700">{rec.clientCode || '-'}</span>
+                            <span className="font-bold text-slate-700">{rec.clientStatus || rec.clientCode || '-'}</span>
+                            {rec.clientCode && rec.clientStatus && <span className="ml-1 text-[10px] font-bold text-emerald-600">({rec.clientCode})</span>}
                             {rec.clientDate && <div className="text-[10px] text-slate-400 font-mono">{rec.clientDate}</div>}
                           </td>
                           <td className="p-3.5 text-center">
-                            {renderStatusBadge(rec.finalStatus, rec.tvgsCode, rec.clientCode)}
+                            {renderStatusBadge(rec)}
                           </td>
                           <td className="p-3.5 text-center whitespace-nowrap">
                             <div className="flex items-center justify-center gap-1.5">
@@ -7883,7 +8540,6 @@ export const Submittal: React.FC<SubmittalProps> = ({
                 <X className="w-4 h-4" />
               </button>
             </div>
-
             <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1 text-xs">
               {/* Highlight Card: Mã hồ sơ & Mã TRA */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50/50 p-4 rounded-2xl border border-blue-200/80 flex items-center justify-between flex-wrap gap-2">
@@ -7969,7 +8625,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
             </div>
 
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>{renderStatusBadge(selectedRecord.finalStatus, selectedRecord.tvgsCode, selectedRecord.clientCode)}</div>
+              <div>{renderStatusBadge(selectedRecord)}</div>
               <div className="flex flex-wrap items-center gap-2">
                 {selectedRecord.linkUrl ? (
                   <a
@@ -8385,6 +9041,135 @@ export const Submittal: React.FC<SubmittalProps> = ({
               >
                 Lưu hồ sơ
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {/* ========================================================
+          MODAL ADMIN: CẤU HÌNH BỘ LỌC & SỐ NGÀY TRỄ TVGS / CĐT
+         ======================================================== */}
+      {showFilterConfigModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+            <div className="p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-300">
+                  <Sliders className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Cấu Hình Bộ Lọc & Ngưỡng Ngày Trễ</h3>
+                  <span className="text-xs text-slate-400">Quyền Admin điều chỉnh mốc cảnh báo TVGS & CĐT</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFilterConfigModal(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 text-xs text-slate-700">
+              <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200 text-blue-900 leading-relaxed">
+                <b>Quy tắc chuẩn hóa:</b> Hồ sơ lấy dữ liệu ở cột <b>Trạng thái CĐT phê duyệt</b> làm căn cứ. Hồ sơ <b>Từ chối (Code C)</b> đồng nghĩa với việc <b>Đã đóng</b>.
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-800 block mb-1.5 text-sm">
+                  1. Số ngày tối đa đối với TVGS (Mặc định: 7 ngày)
+                </label>
+                <p className="text-[11px] text-slate-500 mb-2">
+                  Nếu trình TVGS quá số ngày này mà chưa duyệt thì ghi chú là <b className="text-rose-600">TVGS chậm</b>.
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={90}
+                    value={filterConfig.tvgsLimitDays}
+                    onChange={(e) => setFilterConfig(prev => ({ ...prev, tvgsLimitDays: Math.max(1, parseInt(e.target.value) || 7) }))}
+                    className="w-28 p-2.5 rounded-xl border border-slate-300 font-black text-base text-rose-700 text-center"
+                  />
+                  <span className="font-bold text-slate-600">ngày kể từ ngày đệ trình</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-800 block mb-1.5 text-sm">
+                  2. Số ngày tối đa đối với CĐT (Mặc định: 20 ngày)
+                </label>
+                <p className="text-[11px] text-slate-500 mb-2">
+                  Nếu quá số ngày này kể từ ngày trình CĐT (hoặc ngày TVGS duyệt) mà CĐT chưa duyệt thì ghi chú là <b className="text-purple-700">CĐT chậm</b>.
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={120}
+                    value={filterConfig.cdtLimitDays}
+                    onChange={(e) => setFilterConfig(prev => ({ ...prev, cdtLimitDays: Math.max(1, parseInt(e.target.value) || 20) }))}
+                    className="w-28 p-2.5 rounded-xl border border-slate-300 font-black text-base text-purple-700 text-center"
+                  />
+                  <span className="font-bold text-slate-600">ngày kể từ ngày trình CĐT</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-800 block mb-1.5 text-sm">
+                  3. Bộ lọc tiến độ mặc định khi mở trang
+                </label>
+                <select
+                  value={filterConfig.defaultDelayFilter}
+                  onChange={(e) => {
+                    const val = e.target.value as SubmittalFilterConfig['defaultDelayFilter'];
+                    setFilterConfig(prev => ({ ...prev, defaultDelayFilter: val }));
+                    setDelayFilter(val);
+                  }}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 font-bold bg-white text-slate-800"
+                >
+                  <option value="ALL">Hiển thị tất cả hồ sơ</option>
+                  <option value="OVERDUE_ALL">Lọc tất cả hồ sơ trễ hạn</option>
+                  <option value="TVGS_DELAY">Chỉ lọc hồ sơ TVGS chậm</option>
+                  <option value="CDT_DELAY">Chỉ lọc hồ sơ CĐT chậm</option>
+                  <option value="CONTRACTOR_DELAY">Chỉ lọc Chậm trình do Nhà thầu</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterConfig(DEFAULT_SUBMITTAL_FILTER_CONFIG);
+                  setDelayFilter('ALL');
+                }}
+                className="px-3 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-600 font-bold text-xs cursor-pointer"
+              >
+                Khôi phục mặc định (7d / 20d)
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowFilterConfigModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs cursor-pointer"
+                >
+                  Đóng
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await saveSubmittalFilterConfig(filterConfig);
+                    setShowFilterConfigModal(false);
+                    setSyncToast(`Đã lưu cấu hình bộ lọc: TVGS > ${filterConfig.tvgsLimitDays} ngày, CĐT > ${filterConfig.cdtLimitDays} ngày!`);
+                  }}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer shadow-sm"
+                >
+                  Lưu áp dụng
+                </button>
+              </div>
             </div>
           </div>
         </div>

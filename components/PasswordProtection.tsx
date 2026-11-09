@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { X, AlertCircle, RefreshCw, ShieldCheck, Key, Lock, Eye, EyeOff, UserCheck } from 'lucide-react';
+import { X, AlertCircle, RefreshCw, ShieldCheck, Key, Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { ADMIN_BACKUP_PASSCODE, signInAsAdminWithGoogle } from '../services/firebase';
+import { verifyAndActivateAccessCode, loadUserPermissions } from '../services/userPermissionsService';
 
 interface PasswordProtectionProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({ isOpen, onClose
   const t = (key: string) => TRANSLATIONS[language][key] || key;
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [passcodeInput, setPasscodeInput] = useState('');
   const [showPasscode, setShowPasscode] = useState(false);
 
@@ -22,6 +24,7 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({ isOpen, onClose
     if (isSigningIn) return;
     setIsSigningIn(true);
     setErrorMessage(null);
+    setSuccessMessage(null);
 
     try {
       const res = await signInAsAdminWithGoogle();
@@ -47,30 +50,63 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({ isOpen, onClose
     }
   };
 
-  const handlePasscodeSubmit = (e?: React.FormEvent) => {
+  const handlePasscodeSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const clean = passcodeInput.trim();
     if (!clean) {
-      setErrorMessage(language === 'VN' ? 'Vui lòng nhập mã PIN quản trị.' : 'Please enter the backup PIN.');
+      setErrorMessage(
+        language === 'VN'
+          ? 'Vui lòng nhập Mã cấp quyền Tab hoặc Mã PIN quản trị.'
+          : 'Please enter an Access Code or Admin PIN.'
+      );
       return;
     }
+
+    // 1. Kiểm tra nếu là Mã PIN Quản trị viên tối cao
     if (clean === ADMIN_BACKUP_PASSCODE) {
       setErrorMessage(null);
+      setSuccessMessage(null);
       setPasscodeInput('');
       localStorage.setItem('c10_user_role', 'ADMIN');
       localStorage.setItem('is_admin', 'true');
       localStorage.setItem('c10_admin_unlocked', 'true');
       localStorage.setItem('layer2-auth', 'true');
       localStorage.removeItem('c10_guest_mode');
+      localStorage.removeItem('c10_preview_as_viewer');
       window.dispatchEvent(new Event('c10-auth-changed'));
       onSuccess();
-    } else {
-      setErrorMessage(
-        language === 'VN'
-          ? 'Mã PIN quản trị không chính xác. Vui lòng thử lại!'
-          : 'Incorrect backup PIN. Please try again!'
-      );
+      return;
     }
+
+    // 2. Đồng bộ danh sách mã phân quyền mới nhất từ Cloud trước khi kiểm tra
+    try {
+      await loadUserPermissions();
+    } catch {}
+
+    // 3. Kiểm tra nếu là Mã cấp quyền theo từng Tab (Access Code do Admin cấp)
+    const codeResult = verifyAndActivateAccessCode(clean);
+    if (codeResult.success) {
+      setErrorMessage(null);
+      setPasscodeInput('');
+      localStorage.setItem('c10_user_role', 'EDITOR');
+      localStorage.removeItem('is_admin');
+      localStorage.removeItem('c10_admin_unlocked');
+      localStorage.removeItem('c10_guest_mode');
+      localStorage.removeItem('c10_preview_as_viewer');
+      window.dispatchEvent(new Event('c10-auth-changed'));
+      setSuccessMessage(codeResult.message);
+      setTimeout(() => {
+        setSuccessMessage(null);
+        onClose();
+      }, 900);
+      return;
+    }
+
+    setErrorMessage(
+      language === 'VN'
+        ? 'Mã cấp quyền hoặc Mã PIN không chính xác. Vui lòng kiểm tra lại!'
+        : 'Incorrect Access Code or Admin PIN. Please try again!'
+    );
   };
 
   if (!isOpen) return null;
@@ -86,16 +122,19 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({ isOpen, onClose
             </div>
             <div>
               <h3 className="font-bold text-slate-800 text-base">
-                {language === 'VN' ? 'Đăng Nhập Hệ Thống C10' : 'C10 System Login'}
+                {language === 'VN' ? 'Đăng Nhập & Nhập Mã Quyền Hạn C10' : 'C10 System Login & Access Code'}
               </h3>
               <p className="text-[11px] text-slate-500">
-                {language === 'VN' ? 'Đăng nhập tài khoản Google đã được phân quyền' : 'Sign in with an authorized Google account'}
+                {language === 'VN'
+                  ? 'Đăng nhập bằng Email Google hoặc Nhập mã cấp quyền theo Tab'
+                  : 'Sign in with Google or enter a Tab Access Code'}
               </p>
             </div>
           </div>
           <button
             onClick={() => {
               setErrorMessage(null);
+              setSuccessMessage(null);
               onClose();
             }}
             className="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors cursor-pointer"
@@ -105,18 +144,6 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({ isOpen, onClose
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Informational Card */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center space-y-1.5">
-            <div className="text-xs font-bold text-slate-800">
-              {language === 'VN' ? 'Cổng Xác Thực Tài Khoản Dự Án' : 'Project Account Authentication'}
-            </div>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              {language === 'VN'
-                ? 'Dành cho Quản trị viên và thành viên đã được phân quyền lập báo cáo hoặc cập nhật dữ liệu các hạng mục dự án.'
-                : 'For Administrator and authorized project members to manage reports and data.'}
-            </p>
-          </div>
-
           {errorMessage && (
             <div className="flex items-start gap-2 text-xs text-rose-600 bg-rose-50 border border-rose-200 p-3 rounded-xl font-semibold">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
@@ -124,12 +151,74 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({ isOpen, onClose
             </div>
           )}
 
+          {successMessage && (
+            <div className="flex items-start gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 p-3 rounded-xl font-bold">
+              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+              <span>{successMessage}</span>
+            </div>
+          )}
+
+          {/* Access Code & Admin PIN Form */}
+          <form onSubmit={handlePasscodeSubmit} className="space-y-3 bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4">
+            <div className="text-xs font-bold text-indigo-950 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Key className="w-3.5 h-3.5 text-indigo-600" />
+                {language === 'VN' ? 'Cách 1: Nhập Mã Cấp Quyền Tab / Mã PIN' : 'Option 1: Enter Tab Access Code / PIN'}
+              </span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                Nhanh nhất
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              {language === 'VN'
+                ? 'Nhập mã do Admin cấp để mở quyền Thêm / Chỉnh sửa dữ liệu trong mục tương ứng (ví dụ: Báo cáo ngày, Theo dõi hồ sơ...) hoặc mã PIN Admin.'
+                : 'Enter the code provided by Admin to unlock add/edit permissions for specific tabs.'}
+            </p>
+
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <Key className="w-4 h-4" />
+              </div>
+              <input
+                type={showPasscode ? 'text' : 'password'}
+                value={passcodeInput}
+                onChange={(e) => setPasscodeInput(e.target.value)}
+                placeholder={language === 'VN' ? 'Nhập mã quyền hạn (VD: BCN2026)...' : 'Enter access code...'}
+                className="w-full pl-9 pr-10 py-2.5 text-xs bg-white border border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 font-mono font-bold tracking-wider"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPasscode(!showPasscode)}
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                {showPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all active:scale-98 cursor-pointer"
+            >
+              <Lock className="w-4 h-4 text-amber-300" />
+              <span>{language === 'VN' ? 'Xác Nhận Mã Cấp Quyền' : 'Verify Access Code'}</span>
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative flex items-center justify-center my-1">
+            <div className="border-t border-slate-200 w-full" />
+            <span className="bg-white px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
+              {language === 'VN' ? 'Cách 2: Đăng nhập Email' : 'Option 2: Email Login'}
+            </span>
+            <div className="border-t border-slate-200 w-full" />
+          </div>
+
           {/* Google Sign-In Button */}
           <button
             type="button"
             onClick={handleGoogleSignIn}
             disabled={isSigningIn}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-200 transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
           >
             {isSigningIn ? (
               <>
@@ -161,55 +250,12 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({ isOpen, onClose
             )}
           </button>
 
-          {/* Divider */}
-          <div className="relative flex items-center justify-center my-1">
-            <div className="border-t border-slate-200 w-full" />
-            <span className="bg-white px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              {language === 'VN' ? 'Hoặc Quản Trị Viên' : 'Or Administrator'}
-            </span>
-            <div className="border-t border-slate-200 w-full" />
-          </div>
-
-          {/* Backup Passcode Form */}
-          <form onSubmit={handlePasscodeSubmit} className="space-y-3">
-            <div className="text-xs font-semibold text-slate-700 flex items-center justify-between">
-              <span>{language === 'VN' ? 'Mã PIN quản trị dự phòng:' : 'Admin backup PIN:'}</span>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Key className="w-4 h-4" />
-              </div>
-              <input
-                type={showPasscode ? 'text' : 'password'}
-                value={passcodeInput}
-                onChange={(e) => setPasscodeInput(e.target.value)}
-                placeholder={language === 'VN' ? 'Nhập mã PIN quản trị' : 'Enter admin PIN'}
-                className="w-full pl-9 pr-10 py-2.5 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 font-mono tracking-wider"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPasscode(!showPasscode)}
-                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-              >
-                {showPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl shadow-sm transition-all active:scale-98 cursor-pointer"
-            >
-              <Lock className="w-4 h-4 text-emerald-400" />
-              <span>{language === 'VN' ? 'Mở khóa Quản trị bằng Mã PIN' : 'Unlock Admin with PIN'}</span>
-            </button>
-          </form>
-
           {/* Cancel Button */}
           <button
             type="button"
             onClick={() => {
               setErrorMessage(null);
+              setSuccessMessage(null);
               setPasscodeInput('');
               onClose();
             }}

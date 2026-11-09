@@ -883,6 +883,12 @@ export const DailyReportPrintSheet: React.FC<DailyReportPrintSheetProps> = ({ re
                 key={page.pageNumber}
                 id={`c10-a4-page-${page.pageNumber}`}
                 className={`c10-a4-sheet c10-a4-page ${effectiveIsLandscape ? 'c10-a4-sheet-landscape a4-page-landscape' : 'a4-page-portrait'}`}
+                style={{
+                  width: effectiveIsLandscape ? '1123px' : '794px',
+                  height: effectiveIsLandscape ? '794px' : '1123px',
+                  minHeight: effectiveIsLandscape ? '794px' : '1123px',
+                  maxWidth: effectiveIsLandscape ? '1123px' : '794px'
+                }}
               >
                 {/* Nút xoay trang A4 độc lập cho từng trang (Chỉ hiện trên màn hình, tự ẩn khi In / Xuất PDF) */}
                 <div

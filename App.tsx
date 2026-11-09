@@ -178,6 +178,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   // User Permissions Management State
   const [userPermissions, setUserPermissions] = useState<UserPermissionItem[]>([]);
   const [newMemberEmail, setNewMemberEmail] = useState('');
+  const [newMemberAccessCode, setNewMemberAccessCode] = useState('');
+  const [newMemberName, setNewMemberName] = useState('');
   const [newMemberRoles, setNewMemberRoles] = useState<TabPermissions>({ ...DEFAULT_TAB_PERMISSIONS });
   const [isSavingUserPerms, setIsSavingUserPerms] = useState(false);
 
@@ -194,13 +196,37 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleAddUserPermission = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = newMemberEmail.trim().toLowerCase();
-    if (!cleanEmail || !cleanEmail.includes('@')) {
-      showToast(language === 'VN' ? 'Vui lòng nhập email hợp lệ (vd: hoten@gmail.com)' : 'Please enter a valid email');
+    const cleanCode = newMemberAccessCode.trim();
+    const cleanName = newMemberName.trim();
+
+    if (!cleanEmail && !cleanCode) {
+      showToast(
+        language === 'VN'
+          ? 'Vui lòng nhập Email Google hoặc Mã cấp quyền (Access Code)!'
+          : 'Please enter an Email or Access Code'
+      );
       return;
     }
 
-    if (userPermissions.some(u => u.email.toLowerCase() === cleanEmail)) {
-      showToast(language === 'VN' ? 'Email này đã có trong danh sách phân quyền!' : 'Email already in permissions list!');
+    if (cleanEmail && !cleanEmail.includes('@')) {
+      showToast(language === 'VN' ? 'Email không hợp lệ (vd: hoten@gmail.com)' : 'Invalid email format');
+      return;
+    }
+
+    const effectiveKey = cleanEmail || `mã:${cleanCode.toLowerCase()}`;
+
+    if (
+      userPermissions.some(
+        (u) =>
+          (cleanEmail && u.email.toLowerCase() === cleanEmail) ||
+          (cleanCode && (u.accessCode || '').trim().toLowerCase() === cleanCode.toLowerCase())
+      )
+    ) {
+      showToast(
+        language === 'VN'
+          ? 'Email hoặc Mã cấp quyền này đã tồn tại trong danh sách!'
+          : 'Email or Access Code already exists!'
+      );
       return;
     }
 
@@ -208,7 +234,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     const nextList: UserPermissionItem[] = [
       ...userPermissions,
       {
-        email: cleanEmail,
+        email: effectiveKey,
+        accessCode: cleanCode,
+        name: cleanName,
         roles: { ...newMemberRoles },
         createdAt: new Date().toISOString(),
         updatedBy: 'Admin'
@@ -220,11 +248,37 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     if (ok) {
       setUserPermissions(nextList);
       setNewMemberEmail('');
+      setNewMemberAccessCode('');
+      setNewMemberName('');
       setNewMemberRoles({ ...DEFAULT_TAB_PERMISSIONS });
-      showToast(language === 'VN' ? `Đã cấp quyền cho tài khoản: ${cleanEmail}` : `Authorized: ${cleanEmail}`);
+      showToast(
+        language === 'VN'
+          ? `Đã cấp quyền thành công (${cleanCode ? `Mã: ${cleanCode}` : cleanEmail})!`
+          : `Authorized successfully!`
+      );
     } else {
       showToast('Lỗi khi lưu phân quyền, vui lòng thử lại');
     }
+  };
+
+  const handleUpdateUserAccessCode = async (userEmail: string, newCode: string) => {
+    const cleanCode = newCode.trim();
+    const nextList = userPermissions.map((u) => {
+      if (u.email.toLowerCase() === userEmail.toLowerCase()) {
+        return {
+          ...u,
+          accessCode: cleanCode
+        };
+      }
+      return u;
+    });
+    setUserPermissions(nextList);
+    await saveUserPermissions(nextList);
+    showToast(
+      language === 'VN'
+        ? `Đã lưu mã cấp quyền "${cleanCode || 'Trống'}" cho ${userEmail}`
+        : `Updated access code for ${userEmail}`
+    );
   };
 
   const handleToggleUserTab = async (userEmail: string, tabKey: TabPermissionKey) => {
@@ -243,6 +297,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     setUserPermissions(nextList);
     await saveUserPermissions(nextList);
     showToast(language === 'VN' ? `Đã cập nhật quyền cho ${userEmail}` : `Updated permissions for ${userEmail}`);
+  };
+
+  const handleRemoveUserPermission = async (userEmail: string) => {
+    if (!window.confirm(language === 'VN' ? `Bạn có chắc muốn thu hồi toàn bộ quyền của tài khoản ${userEmail}?` : `Revoke permissions for ${userEmail}?`)) {
+      return;
+    }
+    const nextList = userPermissions.filter(u => u.email.toLowerCase() !== userEmail.toLowerCase());
+    setUserPermissions(nextList);
+    await saveUserPermissions(nextList);
+    showToast(language === 'VN' ? `Đã thu hồi quyền của: ${userEmail}` : `Revoked: ${userEmail}`);
   };
 
   const handleRemoveUserPermission = async (userEmail: string) => {
@@ -1013,35 +1077,81 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         <div className="p-5 md:p-6 space-y-6">
           {/* Add New Member Form */}
           <form onSubmit={handleAddUserPermission} className="bg-slate-50/80 rounded-xl p-5 border border-slate-200 space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-200">
-              <UserPlus className="w-4 h-4 text-indigo-600" />
-              <h3 className="font-bold text-slate-800 text-sm">
-                {language === 'VN' ? 'Cấp Quyền Tài Khoản Mới' : 'Authorize New Member Account'}
-              </h3>
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-indigo-600" />
+                <h3 className="font-bold text-slate-800 text-sm">
+                  {language === 'VN' ? 'Cấp Quyền Bằng Email Google Hoặc Mã Truy Cập (Access Code)' : 'Authorize by Google Email or Access Code'}
+                </h3>
+              </div>
+              <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
+                Hỗ trợ cả Đăng nhập Email & Nhập Mã trực tiếp tại Tab
+              </span>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-              <div className="lg:col-span-1 space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">
-                  {language === 'VN' ? 'Email Google của nhân sự:' : 'Google Account Email:'}
-                </label>
-                <input
-                  type="email"
-                  value={newMemberEmail}
-                  onChange={(e) => setNewMemberEmail(e.target.value)}
-                  placeholder={language === 'VN' ? 'vd: kisu.nguyenvana@gmail.com' : 'e.g. member@gmail.com'}
-                  className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 font-medium"
-                />
-                <p className="text-[11px] text-slate-500">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+              <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2 space-y-1">
+                  <label className="text-xs font-bold text-slate-700">
+                    {language === 'VN' ? 'Tên người dùng / Ghi chú bộ phận:' : 'Member Name / Note:'}
+                  </label>
+                  <input
+                    type="text"
+                    value={newMemberName}
+                    onChange={(e) => setNewMemberName(e.target.value)}
+                    placeholder={language === 'VN' ? 'vd: KS. Nguyễn Văn A - Báo cáo ngày' : 'e.g. Engineer A'}
+                    className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">
+                    {language === 'VN' ? 'Cách 1 — Email Google (Tùy chọn):' : 'Google Email (Optional):'}
+                  </label>
+                  <input
+                    type="email"
+                    value={newMemberEmail}
+                    onChange={(e) => setNewMemberEmail(e.target.value)}
+                    placeholder={language === 'VN' ? 'vd: kisu@gmail.com' : 'member@gmail.com'}
+                    className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-indigo-700">
+                      {language === 'VN' ? 'Cách 2 — Mã cấp quyền:' : 'Access Code:'}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const rand = 'C10-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+                        setNewMemberAccessCode(rand);
+                      }}
+                      className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
+                    >
+                      + Tạo mã nhanh
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={newMemberAccessCode}
+                    onChange={(e) => setNewMemberAccessCode(e.target.value)}
+                    placeholder={language === 'VN' ? 'vd: BCN2026, HOSO123...' : 'e.g. BCN2026'}
+                    className="w-full px-3 py-2 text-xs bg-indigo-50/50 border border-indigo-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 font-mono font-bold text-indigo-900"
+                  />
+                </div>
+
+                <p className="sm:col-span-2 text-[11px] text-slate-500 leading-relaxed">
                   {language === 'VN'
-                    ? 'Nhân sự sẽ dùng chính email này để đăng nhập qua nút "Đăng nhập" ở menu bên trái.'
-                    : 'The member will sign in with this Google account.'}
+                    ? '💡 Bạn có thể nhập chỉ Mã cấp quyền (không cần Email), hoặc nhập cả hai. Người dùng chỉ cần gõ đúng Mã này là được thêm/chỉnh sửa dữ liệu trong các Tab đã tích chọn.'
+                    : 'Enter an Access Code, an Email, or both.'}
                 </p>
               </div>
 
-              <div className="lg:col-span-2 space-y-1.5">
+              <div className="lg:col-span-7 space-y-1.5">
                 <label className="text-xs font-bold text-slate-700">
-                  {language === 'VN' ? 'Chọn các tab cho phép nhân sự này cập nhật:' : 'Select permitted tabs:'}
+                  {language === 'VN' ? 'Chọn các tab cho phép người này thêm / chỉnh sửa dữ liệu:' : 'Select permitted tabs:'}
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
                   {AVAILABLE_TABS.map((tab) => {
@@ -1073,14 +1183,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             <div className="flex justify-end pt-2">
               <button
                 type="submit"
-                disabled={isSavingUserPerms || !newMemberEmail.trim()}
+                disabled={isSavingUserPerms || (!newMemberEmail.trim() && !newMemberAccessCode.trim())}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>
                   {isSavingUserPerms
                     ? (language === 'VN' ? 'Đang lưu phân quyền...' : 'Saving...')
-                    : (language === 'VN' ? 'Thêm Tài Khoản & Cấp Quyền' : 'Authorize Member')}
+                    : (language === 'VN' ? 'Lưu Cấp Quyền (Email / Mã Truy Cập)' : 'Save Authorization')}
                 </span>
               </button>
             </div>
@@ -1092,11 +1202,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               <div className="flex items-center gap-2">
                 <UserCheck className="w-4 h-4 text-emerald-600" />
                 <h3 className="font-bold text-slate-800 text-sm">
-                  {language === 'VN' ? 'Danh Sách Phân Quyền Chi Tiết Theo Tài Khoản' : 'Active Permissions Matrix'}
+                  {language === 'VN' ? 'Danh Sách Phân Quyền Chi Tiết (Theo Email & Mã Cấp Quyền)' : 'Active Permissions Matrix'}
                 </h3>
               </div>
               <span className="text-[11px] text-slate-500">
-                {language === 'VN' ? 'Click vào ô checkbox để bật/tắt quyền tức thì' : 'Click checkboxes to toggle immediately'}
+                {language === 'VN' ? 'Click vào ô checkbox để bật/tắt quyền hoặc nhập/sửa Mã cấp quyền trực tiếp' : 'Click checkboxes to toggle immediately'}
               </span>
             </div>
 
@@ -1105,16 +1215,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 <Users className="w-10 h-10 mx-auto text-slate-300 stroke-1" />
                 <p className="text-xs font-medium">
                   {language === 'VN'
-                    ? 'Chưa có tài khoản nào được phân quyền. Bạn hãy thêm email ở bảng trên để cấp quyền cho nhân sự.'
-                    : 'No members authorized yet. Add an email above to assign tab access.'}
+                    ? 'Chưa có tài khoản hoặc mã nào được phân quyền. Bạn hãy thêm Email hoặc Mã cấp quyền ở bảng trên.'
+                    : 'No members or access codes authorized yet.'}
                 </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse min-w-[850px]">
+                <table className="w-full text-left text-xs border-collapse min-w-[950px]">
                   <thead>
                     <tr className="bg-slate-100/80 text-slate-700 font-bold border-b border-slate-200">
-                      <th className="py-3 px-4 w-64">{language === 'VN' ? 'Tài Khoản (Email)' : 'Member Email'}</th>
+                      <th className="py-3 px-4 w-56">{language === 'VN' ? 'Người Dùng / Email' : 'Member / Email'}</th>
+                      <th className="py-3 px-3 w-44">{language === 'VN' ? '🔑 Mã Cấp Quyền' : 'Access Code'}</th>
                       {AVAILABLE_TABS.map((tab) => (
                         <th key={tab.key} className="py-3 px-2 text-center text-[11px] whitespace-nowrap">
                           {tab.shortLabel}
@@ -1126,10 +1237,39 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                   <tbody className="divide-y divide-slate-100">
                     {userPermissions.map((user) => (
                       <tr key={user.email} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-3 px-4 font-mono font-semibold text-slate-800 text-[11px]">
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                            <span className="truncate max-w-[220px]" title={user.email}>{user.email}</span>
+                        <td className="py-3 px-4 font-semibold text-slate-800 text-[11px]">
+                          <div className="flex flex-col gap-0.5">
+                            {user.name && (
+                              <span className="font-bold text-slate-900 text-xs">{user.name}</span>
+                            )}
+                            <div className="flex items-center gap-1.5 font-mono text-slate-600">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                              <span className="truncate max-w-[200px]" title={user.email}>
+                                {user.email.startsWith('mã:') ? '(Chỉ dùng Mã cấp quyền)' : user.email}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="text"
+                              defaultValue={user.accessCode || ''}
+                              placeholder="Gán mã..."
+                              onBlur={(e) => {
+                                const val = e.target.value.trim();
+                                if (val !== (user.accessCode || '')) {
+                                  handleUpdateUserAccessCode(user.email, val);
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  (e.target as HTMLInputElement).blur();
+                                }
+                              }}
+                              className="w-28 px-2 py-1 text-xs font-mono font-bold text-indigo-800 bg-indigo-50/60 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              title="Nhập mã cấp quyền rồi nhấn Enter hoặc click ra ngoài để lưu tự động"
+                            />
                           </div>
                         </td>
                         {AVAILABLE_TABS.map((tab) => {
@@ -1140,7 +1280,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                                 type="checkbox"
                                 checked={hasRole}
                                 onChange={() => handleToggleUserTab(user.email, tab.key)}
-                                title={`${user.email}: ${hasRole ? 'Đang có quyền' : 'Chưa có quyền'} ${tab.label}`}
+                                title={`${user.name || user.email}: ${hasRole ? 'Đang có quyền' : 'Chưa có quyền'} ${tab.label}`}
                                 className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
                               />
                             </td>

@@ -634,18 +634,22 @@ export const saveDailyReportPermissions = async (
  * Kiểm tra xem người dùng/máy hiện tại có quyền Lập & Xuất báo cáo ngày hay không
  */
 export const canUserEditDailyReport = (userEmail?: string): boolean => {
+  if (localStorage.getItem('c10_preview_as_viewer') === 'true') return false;
+
   // 1. Nếu máy đã mở khoá Admin bằng phucbao1992@gmail.com
   const isAdmin =
     localStorage.getItem('is_admin') === 'true' &&
     localStorage.getItem('c10_admin_unlocked') === 'true';
   if (isAdmin) return true;
 
-  // 2. Kiểm tra email người dùng
+  // 2. Kiểm tra email người dùng hoặc Mã cấp quyền đang kích hoạt
   const email = (
     userEmail ||
     localStorage.getItem('c10_user_email') ||
     ''
   ).trim().toLowerCase();
+
+  const activeCode = (localStorage.getItem('c10_active_access_code') || '').trim().toLowerCase();
 
   if (email === 'phucbao1992@gmail.com') return true;
 
@@ -656,9 +660,13 @@ export const canUserEditDailyReport = (userEmail?: string): boolean => {
       const parsed = JSON.parse(raw);
       if (parsed.allowAllEditors === true) return true;
       if (Array.isArray(parsed.authorizedEmails)) {
-        return parsed.authorizedEmails.some(
-          (e: string) => (e || '').trim().toLowerCase() === email
-        );
+        return parsed.authorizedEmails.some((e: string) => {
+          const item = (e || '').trim().toLowerCase();
+          if (!item) return false;
+          if (email && (item === email || `mã:${item}` === email)) return true;
+          if (activeCode && (item === activeCode || item === `mã:${activeCode}`)) return true;
+          return false;
+        });
       }
     }
   } catch {}
