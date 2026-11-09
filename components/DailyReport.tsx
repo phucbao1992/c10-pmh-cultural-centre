@@ -50,6 +50,32 @@ import DailyReportEditor from './DailyReportEditor';
 import DailyReportPrintSheet from './DailyReportPrintSheet';
 import { checkUserTabPermission } from '../services/userPermissionsService';
 
+
+const createInheritedDraftFromPublished = (published?: any): any => {
+  const def = createDefaultReport();
+  if (!published || !published.g) return def;
+  const today = todayISO();
+  const baseNo = parseInt(String(published.g.reportNo || '1'), 10);
+  const nextNo =
+    published.g.reportDate && published.g.reportDate !== today && !isNaN(baseNo)
+      ? String(baseNo + 1).padStart(2, '0')
+      : published.g.reportNo || '01';
+  return {
+    ...def,
+    ...published,
+    g: {
+      ...def.g,
+      ...published.g,
+      reportDate: today,
+      reportNo: nextNo
+    },
+    logos: typeof mergeWithPermanentLogos === 'function' ? mergeWithPermanentLogos(published.logos) : (published.logos || def.logos)
+  };
+};
+if (typeof window !== 'undefined') {
+  (window as any).createInheritedDraftFromPublished = createInheritedDraftFromPublished;
+}
+
 interface DailyReportProps {
   data: ScheduleData | null;
   equipment: EquipmentData | null;
@@ -179,6 +205,8 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
 
   const [canEdit, setCanEdit] = useState<boolean>(computeCanEdit);
   const [showPermissionsModal, setShowPermissionsModal] = useState<boolean>(false);
+  const [showAccessCodePrompt, setShowAccessCodePrompt] = useState<boolean>(false);
+  const [accessCodeInputVal, setAccessCodeInputVal] = useState<string>('');
   const [permissionsState, setPermissionsState] = useState<DailyReportPermissions>({
     authorizedEmails: ['phucbao1992@gmail.com'],
     allowAllEditors: false
@@ -1924,6 +1952,57 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
                 <span className="font-bold">{weatherBadgeText}</span>
               </div>
             </div>
+            {showAccessCodePrompt ? (
+              <div className="inline-flex items-center gap-1 bg-indigo-50 border border-indigo-200 rounded-xl p-1">
+                <input
+                  type="password"
+                  value={accessCodeInputVal}
+                  onChange={(e) => setAccessCodeInputVal(e.target.value)}
+                  placeholder="Nhập mã cấp quyền..."
+                  className="px-2.5 py-1.5 text-xs bg-white border border-indigo-200 rounded-lg font-mono font-bold text-indigo-900 w-36 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const clean = accessCodeInputVal.trim();
+                    if (!clean) return;
+                    localStorage.setItem('c10_active_access_code', clean);
+                    if (canUserEditDailyReport()) {
+                      setCanEdit(true);
+                      setShowAccessCodePrompt(false);
+                      setAccessCodeInputVal('');
+                      showToast('Đã mở khóa quyền lập & chỉnh sửa Báo cáo ngày!');
+                    } else {
+                      localStorage.removeItem('c10_active_access_code');
+                      showToast('Mã cấp quyền không đúng hoặc chưa được cấp quyền Báo cáo ngày!');
+                    }
+                  }}
+                  className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg cursor-pointer"
+                >
+                  Mở khóa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAccessCodePrompt(false);
+                    setAccessCodeInputVal('');
+                  }}
+                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowAccessCodePrompt(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-xs cursor-pointer transition-all shrink-0"
+                title="Nhập mã do Admin cấp để mở quyền chỉnh sửa Báo cáo ngày"
+              >
+                <Lock className="w-3.5 h-3.5 text-indigo-600" />
+                <span>🔑 Nhập mã quyền hạn</span>
+              </button>
+            )}
           </div>
         </div>
       )}
