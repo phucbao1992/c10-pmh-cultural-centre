@@ -595,9 +595,10 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
         try {
           for (let i = 0; i < pageElements.length; i++) {
             const pageEl = pageElements[i];
-            const isLandscape = false;
+            const isLandscape = pageEl.classList.contains('c10-a4-sheet-landscape');
 
             const clone = pageEl.cloneNode(true) as HTMLElement;
+            clone.querySelectorAll('.no-print').forEach((el) => el.remove());
             clone.style.margin = '0';
             clone.style.boxShadow = 'none';
             clone.style.boxSizing = 'border-box';
@@ -1065,6 +1066,10 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
           size: A4 portrait;
           margin: 8mm 9mm;
         }
+        @page c10-landscape-page {
+          size: A4 landscape;
+          margin: 8mm 9mm;
+        }
         body > div > img {
           display: inline-block !important;
         }
@@ -1091,8 +1096,7 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
           #c10-printable-a4-sheet, #c10-printable-a4-sheet * {
             visibility: visible !important;
           }
-          .c10-a4-sheet, .c10-a4-page, .a4-page-portrait,
-          .c10-a4-sheet-landscape, .a4-page-landscape {
+          .c10-a4-sheet, .c10-a4-page, .a4-page-portrait {
             box-shadow: none !important;
             margin: 0 auto !important;
             width: 100% !important;
@@ -1110,6 +1114,58 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
+          .c10-a4-sheet-landscape, .a4-page-landscape {
+            page: c10-landscape-page !important;
+            box-shadow: none !important;
+            margin: 0 auto !important;
+            width: 100% !important;
+            max-width: 277mm !important;
+            height: 190mm !important;
+            min-height: 190mm !important;
+            max-height: 190mm !important;
+            padding: 2mm 3mm !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+            page-break-after: always !important;
+            break-after: page !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .c10-a4-sheet:last-child, .c10-a4-page:last-child {
+            page-break-after: auto !important;
+            break-after: auto !important;
+          }
+        }
+        .c10-a4-sheet, .a4-page-portrait {
+          background: #fff;
+          color: #000;
+          font-family: "Times New Roman", Times, serif;
+          font-size: 9.5pt;
+          width: 794px;
+          height: 1123px;
+          min-height: 1123px;
+          padding: 38px 45px 38px 45px;
+          box-sizing: border-box;
+          overflow: hidden;
+          margin: 0 auto 24px auto;
+          box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+          line-height: 1.35;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          position: relative;
+        }
+        .c10-a4-sheet-landscape, .a4-page-landscape {
+          width: 1123px !important;
+          height: 794px !important;
+          min-height: 794px !important;
+          max-width: 1123px !important;
+          padding: 32px 42px 32px 42px !important;
+          box-sizing: border-box !important;
+          overflow: hidden !important;
+        }
           .c10-a4-sheet:last-child, .c10-a4-page:last-child {
             page-break-after: auto !important;
             break-after: auto !important;
