@@ -72,18 +72,22 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handlePasswordSuccess = () => {
     setIsPasswordModalOpen(false);
-    setIsLayer2AuthenticatedLocal(true);
+    const isAdminUser =
+      localStorage.getItem('is_admin') === 'true' &&
+      localStorage.getItem('c10_admin_unlocked') === 'true';
+    setIsLayer2AuthenticatedLocal(isAdminUser);
     if (setIsLayer2AuthenticatedProp) {
-      setIsLayer2AuthenticatedProp(true);
+      setIsLayer2AuthenticatedProp(isAdminUser);
     }
     localStorage.removeItem('c10_guest_mode');
-    localStorage.setItem('layer2-auth', 'true');
-    localStorage.setItem('c10_admin_unlocked', 'true');
-    localStorage.setItem('is_admin', 'true');
     window.dispatchEvent(new Event('c10-auth-changed'));
     if (pendingTab) {
-      setActiveTab(pendingTab);
-      setPendingTab(null);
+      if (pendingTab === Tab.ADMIN && !isAdminUser) {
+        setPendingTab(null);
+      } else {
+        setActiveTab(pendingTab);
+        setPendingTab(null);
+      }
     }
   };
 

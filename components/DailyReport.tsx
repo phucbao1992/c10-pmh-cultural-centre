@@ -1966,16 +1966,20 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
                   onClick={() => {
                     const clean = accessCodeInputVal.trim();
                     if (!clean) return;
-                    localStorage.setItem('c10_active_access_code', clean);
-                    if (canUserEditDailyReport()) {
-                      setCanEdit(true);
-                      setShowAccessCodePrompt(false);
-                      setAccessCodeInputVal('');
-                      showToast('Đã mở khóa quyền lập & chỉnh sửa Báo cáo ngày!');
-                    } else {
-                      localStorage.removeItem('c10_active_access_code');
-                      showToast('Mã cấp quyền không đúng hoặc chưa được cấp quyền Báo cáo ngày!');
-                    }
+                    showToast('Đang xác thực mã quyền hạn từ Cloud...');
+                    Promise.all([loadDailyReportPermissions(), typeof loadUserPermissions === 'function' ? loadUserPermissions() : Promise.resolve()]).finally(() => {
+                      localStorage.setItem('c10_active_access_code', clean);
+                      const codeRes = typeof verifyAndActivateAccessCode === 'function' ? verifyAndActivateAccessCode(clean) : { success: false };
+                      if (codeRes.success || canUserEditDailyReport() || (typeof checkUserTabPermission === 'function' && checkUserTabPermission(undefined, 'dailyReport'))) {
+                        setCanEdit(true);
+                        setShowAccessCodePrompt(false);
+                        setAccessCodeInputVal('');
+                        showToast('Đã mở khóa quyền lập & chỉnh sửa Báo cáo ngày!');
+                      } else {
+                        localStorage.removeItem('c10_active_access_code');
+                        showToast('Mã cấp quyền không đúng hoặc chưa được cấp quyền Báo cáo ngày!');
+                      }
+                    });
                   }}
                   className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg cursor-pointer"
                 >

@@ -3,7 +3,8 @@ import { X, AlertCircle, RefreshCw, ShieldCheck, Key, Lock, Eye, EyeOff, CheckCi
 import { Language } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { ADMIN_BACKUP_PASSCODE, signInAsAdminWithGoogle } from '../services/firebase';
-import { verifyAndActivateAccessCode, loadUserPermissions } from '../services/userPermissionsService';
+import { verifyAndActivateAccessCodeAsync, loadUserPermissions } from '../services/userPermissionsService';
+import { loadDailyReportPermissions } from '../services/dailyReportService';
 
 interface PasswordProtectionProps {
   isOpen: boolean;
@@ -78,13 +79,13 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({ isOpen, onClose
       return;
     }
 
-    // 2. Đồng bộ danh sách mã phân quyền mới nhất từ Cloud trước khi kiểm tra
+    // 2. Đồng bộ danh sách mã phân quyền mới nhất từ Cloud trước khi kiểm tra (cả 2 bảng user_permissions và daily_report_permissions)
     try {
-      await loadUserPermissions();
+      await Promise.all([loadUserPermissions(), loadDailyReportPermissions()]);
     } catch {}
 
     // 3. Kiểm tra nếu là Mã cấp quyền theo từng Tab (Access Code do Admin cấp)
-    const codeResult = verifyAndActivateAccessCode(clean);
+    const codeResult = await verifyAndActivateAccessCodeAsync(clean);
     if (codeResult.success) {
       setErrorMessage(null);
       setPasscodeInput('');
@@ -97,8 +98,8 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({ isOpen, onClose
       setSuccessMessage(codeResult.message);
       setTimeout(() => {
         setSuccessMessage(null);
-        onClose();
-      }, 900);
+        onSuccess();
+      }, 700);
       return;
     }
 

@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import firebaseConfig from '../firebase-applet-config.json';
 
@@ -41,14 +41,57 @@ export async function signInAsAdminWithGoogle(): Promise<{
       return { success: true, email, role: 'ADMIN' };
     }
 
-    // 2. Kiểm tra nếu là thành viên đã được phân quyền
+    // 2. Kiểm tra nếu là thành viên đã được phân quyền (truy vấn trực tiếp Cloud Firestore trước để đồng bộ sang mọi máy & trình duyệt Edge)
     try {
-      // Import động hoặc lấy từ storage/Firestore
-      const raw = localStorage.getItem('c10_user_permissions_v1');
-      const permissionsList = raw ? JSON.parse(raw) : [];
-      const isAuthorized = Array.isArray(permissionsList) && permissionsList.some(
-        (u: any) => (u?.email || '').trim().toLowerCase() === email
-      );
+      let isAuthorized = false;
+
+      if (db) {
+        const [upSnap, drSnap] = await Promise.all([
+          getDoc(doc(db, 'c10', 'user_permissions')).catch(() => null),
+          getDoc(doc(db, 'c10', 'daily_report_permissions')).catch(() => null)
+        ]);
+
+        if (upSnap && upSnap.exists()) {
+          const upData = upSnap.data();
+          if (upData && Array.isArray(upData.users)) {
+            localStorage.setItem('c10_user_permissions_v1', JSON.stringify(upData.users));
+            if (upData.users.some((u: any) => (u?.email || '').trim().toLowerCase() === email)) {
+              isAuthorized = true;
+            }
+          }
+        }
+
+        if (drSnap && drSnap.exists()) {
+          const drData = drSnap.data();
+          if (drData && Array.isArray(drData.authorizedEmails)) {
+            localStorage.setItem(
+              'c10_daily_report_permissions_v1',
+              JSON.stringify({
+                authorizedEmails: drData.authorizedEmails,
+                allowAllEditors: Boolean(drData.allowAllEditors),
+                updatedAt: drData.updatedAt || new Date().toISOString()
+              })
+            );
+            if (
+              drData.allowAllEditors === true ||
+              drData.authorizedEmails.some((e: string) => (e || '').trim().toLowerCase() === email)
+            ) {
+              isAuthorized = true;
+            }
+          }
+        }
+      }
+
+      if (!isAuthorized) {
+        const raw = localStorage.getItem('c10_user_permissions_v1');
+        const permissionsList = raw ? JSON.parse(raw) : [];
+        if (
+          Array.isArray(permissionsList) &&
+          permissionsList.some((u: any) => (u?.email || '').trim().toLowerCase() === email)
+        ) {
+          isAuthorized = true;
+        }
+      }
 
       if (isAuthorized) {
         localStorage.setItem('c10_user_email', email);
@@ -56,6 +99,7 @@ export async function signInAsAdminWithGoogle(): Promise<{
         localStorage.removeItem('is_admin');
         localStorage.removeItem('c10_admin_unlocked');
         localStorage.removeItem('c10_guest_mode');
+        localStorage.removeItem('c10_preview_as_viewer');
         window.dispatchEvent(new Event('c10-auth-changed'));
         return { success: true, email, role: 'EDITOR' };
       }

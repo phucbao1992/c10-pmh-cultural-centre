@@ -579,7 +579,58 @@ export const loadDailyReportPermissions = async (): Promise<DailyReportPermissio
   };
 
   try {
-    // 1. Đọc từ localStorage trước
+    // 1. Luôn ưu tiên đọc bản mới nhất từ Cloud Firestore trước để đồng bộ tức thì sang máy khác / trình duyệt Edge
+    if (db) {
+      const [drSnap, upSnap] = await Promise.all([
+        getDoc(doc(db, 'c10', DAILY_REPORT_DOC_PERMISSIONS)).catch(() => null),
+        getDoc(doc(db, 'c10', 'user_permissions')).catch(() => null)
+      ]);
+
+      const mergedSet = new Set<string>(['phucbao1992@gmail.com']);
+      let allowAll = false;
+      let updatedAt: string | undefined = undefined;
+
+      if (drSnap && drSnap.exists()) {
+        const data = drSnap.data();
+        if (data) {
+          allowAll = Boolean(data.allowAllEditors);
+          updatedAt = data.updatedAt;
+          if (Array.isArray(data.authorizedEmails)) {
+            data.authorizedEmails.forEach((e: string) => {
+              const clean = (e || '').trim().toLowerCase();
+              if (clean) mergedSet.add(clean);
+            });
+          }
+        }
+      }
+
+      // Gộp thêm các email và mã cấp quyền có bật dailyReport từ bảng user_permissions trên Cloud
+      if (upSnap && upSnap.exists()) {
+        const upData = upSnap.data();
+        if (upData && Array.isArray(upData.users)) {
+          upData.users.forEach((u: any) => {
+            if (u?.roles?.dailyReport) {
+              const em = (u.email || '').trim().toLowerCase();
+              const cd = (u.accessCode || '').trim().toLowerCase();
+              if (em) mergedSet.add(em);
+              if (cd) mergedSet.add(cd);
+            }
+          });
+        }
+      }
+
+      if ((drSnap && drSnap.exists()) || (upSnap && upSnap.exists())) {
+        const cloudPerms: DailyReportPermissions = {
+          authorizedEmails: Array.from(mergedSet),
+          allowAllEditors: allowAll,
+          updatedAt: updatedAt || new Date().toISOString()
+        };
+        localStorage.setItem(STORAGE_KEY_PERMISSIONS, JSON.stringify(cloudPerms));
+        return cloudPerms;
+      }
+    }
+
+    // 2. Dự phòng đọc từ localStorage nếu mất mạng
     const localRaw = localStorage.getItem(STORAGE_KEY_PERMISSIONS);
     if (localRaw) {
       const parsed = JSON.parse(localRaw);
@@ -587,34 +638,42 @@ export const loadDailyReportPermissions = async (): Promise<DailyReportPermissio
         return parsed;
       }
     }
-
-    // 2. Đọc từ Cloud Firestore
-    if (db) {
-      const snap = await getDoc(doc(db, 'c10', DAILY_REPORT_DOC_PERMISSIONS));
-      if (snap.exists()) {
-        const data = snap.data();
-        if (data && Array.isArray(data.authorizedEmails)) {
-          const cloudPerms: DailyReportPermissions = {
-            authorizedEmails: data.authorizedEmails,
-            allowAllEditors: Boolean(data.allowAllEditors),
-            updatedAt: data.updatedAt
-          };
-          localStorage.setItem(STORAGE_KEY_PERMISSIONS, JSON.stringify(cloudPerms));
-          return cloudPerms;
-        }
-      }
-    }
   } catch {}
 
   return defaultPerms;
+};
+
+export const subscribeDailyReportPermissions = (
+  onUpdate: (perms: DailyReportPermissions) => void
+): (() => void) => {
+  if (!db) return () => {};
+  try {
+    const unsub = onSnapshot(
+      doc(db, 'c10', DAILY_REPORT_DOC_PERMISSIONS),
+      async () => {
+        const latest = await loadDailyReportPermissions();
+        onUpdate(latest);
+      },
+      () => {}
+    );
+    return unsub;
+  } catch {
+    return () => {};
+  }
 };
 
 export const saveDailyReportPermissions = async (
   perms: DailyReportPermissions
 ): Promise<boolean> => {
   try {
+    const cleanList = Array.from(
+      new Set([
+        'phucbao1992@gmail.com',
+        ...perms.authorizedEmails.map((e) => (e || '').trim().toLowerCase()).filter(Boolean)
+      ])
+    );
     const payload = {
-      authorizedEmails: perms.authorizedEmails.map((e) => (e || '').trim().toLowerCase()).filter(Boolean),
+      authorizedEmails: cleanList,
       allowAllEditors: Boolean(perms.allowAllEditors),
       updatedAt: new Date().toISOString()
     };
@@ -630,19 +689,14 @@ export const saveDailyReportPermissions = async (
   }
 };
 
-/**
- * Kiểm tra xem người dùng/máy hiện tại có quyền Lập & Xuất báo cáo ngày hay không
- */
 export const canUserEditDailyReport = (userEmail?: string): boolean => {
   if (localStorage.getItem('c10_preview_as_viewer') === 'true') return false;
 
-  // 1. Nếu máy đã mở khoá Admin bằng phucbao1992@gmail.com
   const isAdmin =
     localStorage.getItem('is_admin') === 'true' &&
     localStorage.getItem('c10_admin_unlocked') === 'true';
   if (isAdmin) return true;
 
-  // 2. Kiểm tra email người dùng hoặc Mã cấp quyền đang kích hoạt
   const email = (
     userEmail ||
     localStorage.getItem('c10_user_email') ||
@@ -653,20 +707,38 @@ export const canUserEditDailyReport = (userEmail?: string): boolean => {
 
   if (email === 'phucbao1992@gmail.com') return true;
 
-  // 3. Kiểm tra danh sách được phân quyền
   try {
     const raw = localStorage.getItem(STORAGE_KEY_PERMISSIONS);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed.allowAllEditors === true) return true;
       if (Array.isArray(parsed.authorizedEmails)) {
-        return parsed.authorizedEmails.some((e: string) => {
+        const matchedDr = parsed.authorizedEmails.some((e: string) => {
           const item = (e || '').trim().toLowerCase();
           if (!item) return false;
-          if (email && (item === email || `mã:${item}` === email)) return true;
-          if (activeCode && (item === activeCode || item === `mã:${activeCode}`)) return true;
+          if (email && (item === email || `mã:${item}` === email || item === `mã:${email}`)) return true;
+          if (activeCode && (item === activeCode || item === `mã:${activeCode}` || `mã:${item}` === activeCode)) return true;
           return false;
         });
+        if (matchedDr) return true;
+      }
+    }
+  } catch {}
+
+  try {
+    const upRaw = localStorage.getItem('c10_user_permissions_v1');
+    if (upRaw) {
+      const users = JSON.parse(upRaw);
+      if (Array.isArray(users)) {
+        const matchedUp = users.some((u: any) => {
+          if (!u?.roles?.dailyReport) return false;
+          const uEmail = (u.email || '').trim().toLowerCase();
+          const uCode = (u.accessCode || '').trim().toLowerCase();
+          if (email && (uEmail === email || (uCode && `mã:${uCode}` === email) || (uCode && uCode === email))) return true;
+          if (activeCode && (uCode === activeCode || uEmail === `mã:${activeCode}` || uEmail === activeCode)) return true;
+          return false;
+        });
+        if (matchedUp) return true;
       }
     }
   } catch {}
