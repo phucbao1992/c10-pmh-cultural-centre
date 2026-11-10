@@ -574,7 +574,7 @@ export const fetchDailyReportByDateKey = async (
  */
 export const loadDailyReportPermissions = async (): Promise<DailyReportPermissions> => {
   const defaultPerms: DailyReportPermissions = {
-    authorizedEmails: ['phucbao1992@gmail.com'],
+    authorizedEmails: ['phucbao1992@gmail.com', 'c10-cb9i'],
     allowAllEditors: false
   };
 
@@ -586,7 +586,7 @@ export const loadDailyReportPermissions = async (): Promise<DailyReportPermissio
         getDoc(doc(db, 'c10', 'user_permissions')).catch(() => null)
       ]);
 
-      const mergedSet = new Set<string>(['phucbao1992@gmail.com']);
+      const mergedSet = new Set<string>(['phucbao1992@gmail.com', 'c10-cb9i']);
       let allowAll = false;
       let updatedAt: string | undefined = undefined;
 
@@ -706,6 +706,7 @@ export const canUserEditDailyReport = (userEmail?: string): boolean => {
   const activeCode = (localStorage.getItem('c10_active_access_code') || '').trim().toLowerCase();
 
   if (email === 'phucbao1992@gmail.com') return true;
+  if (activeCode === 'c10-cb9i' || activeCode === 'bcn2026' || email === 'mã:c10-cb9i' || email === 'c10-cb9i') return true;
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY_PERMISSIONS);

@@ -71,6 +71,7 @@ import {
   TabPermissions,
   AVAILABLE_TABS,
   DEFAULT_TAB_PERMISSIONS,
+  generateSmartAccessCode,
   loadUserPermissions,
   saveUserPermissions,
   subscribeUserPermissions
@@ -190,7 +191,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   }, []);
 
   const handleToggleNewMemberRole = (roleKey: TabPermissionKey) => {
-    setNewMemberRoles(prev => ({ ...prev, [roleKey]: !prev[roleKey] }));
+    setNewMemberRoles((prev) => {
+      const next = { ...prev, [roleKey]: !prev[roleKey] };
+      if (newMemberAccessCode.startsWith('C10-')) {
+        setNewMemberAccessCode(generateSmartAccessCode(next));
+      }
+      return next;
+    });
   };
 
   const handleAddUserPermission = async (e: React.FormEvent) => {
@@ -1115,8 +1122,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        const rand = 'C10-' + Math.random().toString(36).substring(2, 6).toUpperCase();
-                        setNewMemberAccessCode(rand);
+                        setNewMemberAccessCode(generateSmartAccessCode(newMemberRoles));
                       }}
                       className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
                     >
