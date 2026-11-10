@@ -349,26 +349,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
   }, []);
 
-  // Compute Submittal totals
-  const submittalMetrics = useMemo(() => {
-    if (!submittalData) return { approved: 0, unapproved: 0, total: 0, delayed: 0 };
-    const categories = [
-      submittalData.ds, submittalData.sd, submittalData.ma, submittalData.mos,
-      submittalData.ots, submittalData.dsMep, submittalData.sdMep,
-      submittalData.matMep, submittalData.mosMep, submittalData.rfi
-    ].filter(Boolean);
-
-    let approved = 0, unapproved = 0, total = 0, delayed = 0;
-    categories.forEach(item => {
-      approved += item.approved || 0;
-      unapproved += item.unapproved || 0;
-      total += item.total || 0;
-      delayed += item.delayedDocuments ? item.delayedDocuments.length : 0;
-    });
-
-    return { approved, unapproved, total, delayed };
-  }, [submittalData]);
-
   // Delayed days count from latest weekly progress
   const delayedDays = useMemo(() => {
     if (!sheetData?.schedule?.weeklyProgress || sheetData.schedule.weeklyProgress.length === 0) return 0;
