@@ -6661,6 +6661,112 @@ export const saveAutoSyncConfig = (cfg: AutoSyncConfig) => {
   } catch {}
 };
 
+export interface LiveSubmittalDashboardStats {
+  total: number;
+  approved: number;
+  unapproved: number;
+  delayed: number;
+  tvgsDelayCount: number;
+  cdtDelayCount: number;
+  contractorDelayCount: number;
+  approvalRate: number;
+}
+
+export const computeLiveSubmittalDashboardStats = (
+  recordsInput?: MasterSubmittalRecord[],
+  cfgInput?: SubmittalFilterConfig
+): LiveSubmittalDashboardStats => {
+  const records = recordsInput || loadLocalMasterSubmittals();
+  const filterCfg = cfgInput || loadSubmittalFilterConfig();
+  const parseDateMs = (dateStr?: string): number | null => {
+    if (!dateStr) return null;
+    const raw = String(dateStr).trim();
+    if (!raw) return null;
+    if (raw.includes('/')) {
+      const parts = raw.split('/');
+      if (parts.length === 3) {
+        const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+        const parsed = new Date(`${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`).getTime();
+        return isNaN(parsed) ? null : parsed;
+      }
+    }
+    const parsed = new Date(raw).getTime();
+    return isNaN(parsed) ? null : parsed;
+  };
+
+  let tvgsDelayCount = 0;
+  let cdtDelayCount = 0;
+  let contractorDelayCount = 0;
+  const nowMs = Date.now();
+
+  records.forEach((rec) => {
+    if (rec.category === 'inspection_moa') {
+      if (rec.finalStatus === 'PENDING') {
+        const moaDateStr = rec.submissionDate || rec.acceptanceDate || rec.clientDate;
+        const moaSubMs = parseDateMs(moaDateStr);
+        if (moaSubMs !== null) {
+          const diffMoaDays = Math.floor((nowMs - moaSubMs) / (1000 * 3600 * 24));
+          if (diffMoaDays > 15) {
+            cdtDelayCount++;
+          }
+        }
+      }
+      return;
+    }
+
+    const subMs = parseDateMs(rec.submissionDate);
+    if (subMs === null) return;
+
+    const planMs = parseDateMs(rec.plannedDate);
+    let isContractorLate = false;
+    if (planMs !== null && subMs > planMs) {
+      const diff = Math.floor((subMs - planMs) / (1000 * 3600 * 24));
+      if (diff > 0) isContractorLate = true;
+    } else if (rec.notes && rec.notes.toLowerCase().includes('chậm trình')) {
+      isContractorLate = true;
+    }
+    if (isContractorLate) contractorDelayCount++;
+
+    if (rec.finalStatus !== 'PENDING') return;
+
+    const tvgsApproved = isApprovedStatusText(rec.tvgsStatus) || isApprovedStatusText(rec.tvgsCode);
+    const cdtApproved = isApprovedStatusText(rec.clientStatus) || isApprovedStatusText(rec.clientCode);
+
+    const cdtSubmitMs = parseDateMs(rec.clientDate);
+    if (cdtSubmitMs !== null && !cdtApproved) {
+      const diffCdtDays = Math.floor((nowMs - cdtSubmitMs) / (1000 * 3600 * 24));
+      if (diffCdtDays > filterCfg.cdtLimitDays) {
+        cdtDelayCount++;
+        return;
+      }
+    }
+
+    if (!tvgsApproved) {
+      const diffTvgsDays = Math.floor((nowMs - subMs) / (1000 * 3600 * 24));
+      if (diffTvgsDays > filterCfg.tvgsLimitDays) {
+        tvgsDelayCount++;
+      }
+    }
+  });
+
+  const total = records.length;
+  const approved = records.filter((r) => r.finalStatus === 'APPROVED').length;
+  const unapproved = records.filter((r) => r.finalStatus === 'PENDING').length;
+  const delayed = tvgsDelayCount + cdtDelayCount;
+  const approvalRate = total > 0 ? Math.round((approved / total) * 100) : 0;
+
+  return {
+    total,
+    approved,
+    unapproved,
+    delayed,
+    tvgsDelayCount,
+    cdtDelayCount,
+    contractorDelayCount,
+    approvalRate
+  };
+};
+
 export const Submittal: React.FC<SubmittalProps> = ({
   data,
   loading: parentLoading,
