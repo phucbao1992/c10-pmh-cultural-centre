@@ -6149,7 +6149,26 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
 
 
 
-export const LOCAL_STORAGE_KEY_MASTER_SUBMITTALS = 'c10_master_submittals_v4';
+export const LOCAL_STORAGE_KEY_MASTER_SUBMITTALS = 'c10_master_submittals_v5';
+const MOA_EMPTY_STATUS_CODES = new Set([
+  'C10-MC1-DTA-MOA-W-CP-007',
+  'C10-MC1-DTA-MOA-W-CP-008',
+  'C10-MC1-DTA-MOA-W-CP-009',
+  'C10-MC1-DTA-MOA-W-SS-001',
+  'C10-MC1-DTA-MOA-W-SS-002',
+  'C10-MC1-DTA-MOA-W-SS-003',
+  'C10-MC1-DTA-MOA-W-SS-004'
+]);
+DEFAULT_MASTER_SUBMITTALS.forEach((r) => {
+  if (r.category === 'inspection_moa') {
+    const c = String(r.code || '').trim().toUpperCase();
+    if (MOA_EMPTY_STATUS_CODES.has(c)) {
+      r.clientStatus = '';
+      r.submissionDate = '';
+      r.finalStatus = 'NOT_STARTED';
+    }
+  }
+});
 
 export const normalizeSubmittalCategory = (cat: string): SubmittalCategoryKey => {
   const c = String(cat || '').trim().toLowerCase();
@@ -6199,6 +6218,13 @@ export const isApprovedStatusText = (str?: string): boolean => {
 export const computeNormalizedFinalStatus = (rec: Partial<MasterSubmittalRecord>): MasterSubmittalRecord['finalStatus'] => {
   const cat = normalizeSubmittalCategory(String(rec.category || 'ots'));
   if (cat === 'concrete' || cat === 'material_import') return 'APPROVED';
+  if (cat === 'inspection_moa') {
+    const moaStatus = String(rec.clientStatus ?? '').trim();
+    if (!moaStatus) return 'NOT_STARTED';
+    if (isRejectedStatusText(moaStatus)) return 'REJECTED';
+    if (isApprovedStatusText(moaStatus)) return 'APPROVED';
+    return 'PENDING';
+  }
   if (
     isRejectedStatusText(rec.clientStatus) ||
     isRejectedStatusText(rec.clientCode) ||
@@ -6212,7 +6238,7 @@ export const computeNormalizedFinalStatus = (rec: Partial<MasterSubmittalRecord>
   if (isApprovedStatusText(rec.clientStatus) || isApprovedStatusText(rec.clientCode)) {
     return 'APPROVED';
   }
-  if ((cat === 'hse' || cat === 'inspection_moa') && !rec.clientStatus && !rec.clientCode) {
+  if (cat === 'hse' && !rec.clientStatus && !rec.clientCode) {
     if (isApprovedStatusText(rec.tvgsStatus) || isApprovedStatusText(rec.tvgsCode)) {
       return 'APPROVED';
     }
@@ -6231,30 +6257,39 @@ export const normalizeMasterSubmittalsList = (records: MasterSubmittalRecord[]):
     .filter((r) => {
       const code = String(r.code || '').trim();
       if (!code || code === 'MẪU VẬT LIỆU' || code === 'STT' || code === 'CODE') return false;
-      // Loại bỏ các mục chưa có ngày đệ trình thực tế
       const def = defaultRecordByCodeMap.get(code.toUpperCase());
+      const cat = normalizeSubmittalCategory(r.category || def?.category || 'ots');
+      if (cat === 'inspection_moa') return true;
+      // Loại bỏ các mục chưa có ngày đệ trình thực tế
       const subDate = r.submissionDate || def?.submissionDate || r.acceptanceDate;
       return Boolean(subDate && String(subDate).trim());
     })
     .map((r) => {
       const codeKey = String(r.code || '').trim().toUpperCase();
       const def = defaultRecordByCodeMap.get(codeKey);
+      const isMoa = (r.category === 'inspection_moa' || def?.category === 'inspection_moa');
       const merged: MasterSubmittalRecord = {
         ...(def || {}),
         ...r,
         category: normalizeSubmittalCategory(r.category || def?.category || 'ots'),
-        submissionDate: r.submissionDate || def?.submissionDate || r.acceptanceDate,
+        submissionDate: isMoa ? (r.submissionDate !== undefined ? r.submissionDate : (def?.submissionDate || '')) : (r.submissionDate || def?.submissionDate || r.acceptanceDate || ''),
         plannedDate: r.plannedDate || def?.plannedDate,
         tvgsStatus: r.tvgsStatus !== undefined && r.tvgsStatus !== '' ? r.tvgsStatus : (def?.tvgsStatus || ''),
         tvgsDate: r.tvgsDate || def?.tvgsDate || '',
         tvgsCode: r.tvgsCode || def?.tvgsCode || '',
-        clientStatus: r.clientStatus !== undefined && r.clientStatus !== '' ? r.clientStatus : (def?.clientStatus || ''),
+        clientStatus: isMoa ? (r.clientStatus !== undefined ? r.clientStatus : (def?.clientStatus || '')) : (r.clientStatus !== undefined && r.clientStatus !== '' ? r.clientStatus : (def?.clientStatus || '')),
         clientDate: r.clientDate || def?.clientDate || '',
         clientCode: r.clientCode || def?.clientCode || '',
         linkUrl: r.linkUrl || def?.linkUrl,
         notes: r.notes || def?.notes,
         finalStatus: 'PENDING'
       };
+      if (isMoa && MOA_EMPTY_STATUS_CODES.has(codeKey)) {
+        if (!r.clientStatus || r.clientStatus === r.tvgsStatus) {
+          merged.clientStatus = '';
+          merged.submissionDate = '';
+        }
+      }
       // Nếu def đã được đánh dấu Đã thay thế (Đóng) do có bản Rev mới hơn thì giữ trạng thái REJECTED (Đã đóng)
       if (def?.finalStatus === 'REJECTED' && String(def.clientStatus || '').includes('Đã thay thế')) {
         merged.finalStatus = 'REJECTED';
@@ -6339,6 +6374,7 @@ export const saveSubmittalsToFirestore = async (records: MasterSubmittalRecord[]
     const docRef = doc(db, 'c10', 'master_submittals');
     await setDoc(docRef, {
       records: normalized,
+      schemaVersion: 5,
       updatedAt: new Date().toISOString(),
       updatedBy: localStorage.getItem('c10_user_email') || 'Admin'
     }, { merge: true });
@@ -6524,9 +6560,48 @@ export const syncFromGoogleSheet = async (): Promise<{ success: boolean; count: 
     }
 
     if (syncedStandardRecords.length > 0) {
-      // Giữ lại các phân hệ đặc thù (Bê tông, Vật tư nhập, MOA) hoặc hợp nhất cùng dữ liệu mới quét
+      // 3. Quét động các sheet Biên bản Nghiệm thu MOA (18. MOA-M & 19. MOA-W)
+      const moaConfigs = [
+        { sheetName: '18. MOA-M', moaType: 'MOA-M' as const, linkCol: 9 },
+        { sheetName: '19. MOA-W', moaType: 'MOA-W' as const, linkCol: 11 }
+      ];
+      for (const mCfg of moaConfigs) {
+        const rows = await fetchSheetRows(mCfg.sheetName);
+        rows.forEach((row, rIdx) => {
+          const code = getGvizStr(row, 2);
+          if (!code || code.length < 3 || code === 'STT' || code.startsWith('HỒ SƠ') || code.startsWith('CODE') || code === '0') return;
+          const title = getGvizStr(row, 1).replace(/\r/g, '').replace(/\n+/g, ' ');
+          const acceptanceDate = parseGvizDateToISO(row?.c?.[3]);
+          const tvgsStatus = getGvizStr(row, 4);
+          const submissionDate = parseGvizDateToISO(row?.c?.[5]);
+          const clientStatus = getGvizStr(row, 6);
+          const link = getGvizStr(row, mCfg.linkCol);
+
+          const prev = existingByCode.get(code.toUpperCase());
+          const rec: MasterSubmittalRecord = {
+            id: prev?.id || `moa-${mCfg.moaType}-${rIdx + 1}`,
+            category: 'inspection_moa',
+            stt: rIdx + 1,
+            code,
+            title: title || code,
+            acceptanceDate: acceptanceDate || '',
+            tvgsStatus: tvgsStatus || '',
+            submissionDate: submissionDate || '',
+            clientStatus: clientStatus || '',
+            linkUrl: link || prev?.linkUrl || '',
+            moaType: mCfg.moaType,
+            volumeNo: prev?.volumeNo || '',
+            finalStatus: 'NOT_STARTED'
+          };
+          rec.finalStatus = computeNormalizedFinalStatus(rec);
+          syncedStandardRecords.push(rec);
+        });
+      }
+
+      // Giữ lại các phân hệ đặc thù (Bê tông, Vật tư nhập) và các MOA chưa có trong Sheet
+      const syncedCodes = new Set(syncedStandardRecords.map(r => String(r.code || '').trim().toUpperCase()));
       const specialRecords = existingRecords.filter(r =>
-        r.category === 'concrete' || r.category === 'material_import' || r.category === 'inspection_moa'
+        r.category === 'concrete' || r.category === 'material_import' || (r.category === 'inspection_moa' && !syncedCodes.has(String(r.code || '').trim().toUpperCase()))
       );
       const combined = normalizeMasterSubmittalsList([...syncedStandardRecords, ...specialRecords]);
       await saveSubmittalsToFirestore(combined);
@@ -6596,7 +6671,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
   const [masterRecords, setMasterRecords] = useState<MasterSubmittalRecord[]>(loadLocalMasterSubmittals);
   const [selectedCategory, setSelectedCategory] = useState<SubmittalCategoryKey | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'APPROVED' | 'PENDING' | 'REJECTED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'APPROVED' | 'PENDING' | 'REJECTED' | 'NOT_STARTED' | 'MOA_OVERDUE'>('ALL');
   const [filterConfig, setFilterConfig] = useState<SubmittalFilterConfig>(loadSubmittalFilterConfig);
   const [delayFilter, setDelayFilter] = useState<'ALL' | 'OVERDUE_ALL' | 'TVGS_DELAY' | 'CDT_DELAY' | 'CONTRACTOR_DELAY'>(() => loadSubmittalFilterConfig().defaultDelayFilter || 'ALL');
   const [showFilterConfigModal, setShowFilterConfigModal] = useState<boolean>(false);
@@ -6687,7 +6762,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
       return;
     }
     const res = verifyAndActivateAccessCode(code);
-    if (res.success && (res.item?.permissions.submittal || res.item?.permissions.dailyReport)) {
+    if (res.success && (res.item?.roles?.submittal || res.item?.roles?.dailyReport)) {
       localStorage.removeItem('c10_preview_as_viewer');
       setCanEdit(true);
       setShowQuickCodeInput(false);
@@ -6789,6 +6864,27 @@ export const Submittal: React.FC<SubmittalProps> = ({
     delayBadgeText: string;
     delayDetailText: string;
   } => {
+    if (rec.category === 'inspection_moa') {
+      if (rec.finalStatus !== 'PENDING') {
+        return { delayType: 'NONE', isContractorLate: false, contractorLateDays: 0, overdueDays: 0, delayBadgeText: '', delayDetailText: '' };
+      }
+      const moaDateStr = rec.submissionDate || rec.acceptanceDate || rec.clientDate;
+      const moaSubMs = parseSubmittalDateMs(moaDateStr);
+      if (moaSubMs !== null) {
+        const diffMoaDays = Math.floor((Date.now() - moaSubMs) / (1000 * 3600 * 24));
+        if (diffMoaDays > 15) {
+          return {
+            delayType: 'CDT_DELAY',
+            isContractorLate: false,
+            contractorLateDays: 0,
+            overdueDays: diffMoaDays,
+            delayBadgeText: 'Chậm (> 15 ngày)',
+            delayDetailText: `MOA đang trình quá 15 ngày chưa duyệt (${diffMoaDays} ngày kể từ ngày trình ${moaDateStr})`
+          };
+        }
+      }
+      return { delayType: 'NONE', isContractorLate: false, contractorLateDays: 0, overdueDays: 0, delayBadgeText: '', delayDetailText: '' };
+    }
     const subMs = parseSubmittalDateMs(rec.submissionDate);
     if (subMs === null) {
       return {
@@ -6903,6 +6999,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
     const approved = masterRecords.filter(r => r.finalStatus === 'APPROVED').length;
     const pending = masterRecords.filter(r => r.finalStatus === 'PENDING').length;
     const rejected = masterRecords.filter(r => r.finalStatus === 'REJECTED').length;
+    const notStarted = masterRecords.filter(r => r.finalStatus === 'NOT_STARTED').length;
     const approvedPercent = total > 0 ? Math.round((approved / total) * 100) : 0;
 
     let tvgsDelayCount = 0;
@@ -6920,12 +7017,29 @@ export const Submittal: React.FC<SubmittalProps> = ({
       approved,
       pending,
       rejected,
+      notStarted,
       approvedPercent,
       tvgsDelayCount,
       cdtDelayCount,
       contractorDelayCount
     };
   }, [masterRecords, filterConfig]);
+
+  const moaStats = useMemo(() => {
+    const moaRecords = masterRecords.filter(r => r.category === 'inspection_moa');
+    const total = moaRecords.length;
+    const approved = moaRecords.filter(r => r.finalStatus === 'APPROVED').length;
+    const pending = moaRecords.filter(r => r.finalStatus === 'PENDING').length;
+    const notStarted = moaRecords.filter(r => r.finalStatus === 'NOT_STARTED').length;
+    const overdue = moaRecords.filter(r => r.finalStatus === 'PENDING' && isRecordOverdue(r)).length;
+    return {
+      total,
+      approved,
+      pending,
+      notStarted,
+      overdue
+    };
+  }, [masterRecords]);
 
   // 4. Đếm số lượng hồ sơ theo từng danh mục
   const categoryCounts = useMemo(() => {
@@ -6947,6 +7061,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
       const approved = catRecords.filter((r) => r.finalStatus === 'APPROVED').length;
       const closedRejected = catRecords.filter((r) => r.finalStatus === 'REJECTED').length;
       const unapproved = catRecords.filter((r) => r.finalStatus === 'PENDING').length;
+      const notStarted = catRecords.filter((r) => r.finalStatus === 'NOT_STARTED').length;
       const overdueRecords = catRecords.filter(isRecordOverdue);
       const overdue = overdueRecords.length;
       return {
@@ -6955,6 +7070,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
         approved,
         closedRejected,
         unapproved,
+        notStarted,
         overdue,
         overdueRecords
       };
@@ -7573,7 +7689,9 @@ export const Submittal: React.FC<SubmittalProps> = ({
       if (selectedCategory !== 'all' && rec.category !== selectedCategory) {
         return false;
       }
-      if (statusFilter !== 'ALL' && rec.finalStatus !== statusFilter) {
+      if (statusFilter === 'MOA_OVERDUE') {
+        if (rec.finalStatus !== 'PENDING' || !isRecordOverdue(rec)) return false;
+      } else if (statusFilter !== 'ALL' && rec.finalStatus !== statusFilter) {
         return false;
       }
       if (delayFilter !== 'ALL') {
@@ -7626,6 +7744,41 @@ export const Submittal: React.FC<SubmittalProps> = ({
 
   // Render badge trạng thái + ghi chú TVGS chậm / CĐT chậm / Chậm trình do Nhà thầu
   const renderStatusBadge = (rec: MasterSubmittalRecord) => {
+    if (rec.category === 'inspection_moa') {
+      const status = rec.finalStatus;
+      const dInfo = evaluateRecordDelay(rec);
+      return (
+        <div className="flex flex-col items-center gap-1">
+          {status === 'APPROVED' ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>Đã hoàn thành (Đã ký)</span>
+            </span>
+          ) : status === 'PENDING' ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+              <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span>Đang Trình</span>
+            </span>
+          ) : status === 'NOT_STARTED' ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+              <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>Chưa trình</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap">
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+              <span>{rec.clientStatus || 'Từ chối'}</span>
+            </span>
+          )}
+          {dInfo.delayBadgeText && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black border bg-rose-50 text-rose-700 border-rose-300">
+              {dInfo.delayBadgeText}
+            </span>
+          )}
+        </div>
+      );
+    }
+
     const status = rec.finalStatus;
     const dInfo = evaluateRecordDelay(rec);
     return (
@@ -7639,6 +7792,11 @@ export const Submittal: React.FC<SubmittalProps> = ({
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
             <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
             <span>Đang Trình</span>
+          </span>
+        ) : status === 'NOT_STARTED' ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span>Chưa trình</span>
           </span>
         ) : (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-300 whitespace-nowrap" title="Hồ sơ Từ chối hoặc Đã thay thế được tính là Đã đóng">
@@ -8066,33 +8224,59 @@ export const Submittal: React.FC<SubmittalProps> = ({
               {/* Bộ lọc trạng thái CĐT */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-xs font-bold text-slate-400 mr-1 flex items-center gap-1">
-                  <Filter className="w-3.5 h-3.5" /> Trạng thái CĐT:
+                  <Filter className="w-3.5 h-3.5" /> {selectedCategory === 'inspection_moa' ? 'Trạng thái Trình kí MOA:' : 'Trạng thái CĐT:'}
                 </span>
-                {(['ALL', 'APPROVED', 'PENDING', 'REJECTED'] as const).map((st) => {
-                  const label =
-                    st === 'ALL'
-                      ? `Tất cả (${kpiStats.total})`
-                      : st === 'APPROVED'
-                      ? `Đã duyệt (${kpiStats.approved})`
-                      : st === 'PENDING'
-                      ? `Đang trình (${kpiStats.pending})`
-                      : `Từ chối / Đã đóng (${kpiStats.rejected})`;
-                  const isActive = statusFilter === st;
-                  return (
-                    <button
-                      key={st}
-                      type="button"
-                      onClick={() => setStatusFilter(st)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-slate-800 text-white shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
+                {selectedCategory === 'inspection_moa' ? (
+                  ([
+                    { key: 'ALL', label: `Tất cả (${moaStats.total})` },
+                    { key: 'APPROVED', label: `Đã hoàn thành (${moaStats.approved})` },
+                    { key: 'PENDING', label: `Đang trình (${moaStats.pending})` },
+                    { key: 'MOA_OVERDUE', label: `Chậm > 15 ngày (${moaStats.overdue})` },
+                    { key: 'NOT_STARTED', label: `Chưa trình (${moaStats.notStarted})` }
+                  ] as const).map((item) => {
+                    const isActive = statusFilter === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => setStatusFilter(item.key)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-slate-800 text-white shadow-xs'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })
+                ) : (
+                  (['ALL', 'APPROVED', 'PENDING', 'REJECTED'] as const).map((st) => {
+                    const label =
+                      st === 'ALL'
+                        ? `Tất cả (${kpiStats.total})`
+                        : st === 'APPROVED'
+                        ? `Đã duyệt (${kpiStats.approved})`
+                        : st === 'PENDING'
+                        ? `Đang trình (${kpiStats.pending})`
+                        : `Từ chối / Đã đóng (${kpiStats.rejected})`;
+                    const isActive = statusFilter === st;
+                    return (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => setStatusFilter(st)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-slate-800 text-white shadow-xs'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })
+                )}
               </div>
             </div>
 
@@ -8320,9 +8504,10 @@ export const Submittal: React.FC<SubmittalProps> = ({
                       <th className="p-3.5 text-center">Phân loại</th>
                       <th className="p-3.5">Mã biên bản nghiệm thu</th>
                       <th className="p-3.5">Nội dung công tác nghiệm thu</th>
-                      <th className="p-3.5 text-center">Ngày nghiệm thu</th>
+                      <th className="p-3.5 text-center">Checklist NT</th>
+                      <th className="p-3.5 text-center">Ngày trình MOA</th>
                       <th className="p-3.5 text-center">Quyển lưu trữ</th>
-                      <th className="p-3.5 text-center">Trạng thái</th>
+                      <th className="p-3.5 text-center">Trạng thái Trình kí MOA</th>
                       <th className="p-3.5 text-center">Tài liệu đính kèm</th>
                     </tr>
                   </thead>
@@ -8349,7 +8534,17 @@ export const Submittal: React.FC<SubmittalProps> = ({
                             {rec.title}
                           </td>
                           <td className="p-3.5 text-center font-mono text-slate-600">
-                            {rec.acceptanceDate || rec.submissionDate || '-'}
+                            {rec.acceptanceDate ? (
+                              <div className="flex flex-col items-center gap-0.5">
+                                <span>{rec.acceptanceDate}</span>
+                                {rec.tvgsStatus && (
+                                  <span className="text-[10px] font-bold text-slate-500">({rec.tvgsStatus})</span>
+                                )}
+                              </div>
+                            ) : '-'}
+                          </td>
+                          <td className="p-3.5 text-center font-mono text-slate-600">
+                            {rec.submissionDate || '-'}
                           </td>
                           <td className="p-3.5 text-center">
                             <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[11px]">
@@ -8379,7 +8574,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={8} className="p-8 text-center text-slate-400 italic">
+                        <td colSpan={9} className="p-8 text-center text-slate-400 italic">
                           Không tìm thấy biên bản nghiệm thu nào khớp với điều kiện tìm kiếm.
                         </td>
                       </tr>

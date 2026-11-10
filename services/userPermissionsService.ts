@@ -64,6 +64,17 @@ export const BUILTIN_DEFAULT_PERMISSIONS: UserPermissionItem[] = [
     createdAt: '2026-11-10T00:00:00.000Z',
     updatedBy: 'Admin',
   },
+  {
+    email: 'mã:c10-5bmi36',
+    accessCode: 'C10-5BMI36',
+    name: 'Mã (C10-5BMI36)',
+    roles: {
+      ...DEFAULT_TAB_PERMISSIONS,
+      dailyReport: true,
+    },
+    createdAt: '2026-11-10T00:00:00.000Z',
+    updatedBy: 'Admin',
+  },
 ];
 
 export const AVAILABLE_TABS: { key: TabPermissionKey; label: string; shortLabel: string; color: string; bit: number; codeTag: string }[] = [
@@ -302,8 +313,26 @@ export const loadUserPermissions = async (): Promise<UserPermissionItem[]> => {
       }
     }
 
+    // Merge local users so codes created on Edge sync two-way with Firestore c10/user_permissions
+    const localUsers = loadLocalUserPermissions();
+    if (localUsers && localUsers.length > 0) {
+      localUsers.forEach((lu) => {
+        const idx = baseList.findIndex(
+          (u) =>
+            (u.email && lu.email && u.email.trim().toLowerCase() === lu.email.trim().toLowerCase()) ||
+            (lu.accessCode && (u.accessCode || '').trim().toLowerCase() === lu.accessCode.trim().toLowerCase())
+        );
+        if (idx === -1) {
+          baseList.push(lu);
+        } else {
+          baseList[idx] = { ...baseList[idx], ...lu, roles: { ...baseList[idx].roles, ...lu.roles } };
+        }
+      });
+    }
+
     const sanitized = sanitizePermissionsList(baseList);
     saveLocalUserPermissions(sanitized);
+    saveUserPermissions(sanitized).catch(() => {});
     return sanitized;
   } catch (err) {
     console.warn('Cannot load user permissions from Cloud, using local cache:', err);
@@ -454,6 +483,7 @@ export const verifyAndActivateAccessCode = (
         updatedBy: 'SmartCode',
       };
       saveLocalUserPermissions([...users, matched]);
+      saveUserPermissions([...users, matched]).catch(() => {});
     }
   }
 
@@ -530,9 +560,10 @@ export const verifyAndActivateAccessCodeAsync = async (
 };
 
 // Kiểm tra quyền thao tác trên một tab cụ thể (hỗ trợ cả Email, Access Code và Smart Code)
+const VALID_TAB_KEY_SET = new Set<string>(AVAILABLE_TABS.map((t) => t.key));
 export const checkUserTabPermission = (
-  userEmail?: string,
-  tabKey?: TabPermissionKey
+  userEmailOrTab?: string,
+  maybeTabKey?: TabPermissionKey
 ): boolean => {
   if (localStorage.getItem('c10_preview_as_viewer') === 'true') {
     return false;
@@ -542,6 +573,13 @@ export const checkUserTabPermission = (
     localStorage.getItem('is_admin') === 'true' &&
     localStorage.getItem('c10_admin_unlocked') === 'true';
   if (isAdmin) return true;
+
+  let userEmail = userEmailOrTab;
+  let tabKey = maybeTabKey;
+  if (!tabKey && userEmailOrTab && VALID_TAB_KEY_SET.has(userEmailOrTab)) {
+    tabKey = userEmailOrTab as TabPermissionKey;
+    userEmail = undefined;
+  }
 
   if (!tabKey) return false;
 
