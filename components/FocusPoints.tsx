@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { scheduleAutoCloudVaultBackup } from '../services/cloudVaultService';
 import PasswordProtection from './PasswordProtection';
 import { Lock, Unlock } from 'lucide-react';
 import { ENABLE_PASSWORD_PROTECTION } from '../constants';
@@ -80,12 +79,19 @@ const FocusPoints: React.FC<FocusPointsProps> = ({ language = 'VN' }) => {
         styleEl.id = 'c10-hide-controls-style';
         styleEl.textContent = `
           #exportBtn,
-          .control-date {
+          .control-date,
+          #lblControlDate,
+          #controlDate,
+          #lblControlDateHint {
             display: none !important;
           }
         `;
         docRef.head?.appendChild(styleEl);
       }
+      const exportBtn = docRef.getElementById('exportBtn');
+      if (exportBtn) exportBtn.remove();
+      const controlDates = docRef.querySelectorAll('.control-date');
+      controlDates.forEach((el) => el.remove());
     } catch (e) {
       // Ignore cross-origin if any
     }
@@ -118,10 +124,8 @@ const FocusPoints: React.FC<FocusPointsProps> = ({ language = 'VN' }) => {
           return;
         }
         try {
-          latestStateRef.current = state;
-          localStorage.setItem('c10-excavation-layer2-v2', JSON.stringify(state));
-          scheduleAutoCloudVaultBackup('focus_points');
           await setDoc(doc(db, 'c10', 'focusPointsState'), state);
+          latestStateRef.current = state;
         } catch (error) {
           console.error('Error saving state to Firebase', error);
         }
@@ -134,8 +138,6 @@ const FocusPoints: React.FC<FocusPointsProps> = ({ language = 'VN' }) => {
           return;
         }
         try {
-          localStorage.setItem('c10_focus_points_counts', JSON.stringify(counts));
-          scheduleAutoCloudVaultBackup('focus_points_counts');
           await setDoc(doc(db, 'c10', 'focusPointsCounts'), counts);
         } catch (error) {
           console.error('Error saving counts to Firebase', error);
@@ -148,30 +150,15 @@ const FocusPoints: React.FC<FocusPointsProps> = ({ language = 'VN' }) => {
     // Primary listener on 'c10' collection
     const unsub = onSnapshot(doc(db, 'c10', 'focusPointsState'), (docSnap) => {
       if (docSnap.exists()) {
-        const remoteData = docSnap.data();
-        latestStateRef.current = remoteData;
-        try {
-          localStorage.setItem('c10-excavation-layer2-v2', JSON.stringify(remoteData));
-        } catch {}
-        sendStateToIframe(remoteData);
+        latestStateRef.current = docSnap.data();
+        sendStateToIframe();
       } else {
-        let localSaved: any = null;
-        try {
-          const raw = localStorage.getItem('c10-excavation-layer2-v2');
-          if (raw) localSaved = JSON.parse(raw);
-        } catch {}
-        latestStateRef.current = localSaved;
-        sendStateToIframe(localSaved);
+        latestStateRef.current = null;
+        sendStateToIframe(null);
       }
     }, (error) => {
       console.error("Firestore listening error in FocusPoints:", error);
-      let localSaved: any = null;
-      try {
-        const raw = localStorage.getItem('c10-excavation-layer2-v2');
-        if (raw) localSaved = JSON.parse(raw);
-      } catch {}
-      latestStateRef.current = localSaved;
-      sendStateToIframe(localSaved);
+      sendStateToIframe(null);
     });
 
     return () => {

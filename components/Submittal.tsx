@@ -7211,7 +7211,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
     setAiEvalLastUpdated(
       `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
     );
-  }, [masterRecords, filterConfig]);
+  }, [masterRecords, filterConfig, lastSyncTime]);
 
   const geminiSubmittalEvaluations = useMemo(() => {
     const totalDocs = kpiStats.total;
