@@ -6265,15 +6265,25 @@ export const normalizeMasterSubmittalsList = (records: MasterSubmittalRecord[]):
       return merged;
     });
 
-  // Đóng các bản trình cũ (Rev00) nếu đã có bản trình mới hơn (.Rev001 / .Rev002) trong danh sách
-  const getBaseCode = (c: string) => String(c || '').trim().replace(/\.Rev\d+$/i, '').toUpperCase();
+  // Đóng các bản trình cũ (Rev00) nếu đã có bản trình mới hơn (.Rev001 / .Rev002 / Rev 01...) trong danh sách
+  const getBaseCode = (c: string) => String(c || '').trim().replace(/[\._\-\s]*Rev[\.\s]*\d+.*$/i, '').toUpperCase();
+  const getRevNum = (c: string, r?: string) => {
+    const m = String(c || '').match(/Rev[\.\s]*(\d+)/i);
+    if (m) return parseInt(m[1], 10);
+    const n = parseInt(String(r || '').replace(/\D/g, ''), 10);
+    return isNaN(n) ? 0 : n;
+  };
   cleaned.forEach((rec, idx) => {
     if (rec.finalStatus !== 'PENDING') return;
     const base = getBaseCode(rec.code);
+    const recRev = getRevNum(rec.code, rec.rev);
     const hasNewer = cleaned.some((other, oIdx) => {
       if (oIdx === idx || other.category !== rec.category) return false;
       if (getBaseCode(other.code) !== base) return false;
-      return oIdx > idx && (/\.Rev\d+$/i.test(other.code) || Number(other.rev || 0) > Number(rec.rev || 0));
+      const otherRev = getRevNum(other.code, other.rev);
+      if (otherRev > recRev) return true;
+      if (oIdx > idx && (otherRev === recRev || /Rev/i.test(other.code))) return true;
+      return false;
     });
     if (hasNewer) {
       rec.finalStatus = 'REJECTED';
@@ -6817,7 +6827,23 @@ export const Submittal: React.FC<SubmittalProps> = ({
     const tvgsApproved = isApprovedStatusText(rec.tvgsStatus) || isApprovedStatusText(rec.tvgsCode);
     const cdtApproved = isApprovedStatusText(rec.clientStatus) || isApprovedStatusText(rec.clientCode);
 
-    // Xét TVGS chậm: chưa được TVGS duyệt và quá tvgsLimitDays kể từ ngày trình
+    // 1. Xét CĐT chậm (Chỉ tính khi Hồ sơ CÓ ngày trình qua CĐT, không liên quan ngày TVGS phê duyệt)
+    const cdtSubmitMs = parseSubmittalDateMs(rec.clientDate);
+    if (cdtSubmitMs !== null && !cdtApproved) {
+      const diffCdtDays = Math.floor((nowMs - cdtSubmitMs) / (1000 * 3600 * 24));
+      if (diffCdtDays > filterConfig.cdtLimitDays) {
+        return {
+          delayType: 'CDT_DELAY',
+          isContractorLate,
+          contractorLateDays,
+          overdueDays: diffCdtDays,
+          delayBadgeText: 'CĐT chậm',
+          delayDetailText: `CĐT chậm (${diffCdtDays} ngày > ${filterConfig.cdtLimitDays} ngày kể từ ngày trình CĐT ${rec.clientDate})`
+        };
+      }
+    }
+
+    // 2. Xét TVGS chậm: chưa được TVGS duyệt và quá tvgsLimitDays kể từ ngày trình
     if (!tvgsApproved) {
       const diffTvgsDays = Math.floor((nowMs - subMs) / (1000 * 3600 * 24));
       if (diffTvgsDays > filterConfig.tvgsLimitDays) {
@@ -6828,22 +6854,6 @@ export const Submittal: React.FC<SubmittalProps> = ({
           overdueDays: diffTvgsDays,
           delayBadgeText: 'TVGS chậm',
           delayDetailText: `TVGS chậm (${diffTvgsDays} ngày > ${filterConfig.tvgsLimitDays} ngày)`
-        };
-      }
-    }
-
-    // Xét CĐT chậm: TVGS đã duyệt, CĐT chưa duyệt và quá cdtLimitDays kể từ ngày trình CĐT (clientDate || tvgsDate || submissionDate)
-    if (tvgsApproved && !cdtApproved) {
-      const cdtSubmitMs = parseSubmittalDateMs(rec.clientDate) || parseSubmittalDateMs(rec.tvgsDate) || subMs;
-      const diffCdtDays = Math.floor((nowMs - cdtSubmitMs) / (1000 * 3600 * 24));
-      if (diffCdtDays > filterConfig.cdtLimitDays) {
-        return {
-          delayType: 'CDT_DELAY',
-          isContractorLate,
-          contractorLateDays,
-          overdueDays: diffCdtDays,
-          delayBadgeText: 'CĐT chậm',
-          delayDetailText: `CĐT chậm (${diffCdtDays} ngày > ${filterConfig.cdtLimitDays} ngày)`
         };
       }
     }
@@ -6873,7 +6883,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
   const isRecordOverdue = (rec: MasterSubmittalRecord): boolean => {
     if (rec.finalStatus !== 'PENDING') return false;
     const info = evaluateRecordDelay(rec);
-    return info.delayType === 'TVGS_DELAY' || info.delayType === 'CDT_DELAY' || info.delayType === 'CONTRACTOR_DELAY';
+    return info.delayType === 'TVGS_DELAY' || info.delayType === 'CDT_DELAY';
   };
 
   // 3. Tính toán KPI thống kê tiến độ duyệt hồ sơ toàn dự án (Căn cứ cột CĐT phê duyệt; Từ chối = Đã đóng)
