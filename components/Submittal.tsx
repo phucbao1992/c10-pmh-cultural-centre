@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { SubmittalData, SubmittalItem } from '../services/sheetsService';
 import { checkUserTabPermission, verifyAndActivateAccessCode } from '../services/userPermissionsService';
+import { scheduleAutoCloudVaultBackup } from '../services/cloudVaultService';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../constants';
 
@@ -6316,6 +6317,7 @@ export const saveSubmittalsToFirestore = async (records: MasterSubmittalRecord[]
   try {
     const normalized = normalizeMasterSubmittalsList(records);
     saveLocalMasterSubmittals(normalized);
+    scheduleAutoCloudVaultBackup(true);
     if (!db) return true;
     const docRef = doc(db, 'c10', 'master_submittals');
     await setDoc(docRef, {

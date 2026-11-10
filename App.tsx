@@ -76,6 +76,16 @@ import {
   saveUserPermissions,
   subscribeUserPermissions
 } from './services/userPermissionsService';
+import {
+  PROTECTED_USER_DATA_KEYS,
+  SUBMITTAL_DATA_KEYS,
+  backupToCloudVaultNow,
+  restoreFromCloudVaultOnBoot,
+  exportFullSystemBackupFile,
+  importFullSystemBackupFile,
+  getLastVaultSyncTime,
+  VAULT_EVENT_SYNCED
+} from './services/cloudVaultService';
 
 interface AdminPanelProps {
   language: Language;
@@ -183,6 +193,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberRoles, setNewMemberRoles] = useState<TabPermissions>({ ...DEFAULT_TAB_PERMISSIONS });
   const [isSavingUserPerms, setIsSavingUserPerms] = useState(false);
+  const [vaultSyncedAt, setVaultSyncedAt] = useState<string>(() => getLastVaultSyncTime());
+  const [isSyncingVault, setIsSyncingVault] = useState<boolean>(false);
 
   useEffect(() => {
     loadUserPermissions().then(list => setUserPermissions(list));
@@ -807,6 +819,81 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               <p className="text-slate-700 font-semibold mt-0.5">Google OAuth 2.0 Admin Account</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* KÉT SẮT ĐÁM MÂY TỰ ĐỘNG 3 LỚP (PERMANENT CLOUD VAULT BAR) */}
+      <div className="bg-gradient-to-r from-emerald-950 via-teal-950 to-slate-900 rounded-2xl p-5 text-white shadow-md border border-emerald-500/30 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              Két Sắt Đám Mây Tự Động 3 Lớp: ĐANG BẬT
+            </span>
+            {vaultSyncedAt && (
+              <span className="text-[11px] text-emerald-200/80 font-mono">
+                • Sao lưu gần nhất: {formatVNDateTime(vaultSyncedAt)}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-300 leading-relaxed max-w-3xl">
+            Bảo vệ vĩnh viễn <b className="text-white">Mã cấp quyền & Email</b>, <b className="text-white">Báo cáo ngày & Logo</b>, <b className="text-white">Hồ sơ đệ trình nhập trực tiếp</b> và <b className="text-white">Cấu hình bộ lọc</b>. Mọi thay đổi đều tự động sao lưu lên Cloud KV độc lập và tự động khôi phục 100% mỗi khi bạn cập nhật/đồng bộ lại code hệ thống!
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            type="button"
+            disabled={isSyncingVault}
+            onClick={async () => {
+              setIsSyncingVault(true);
+              await backupToCloudVaultNow(true);
+              await restoreFromCloudVaultOnBoot();
+              setVaultSyncedAt(getLastVaultSyncTime());
+              setIsSyncingVault(false);
+              showToast('Đã đồng bộ & khóa an toàn toàn bộ dữ liệu lên Két Sắt Đám Mây!');
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition-all cursor-pointer disabled:opacity-60"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingVault ? 'animate-spin' : ''}`} />
+            <span>{isSyncingVault ? 'Đang đồng bộ...' : 'Đồng bộ Két Sắt Cloud'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              exportFullSystemBackupFile();
+              showToast('Đã tải xuống file Sao lưu Tổng toàn hệ thống (.json)!');
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-bold transition-all cursor-pointer"
+          >
+            <Save className="w-3.5 h-3.5 text-amber-300" />
+            <span>Tải File Sao Lưu (.json)</span>
+          </button>
+
+          <label className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-bold transition-all cursor-pointer">
+            <Database className="w-3.5 h-3.5 text-sky-300" />
+            <span>Khôi Phục Từ File</span>
+            <input
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                const res = await importFullSystemBackupFile(f);
+                if (res.success) {
+                  const list = await loadUserPermissions();
+                  setUserPermissions(list);
+                  setVaultSyncedAt(getLastVaultSyncTime());
+                  showToast(`Đã khôi phục thành công ${res.count} mục dữ liệu và đồng bộ lên Cloud!`);
+                } else {
+                  showToast('File sao lưu không hợp lệ!');
+                }
+                e.target.value = '';
+              }}
+            />
+          </label>
         </div>
       </div>
 

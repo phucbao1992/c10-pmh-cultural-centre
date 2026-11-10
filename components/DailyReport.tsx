@@ -49,6 +49,7 @@ import {
 import DailyReportEditor from './DailyReportEditor';
 import DailyReportPrintSheet from './DailyReportPrintSheet';
 import { checkUserTabPermission } from '../services/userPermissionsService';
+import { VAULT_EVENT_SYNCED, scheduleAutoCloudVaultBackup } from '../services/cloudVaultService';
 
 
 const createInheritedDraftFromPublished = (published?: any): any => {
@@ -299,6 +300,23 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
       });
     };
     window.addEventListener(DAILY_REPORT_LOGOS_EVENT, handleLogosUpdatedEvent);
+    const handleVaultSynced = () => {
+      try {
+        const savedPub = localStorage.getItem(STORAGE_KEY_PUBLISHED);
+        if (savedPub) {
+          const parsed = JSON.parse(savedPub);
+          if (parsed && parsed.g) {
+            setPublishedReport((prev) => ({
+              ...prev,
+              ...parsed,
+              logos: mergeWithPermanentLogos(parsed.logos || prev.logos)
+            }));
+          }
+        }
+      } catch {}
+      setCanEdit(computeCanEdit());
+    };
+    window.addEventListener(VAULT_EVENT_SYNCED, handleVaultSynced);
 
     // 3. Load historical reports index
     fetchDailyReportHistoryIndex().then((list) => {
@@ -315,6 +333,7 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
       unsub();
       unsubLogos();
       window.removeEventListener(DAILY_REPORT_LOGOS_EVENT, handleLogosUpdatedEvent);
+      window.removeEventListener(VAULT_EVENT_SYNCED, handleVaultSynced);
     };
   }, [selectedHistoryDate]);
 
@@ -412,6 +431,7 @@ const DailyReport: React.FC<DailyReportProps> = ({ data, dailyTab, loading, lang
     setPublishedReport(nextReport);
     try {
       localStorage.setItem(STORAGE_KEY_PUBLISHED, JSON.stringify(nextReport));
+      scheduleAutoCloudVaultBackup(false);
     } catch {}
     setIsEditingReport(false);
     setSelectedHistoryDate(null);

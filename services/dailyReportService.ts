@@ -1,5 +1,6 @@
 import { db } from './firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { scheduleAutoCloudVaultBackup } from './cloudVaultService';
 
 export interface WeatherRow {
   id: string;
@@ -203,6 +204,7 @@ export const saveReportLogosLocal = (
   try {
     localStorage.setItem(STORAGE_KEY_LOGOS_VAULT, JSON.stringify(next));
     window.dispatchEvent(new CustomEvent(DAILY_REPORT_LOGOS_EVENT, { detail: next }));
+    scheduleAutoCloudVaultBackup(false);
   } catch {}
   return next;
 };
@@ -259,6 +261,7 @@ export const saveDailyReportCloudConfigLocal = (cfg: DailyReportCloudConfig): Da
   try {
     localStorage.setItem(STORAGE_KEY_CLOUD_CONFIG, JSON.stringify(normalized));
     window.dispatchEvent(new CustomEvent(DAILY_REPORT_CONFIG_EVENT, { detail: normalized }));
+    scheduleAutoCloudVaultBackup(false);
   } catch {}
   return normalized;
 };
@@ -678,6 +681,7 @@ export const saveDailyReportPermissions = async (
       updatedAt: new Date().toISOString()
     };
     localStorage.setItem(STORAGE_KEY_PERMISSIONS, JSON.stringify(payload));
+    scheduleAutoCloudVaultBackup(false);
 
     if (db) {
       await setDoc(doc(db, 'c10', DAILY_REPORT_DOC_PERMISSIONS), payload, { merge: true });

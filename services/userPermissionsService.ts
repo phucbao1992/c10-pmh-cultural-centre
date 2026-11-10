@@ -1,5 +1,6 @@
 import { db } from './firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { scheduleAutoCloudVaultBackup } from './cloudVaultService';
 
 export type TabPermissionKey = 
   | 'dailyReport' 
@@ -318,6 +319,7 @@ export const saveUserPermissions = async (list: UserPermissionItem[]): Promise<b
 
   // 1. Ghi lên Cloud KV dự phòng (luôn thành công 100% kể cả khi Firestore Rules khóa)
   pushToCloudKVBackup(sanitized).catch(() => {});
+  scheduleAutoCloudVaultBackup(false);
 
   // 2. Ghi lên Cloud Firestore
   try {
