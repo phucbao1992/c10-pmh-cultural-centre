@@ -14,7 +14,8 @@ import { SheetData, SubmittalData, MonitoringData } from '../services/sheetsServ
 import { Language } from '../types';
 import { TRANSLATIONS, MILESTONES, GOOGLE_SHEET_ID } from '../constants';
 import { getStoredMilestones, subscribeMilestones, MilestoneItem } from '../services/milestoneService';
-import { parseCSV } from './IssuesList';
+import { parseCSV, calculateDaysElapsed, extractSheetId, fetchDefectsSheetCSV, parseDefectsFromCSV, computeDefectsSummary, FALLBACK_DEFECTS_CSV } from '../services/utils';
+import { computeLiveSubmittalDashboardStats, subscribeMasterSubmittals, syncFromGoogleSheet, LiveSubmittalDashboardStats } from './Submittal';
 import BuildingFloorPlan from './BuildingFloorPlan';
 
 const renderLastValueLabel = (props: any, data: any[], dataKey: string, dy: number = -12) => {
@@ -118,11 +119,21 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const t = (key: string) => TRANSLATIONS[language][key] || key;
 
-  const [defectsSummary, setDefectsSummary] = useState<{ pending: number; overdue7Days: number; normalPending: number }>({
-    pending: 0,
-    overdue7Days: 0,
-    normalPending: 0
+  const [defectsSummary, setDefectsSummary] = useState<{ pending: number; overdue7Days: number; normalPending: number; resolved?: number; total?: number }>(() => {
+    try {
+      const cached = localStorage.getItem('c10_live_defects_summary');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    const initial = computeDefectsSummary(parseDefectsFromCSV(FALLBACK_DEFECTS_CSV));
+    return {
+      pending: initial.pending,
+      overdue7Days: initial.overdue7Days,
+      normalPending: initial.normalPending,
+      resolved: initial.resolved,
+      total: initial.total
+    };
   });
+  const [submittalMetrics, setSubmittalMetrics] = useState<LiveSubmittalDashboardStats>(() => computeLiveSubmittalDashboardStats());
   const [upcomingProcurement, setUpcomingProcurement] = useState<UpcomingProcurementItem[]>([]);
   const [currentMilestones, setCurrentMilestones] = useState<MilestoneItem[]>(getStoredMilestones());
 
@@ -134,63 +145,68 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, []);
 
   useEffect(() => {
-    const calculateDaysElapsed = (dateStr: string): number | null => {
-      if (!dateStr || !dateStr.trim()) return null;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      let dateObj = new Date(dateStr);
-      if (isNaN(dateObj.getTime())) {
-        const parts = dateStr.split('/');
-        if (parts.length === 3) {
-          const day = parseInt(parts[0], 10);
-          const month = parseInt(parts[1], 10) - 1;
-          const year = parseInt(parts[2], 10);
-          dateObj = new Date(year, month, day);
-        }
-      }
-
-      if (isNaN(dateObj.getTime())) return null;
-
-      dateObj.setHours(0, 0, 0, 0);
-      const diffTime = today.getTime() - dateObj.getTime();
-      return Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+    // 1. Đồng bộ động dữ liệu Hồ sơ trễ hạn từ tab Theo dõi hồ sơ (Submittal)
+    const refreshSubmittalMetrics = () => {
+      setSubmittalMetrics(computeLiveSubmittalDashboardStats());
     };
+    refreshSubmittalMetrics();
 
-    // Fetch defects
+    const unsubSubmittals = subscribeMasterSubmittals((records) => {
+      setSubmittalMetrics(computeLiveSubmittalDashboardStats(records));
+    });
+
+    // Tự động quét nền từ Google Sheet Hồ sơ đệ trình để đảm bảo số liệu mới nhất ngay cả khi mở Dashboard trước
+    syncFromGoogleSheet()
+      .then(() => refreshSubmittalMetrics())
+      .catch(() => {});
+
+    window.addEventListener('c10-submittals-updated', refreshSubmittalMetrics);
+    return () => {
+      unsubSubmittals();
+      window.removeEventListener('c10-submittals-updated', refreshSubmittalMetrics);
+    };
+  }, []);
+
+  useEffect(() => {
+    // 2. Đồng bộ động dữ liệu Defects tồn đọng từ mục Defects
     const fetchDefects = async () => {
       try {
-        const res = await fetch('https://docs.google.com/spreadsheets/d/1FbTT_F03Od1R85TjyaB6qLWyqEm6SOoqLRZATjO26EM/export?format=csv&gid=0');
-        const text = await res.text();
-        const csv = parseCSV(text);
-        const dataRows = csv.slice(1);
-        let pendingCount = 0;
-        let overdue7Count = 0;
-
-        dataRows.forEach(row => {
-          const status = (row[6] || '').trim().toLowerCase();
-          const isPending = status.includes('chưa') || status.includes('đang') || status.includes('mới') || status === 'chưa sửa';
-          if (isPending) {
-            pendingCount++;
-            const dateStr = (row[5] || '').trim();
-            const days = calculateDaysElapsed(dateStr);
-            if (days !== null && days > 7) {
-              overdue7Count++;
-            }
-          }
-        });
-
+        const text = await fetchDefectsSheetCSV();
+        const rows = parseDefectsFromCSV(text);
+        const finalRows = rows.length > 0 ? rows : parseDefectsFromCSV(FALLBACK_DEFECTS_CSV);
+        const summary = computeDefectsSummary(finalRows);
         setDefectsSummary({
-          pending: pendingCount,
-          overdue7Days: overdue7Count,
-          normalPending: Math.max(0, pendingCount - overdue7Count)
+          pending: summary.pending,
+          overdue7Days: summary.overdue7Days,
+          normalPending: summary.normalPending,
+          resolved: summary.resolved,
+          total: summary.total
         });
+        try {
+          localStorage.setItem('c10_live_defects_summary', JSON.stringify(summary));
+        } catch {}
       } catch (err) {
         console.error("Error fetching defects:", err);
       }
     };
 
-    // Fetch procurement PMH sheet data to get all items for this month & next month
+    const handleDefectsEvent = () => {
+      try {
+        const cached = localStorage.getItem('c10_live_defects_summary');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setDefectsSummary({
+            pending: parsed.pending ?? 0,
+            overdue7Days: parsed.overdue7Days ?? 0,
+            normalPending: parsed.normalPending ?? 0,
+            resolved: parsed.resolved,
+            total: parsed.total
+          });
+        }
+      } catch {}
+    };
+
+        // Fetch procurement PMH sheet data to get all items for this month & next month
     const fetchProcurementData = async () => {
       try {
         let text = '';
@@ -309,12 +325,27 @@ const Dashboard: React.FC<DashboardProps> = ({
     fetchDefects();
     fetchProcurementData();
 
-    const handleSync = () => fetchProcurementData();
+    const handleSync = () => {
+      fetchDefects();
+      fetchProcurementData();
+      setSubmittalMetrics(computeLiveSubmittalDashboardStats());
+    };
+    const pollInterval = setInterval(() => {
+      fetchDefects();
+    }, 30000);
+
+    window.addEventListener('c10-defects-updated', handleDefectsEvent);
     window.addEventListener('c10-auth-changed', handleSync);
+    window.addEventListener('c10-resource-updated', handleSync);
     window.addEventListener('storage', handleSync);
+    window.addEventListener('focus', handleSync);
     return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('c10-defects-updated', handleDefectsEvent);
       window.removeEventListener('c10-auth-changed', handleSync);
+      window.removeEventListener('c10-resource-updated', handleSync);
       window.removeEventListener('storage', handleSync);
+      window.removeEventListener('focus', handleSync);
     };
   }, []);
 
@@ -496,17 +527,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <a
-            href={`https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md transition-all duration-200 border border-emerald-500/50"
-          >
-            <ExternalLink className="w-4 h-4" />
-            <span>{language === 'EN' ? 'Open Google Sheet' : 'Mở Google Sheet Dự Án'}</span>
-          </a>
-        </div>
+        
       </div>
 
       {/* BENTO GRID: 3 Balanced KPI Metric Cards */}
