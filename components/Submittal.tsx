@@ -7211,26 +7211,12 @@ export const Submittal: React.FC<SubmittalProps> = ({
     setAiEvalLastUpdated(
       `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
     );
-    try {
-      const payload: LiveSubmittalDashboardStats = {
-        total: kpiStats.total,
-        approved: kpiStats.approved,
-        unapproved: kpiStats.pending,
-        delayed: kpiStats.tvgsDelayCount + kpiStats.cdtDelayCount,
-        tvgsDelayCount: kpiStats.tvgsDelayCount,
-        cdtDelayCount: kpiStats.cdtDelayCount,
-        contractorDelayCount: kpiStats.contractorDelayCount,
-        approvalRate: kpiStats.approvedPercent
-      };
-      localStorage.setItem('c10_live_submittal_kpis', JSON.stringify(payload));
-      window.dispatchEvent(new Event('c10-submittals-updated'));
-    } catch {}
-  }, [masterRecords, filterConfig, kpiStats]);
+  }, [masterRecords, filterConfig, lastSyncTime]);
 
   const geminiSubmittalEvaluations = useMemo(() => {
     const totalDocs = kpiStats.total;
     const approvedDocs = kpiStats.approved;
-    const pendingDocs = kpiStats.pending;
+    const pendingDocs = kpiStats.unapproved;
     const tvgsLate = kpiStats.tvgsDelayCount;
     const cdtLate = kpiStats.cdtDelayCount;
     const contractorLate = kpiStats.contractorDelayCount;
