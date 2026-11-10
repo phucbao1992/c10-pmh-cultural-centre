@@ -27,8 +27,8 @@ jobs:
           UPSTREAM_SHA=$(cd /tmp/aistudio-sync && git rev-parse HEAD)
           echo "AI Studio Upstream SHA: $UPSTREAM_SHA"
           
-          # Sync all files from AI Studio to workspace except .git and .github
-          rsync -av --delete --exclude='.git' --exclude='.github' /tmp/aistudio-sync/ ./
+          # Sync all files from AI Studio to workspace except .git, .github and cloudVaultService.ts
+          rsync -av --delete --exclude='.git' --exclude='.github' --exclude='services/cloudVaultService.ts' /tmp/aistudio-sync/ ./
           
           # Check if there are changes
           if [ -n "$(git status --porcelain)" ]; then
