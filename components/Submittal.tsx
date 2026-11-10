@@ -29,6 +29,7 @@ export type SubmittalCategoryKey =
 export type SubmittalDelayType = 'NONE' | 'TVGS_DELAY' | 'CDT_DELAY' | 'CONTRACTOR_DELAY';
 
 export interface MasterSubmittalRecord {
+  submissionCount?: number;
   id: string;
   category: SubmittalCategoryKey;
   stt: string | number;
@@ -7870,7 +7871,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
     // 3. Hồ sơ trọng điểm trễ sâu hoặc trình nhiều lần (Rev 02+)
     const multiRevRecords = masterRecords.filter((r) => {
       const revNum = parseInt(String(r.rev || '').replace(/\D/g, ''), 10);
-      return (!isNaN(revNum) && revNum >= 2) || (r.submissionCount && r.submissionCount >= 2);
+      return (!isNaN(revNum) && revNum >= 2) || (Boolean(r.submissionCount) && Number(r.submissionCount) >= 2);
     });
     const overdueWithDays = masterRecords
       .filter((r) => r.finalStatus === 'PENDING' && isRecordOverdue(r))
