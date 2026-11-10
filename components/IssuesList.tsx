@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../constants';
-import { parseCSV, calculateDaysElapsed, extractSheetId, getEffectiveDefectsSheetId, fetchDefectsSheetCSV, parseDefectsFromCSV, FALLBACK_DEFECTS_CSV } from '../services/utils';
+import { parseCSV, calculateDaysElapsed, extractSheetId, getEffectiveDefectsSheetId, fetchDefectsSheetCSV, parseDefectsFromCSV, computeDefectsSummary, FALLBACK_DEFECTS_CSV } from '../services/utils';
 export { parseCSV, calculateDaysElapsed };
 
 interface IssuesListProps {
@@ -51,7 +51,13 @@ const IssuesList: React.FC<IssuesListProps> = ({ language, onProtectedAction }) 
       const sheetId = getDefectsSheetId();
       const text = await fetchDefectsSheetCSV(sheetId);
       const parsedItems = parseDefectsFromCSV(text);
-      setDefects(parsedItems.length > 0 ? parsedItems : parseDefectsFromCSV(FALLBACK_DEFECTS_CSV));
+      const finalItems = parsedItems.length > 0 ? parsedItems : parseDefectsFromCSV(FALLBACK_DEFECTS_CSV);
+      setDefects(finalItems);
+      try {
+        const summary = computeDefectsSummary(finalItems);
+        localStorage.setItem('c10_live_defects_summary', JSON.stringify(summary));
+        window.dispatchEvent(new Event('c10-defects-updated'));
+      } catch {}
     } catch (err) {
       console.error("Failed to fetch defects data from Sheet:", err);
       setDefects(parseDefectsFromCSV(FALLBACK_DEFECTS_CSV));
@@ -69,13 +75,14 @@ const IssuesList: React.FC<IssuesListProps> = ({ language, onProtectedAction }) 
 
   // Compute statistics
   const stats = useMemo(() => {
-    const total = defects.length;
-    const pending = defects.filter(d => d.isPending).length;
-    const resolved = defects.filter(d => d.isResolved).length;
-    const highPriority = defects.filter(d => d.isPending && d.isHighPriority).length;
-    const agingOver7Days = defects.filter(d => d.isPending && d.daysElapsed !== null && d.daysElapsed > 7).length;
-
-    return { total, pending, resolved, highPriority, agingOver7Days };
+    const s = computeDefectsSummary(defects);
+    return {
+      total: s.total,
+      pending: s.pending,
+      resolved: s.resolved,
+      highPriority: s.highPriority,
+      agingOver7Days: s.overdue7Days
+    };
   }, [defects]);
 
   // Extract unique locations for dropdown filter
