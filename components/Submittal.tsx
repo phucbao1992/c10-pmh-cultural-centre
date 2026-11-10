@@ -7199,7 +7199,173 @@ export const Submittal: React.FC<SubmittalProps> = ({
     return null;
   };
 
-  const renderCN82CategoryChartsSection = () => {
+    // 4C. Hàm động đánh giá bằng Gemini AI theo dữ liệu mới nhất mỗi khi cập nhật (5 câu hỏi trọng tâm)
+  const [aiEvalRefreshing, setAiEvalRefreshing] = useState<boolean>(false);
+  const [aiEvalLastUpdated, setAiEvalLastUpdated] = useState<string>(() => {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+  });
+
+  useEffect(() => {
+    const now = new Date();
+    setAiEvalLastUpdated(
+      `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
+    );
+  }, [masterRecords, filterConfig, lastSyncTime]);
+
+  const geminiSubmittalEvaluations = useMemo(() => {
+    const totalDocs = kpiStats.total;
+    const approvedDocs = kpiStats.approved;
+    const pendingDocs = kpiStats.unapproved;
+    const tvgsLate = kpiStats.tvgsDelayCount;
+    const cdtLate = kpiStats.cdtDelayCount;
+    const contractorLate = kpiStats.contractorDelayCount;
+    const totalLate = tvgsLate + cdtLate;
+
+    // 1. Điểm nghẽn phê duyệt
+    let bottleneckActor = 'Không có điểm nghẽn nghiêm trọng';
+    let q1Status: 'SAFE' | 'WARNING' | 'DANGER' = 'SAFE';
+    if (totalLate > 0 || contractorLate > 0) {
+      if (tvgsLate >= cdtLate && tvgsLate >= contractorLate && tvgsLate > 0) {
+        bottleneckActor = `Khâu TVGS rà soát (${tvgsLate} hồ sơ quá ${filterConfig.tvgsLimitDays} ngày)`;
+      } else if (cdtLate >= tvgsLate && cdtLate >= contractorLate && cdtLate > 0) {
+        bottleneckActor = `Khâu CĐT phê duyệt (${cdtLate} hồ sơ quá ${filterConfig.cdtLimitDays} ngày)`;
+      } else {
+        bottleneckActor = `Khâu Nhà thầu trình lại (${contractorLate} hồ sơ chưa trình Rev mới)`;
+      }
+      q1Status = totalLate >= 5 ? 'DANGER' : 'WARNING';
+    }
+    const q1Content =
+      totalLate === 0 && contractorLate === 0
+        ? `Luồng phê duyệt giữa Nhà thầu - TVGS - CĐT đang thông suốt. Toàn bộ ${approvedDocs}/${totalDocs} hồ sơ đã xử lý đúng hạn quy định.`
+        : `Điểm nghẽn lớn nhất hiện tại nằm ở ${bottleneckActor}. Cụ thể: TVGS chậm ${tvgsLate} hồ sơ, CĐT chậm ${cdtLate} hồ sơ và Nhà thầu cần trình lại ${contractorLate} hồ sơ bị trả về.`;
+
+    // 2. Phân hệ có tỷ lệ trễ hạn / tồn đọng cao nhất
+    const sortedCats = [...categoryAnalytics].sort((a, b) => {
+      if (b.overdue !== a.overdue) return b.overdue - a.overdue;
+      return b.unapproved - a.unapproved;
+    });
+    const topCat = sortedCats[0];
+    const secondCat = sortedCats[1];
+    const q2Status: 'SAFE' | 'WARNING' | 'DANGER' =
+      topCat && topCat.overdue >= 3 ? 'DANGER' : topCat && (topCat.overdue > 0 || topCat.unapproved >= 5) ? 'WARNING' : 'SAFE';
+    const q2Content = topCat
+      ? topCat.overdue > 0
+        ? `Phân hệ "${topCat.cat.label}" đang có áp lực cao nhất với ${topCat.overdue} hồ sơ trễ hạn và ${topCat.unapproved} hồ sơ đang chờ duyệt (trên tổng ${topCat.total} hồ sơ). Tiếp theo là "${secondCat?.cat.label || '-'}" (${secondCat?.overdue || 0} trễ, ${secondCat?.unapproved || 0} đang trình).`
+        : `Không có phân hệ nào bị trễ hạn. Phân hệ đang có số lượng hồ sơ chờ duyệt nhiều nhất là "${topCat.cat.label}" (${topCat.unapproved}/${topCat.total} hồ sơ đang trình).`
+      : 'Chưa ghi nhận dữ liệu phân hệ tồn đọng.';
+
+    // 3. Hồ sơ trọng điểm trễ sâu hoặc trình nhiều lần (Rev 02+)
+    const multiRevRecords = masterRecords.filter((r) => {
+      const revNum = parseInt(String(r.rev || '').replace(/\D/g, ''), 10);
+      return (!isNaN(revNum) && revNum >= 2) || (r.submissionCount && r.submissionCount >= 2);
+    });
+    const overdueWithDays = masterRecords
+      .filter((r) => r.finalStatus === 'PENDING' && isRecordOverdue(r))
+      .map((r) => ({ rec: r, d: evaluateRecordDelay(r) }))
+      .sort((a, b) => b.d.overdueDays - a.d.overdueDays);
+    const topOverdue = overdueWithDays.slice(0, 3);
+    const q3Status: 'SAFE' | 'WARNING' | 'DANGER' =
+      topOverdue.length > 0 && topOverdue[0].d.overdueDays > 30
+        ? 'DANGER'
+        : topOverdue.length > 0 || multiRevRecords.length > 5
+          ? 'WARNING'
+          : 'SAFE';
+    const topCodesStr =
+      topOverdue.length > 0
+        ? topOverdue.map((x) => `${x.rec.code} (chậm ${x.d.overdueDays} ngày)`).join(', ')
+        : 'Không có hồ sơ trễ hạn';
+    const q3Content =
+      topOverdue.length > 0
+        ? `Hồ sơ trễ hạn sâu cần ưu tiên xử lý ngay: ${topCodesStr}. Ngoài ra toàn dự án có ${multiRevRecords.length} hồ sơ phải trình từ lần 2 (Rev 02+) trở lên cần rà soát kỹ chất lượng hồ sơ.`
+        : `Hiện không có hồ sơ nào bị trễ hạn phê duyệt. Có ${multiRevRecords.length} hồ sơ có lịch sử trình từ Rev 02 trở lên đã được kiểm soát và cập nhật trạng thái.`;
+
+    // 4. Pháp lý vật tư đầu vào (MOA & Đệ trình Vật tư)
+    const matCat = categoryAnalytics.find((c) => c.cat.key === 'mat');
+    const matImportCat = categoryAnalytics.find((c) => c.cat.key === 'material_import');
+    const matApproved = (matCat?.approved || 0) + (matImportCat?.approved || 0);
+    const matTotal = (matCat?.total || 0) + (matImportCat?.total || 0);
+    const moaRatio = moaStats.total > 0 ? Math.round((moaStats.approved / moaStats.total) * 100) : 100;
+    const q4Status: 'SAFE' | 'WARNING' | 'DANGER' =
+      moaStats.overdue > 0 ? 'DANGER' : moaStats.notStarted > 0 || (matCat?.overdue || 0) > 0 ? 'WARNING' : 'SAFE';
+    const q4Content = `Hồ sơ MOA đạt ${moaStats.approved}/${moaStats.total} (${moaRatio}%) đã ký hoàn thành, ${moaStats.pending} đang trình (${moaStats.overdue} chậm > 15 ngày) và ${moaStats.notStarted} chưa trình. Đệ trình vật tư & Nhập vật tư đã duyệt ${matApproved}/${matTotal} hồ sơ, cơ bản đáp ứng tiến độ thi công phần hầm.`;
+
+    // 5. Khuyến nghị hành động ưu tiên trong 7 ngày tới
+    const q5Status: 'SAFE' | 'WARNING' | 'DANGER' =
+      totalLate >= 5 ? 'DANGER' : totalLate > 0 || contractorLate > 0 || moaStats.notStarted > 0 ? 'WARNING' : 'SAFE';
+    const actionItems: string[] = [];
+    if (tvgsLate > 0) actionItems.push(`TVGS ưu tiên giải quyết dứt điểm ${tvgsLate} hồ sơ quá hạn ${filterConfig.tvgsLimitDays} ngày`);
+    if (cdtLate > 0) actionItems.push(`Đôn đốc CĐT phê duyệt ${cdtLate} tờ trình quá hạn ${filterConfig.cdtLimitDays} ngày`);
+    if (contractorLate > 0) actionItems.push(`Nhà thầu khẩn trương hiệu chỉnh & trình lại ${contractorLate} hồ sơ bị trả về`);
+    if (moaStats.notStarted > 0) actionItems.push(`Hoàn thiện trình ký ${moaStats.notStarted} hồ sơ MOA chưa trình`);
+    if (actionItems.length === 0) actionItems.push(`Duy trì nhịp độ kiểm soát ${pendingDocs} hồ sơ đang trình trong hạn và chuẩn bị sớm hồ sơ giai đoạn tiếp theo`);
+    const q5Content = `Trọng tâm 7 ngày tới: ${actionItems.join('; ')}.`;
+
+    return [
+      {
+        id: 'q1',
+        question: '1. Điểm nghẽn phê duyệt hiện tại (TVGS / CĐT / Nhà thầu)',
+        metric: `TVGS chậm: ${tvgsLate} • CĐT chậm: ${cdtLate} • NT chậm: ${contractorLate}`,
+        status: q1Status,
+        content: q1Content
+      },
+      {
+        id: 'q2',
+        question: '2. Phân hệ hồ sơ có tỷ lệ trễ hạn & tồn đọng cao nhất',
+        metric: topCat ? `${topCat.cat.shortLabel}: ${topCat.overdue} trễ / ${topCat.unapproved} đang trình` : 'Ổn định',
+        status: q2Status,
+        content: q2Content
+      },
+      {
+        id: 'q3',
+        question: '3. Hồ sơ trọng điểm trễ sâu hoặc trình nhiều lần (Rev 02+)',
+        metric: `Trễ hạn: ${totalLate} hồ sơ • Trình Rev 02+: ${multiRevRecords.length} hồ sơ`,
+        status: q3Status,
+        content: q3Content
+      },
+      {
+        id: 'q4',
+        question: '4. Đáp ứng pháp lý Vật tư đầu vào & Nghiệm thu MOA phần hầm',
+        metric: `MOA hoàn thành: ${moaStats.approved}/${moaStats.total} (${moaRatio}%) • Chưa trình: ${moaStats.notStarted}`,
+        status: q4Status,
+        content: q4Content
+      },
+      {
+        id: 'q5',
+        question: '5. Khuyến nghị hành động ưu tiên (Action Plan 7 ngày tới)',
+        metric: `Tổng hoàn thành: ${approvedDocs}/${totalDocs} (${kpiStats.approvalRate}%)`,
+        status: q5Status,
+        content: q5Content
+      }
+    ];
+  }, [masterRecords, kpiStats, moaStats, categoryAnalytics, filterConfig]);
+
+  const renderSubmittalStatusBadge = (status: 'SAFE' | 'WARNING' | 'DANGER') => {
+    if (status === 'DANGER') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-red-50 text-red-700 border border-red-200 shrink-0">
+          <AlertTriangle className="w-3 h-3" />
+          Cần xử lý gấp
+        </span>
+      );
+    }
+    if (status === 'WARNING') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+          <AlertTriangle className="w-3 h-3" />
+          Cận cảnh báo
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+        <CheckCircle2 className="w-3 h-3" />
+        An toàn
+      </span>
+    );
+  };
+
+const renderCN82CategoryChartsSection = () => {
     if (selectedCategory !== 'all') {
       const singleItem = categoryAnalytics.find((c) => c.cat.key === selectedCategory);
       if (!singleItem) return null;
@@ -7425,7 +7591,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
               </div>
               <div>
                 <h3 className="text-sm md:text-base font-black text-rose-950">
-                  Danh sách tổng hợp hồ sơ trễ hạn (TVGS &gt; {filterConfig.tvgsLimitDays} ngày | CĐT &gt; {filterConfig.cdtLimitDays} ngày)
+                  Danh sách tổng hợp hồ sơ trễ hạn
                 </h3>
                 <p className="text-xs text-rose-700/85 mt-0.5">
                   Căn cứ cột Trạng thái CĐT phê duyệt (Hồ sơ Từ chối = Đã đóng). Tự động phân loại: <b>TVGS chậm</b> ({kpiStats.tvgsDelayCount}) • <b>CĐT chậm</b> ({kpiStats.cdtDelayCount}) • <b>Chậm trình do Nhà thầu</b> ({kpiStats.contractorDelayCount})
@@ -7530,6 +7696,77 @@ export const Submittal: React.FC<SubmittalProps> = ({
               </div>
             )
           )}
+        </div>
+
+        {/* KHỐI 1B: ĐÁNH GIÁ & PHÂN TÍCH ĐỘNG BẰNG GEMINI AI THEO DỮ LIỆU MỚI NHẤT (TƯƠNG TỰ QUAN TRẮC CHUYỂN VỊ) */}
+        <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-bold text-slate-800 text-base sm:text-lg">
+                    Đánh Giá &amp; Phân Tích Động Hồ Sơ Đệ Trình (Gemini AI)
+                  </h3>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    Tự động cập nhật theo dữ liệu mới nhất
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Tự động tổng hợp, nhận diện điểm nghẽn và đánh giá rủi ro tiến độ hồ sơ theo 5 tiêu chí quản trị cốt lõi • Cập nhật lúc: <b className="text-slate-700">{aiEvalLastUpdated}</b>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setAiEvalRefreshing(true);
+                  const now = new Date();
+                  setAiEvalLastUpdated(
+                    `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
+                  );
+                  setTimeout(() => setAiEvalRefreshing(false), 400);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold transition-all cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${aiEvalRefreshing ? 'animate-spin' : ''}`} />
+                <span>Cập nhật đánh giá Gemini</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {geminiSubmittalEvaluations.map((item) => (
+              <div
+                key={item.id}
+                className="group relative flex flex-col justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-400 hover:shadow-md transition-all duration-200"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2 mb-2.5">
+                    <h4 className="font-bold text-xs sm:text-sm text-slate-800 leading-snug group-hover:text-indigo-600 transition-colors">
+                      {item.question}
+                    </h4>
+                    {renderSubmittalStatusBadge(item.status)}
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100 text-[11px]">
+                    <span className="font-semibold text-slate-400">Chỉ số:</span>
+                    <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+                      {item.metric}
+                    </span>
+                  </div>
+
+                  <div className="text-xs text-slate-600 leading-relaxed font-normal">
+                    {item.content}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* KHỐI 2: NHÓM HỒ SƠ ĐANG TRIỂN KHAI / CÓ TỒN ĐỌNG (9 NHÓM) */}

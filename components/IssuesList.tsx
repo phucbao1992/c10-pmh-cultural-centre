@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../constants';
+import { parseCSV, calculateDaysElapsed, extractSheetId, getEffectiveDefectsSheetId, fetchDefectsSheetCSV, parseDefectsFromCSV, FALLBACK_DEFECTS_CSV } from '../services/utils';
+export { parseCSV, calculateDaysElapsed };
 
 interface IssuesListProps {
   data?: any;
@@ -27,48 +29,6 @@ export interface DefectItem {
   daysElapsed: number | null;
 }
 
-export function parseCSV(text: string): string[][] {
-  let p = '', row = [''], ret = [row], i = 0, r = 0, s = !0, l;
-  for (l of text) {
-    if ('"' === l) {
-      if (s && l === p) row[i] += l;
-      s = !s;
-    } else if (',' === l && s) l = row[++i] = '';
-    else if ('\n' === l && s) {
-      if ('\r' === p) row[i] = row[i].slice(0, -1);
-      row = ret[++r] = [l = '']; i = 0;
-    } else row[i] += l;
-    p = l;
-  }
-  if (ret.length && ret[ret.length - 1].length === 1 && ret[ret.length - 1][0] === '') ret.pop();
-  return ret;
-}
-
-const calculateDaysElapsed = (dateStr: string): number | null => {
-  if (!dateStr || !dateStr.trim()) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // Attempt parsing MM/DD/YYYY or DD/MM/YYYY
-  let dateObj = new Date(dateStr);
-  if (isNaN(dateObj.getTime())) {
-    const parts = dateStr.split('/');
-    if (parts.length === 3) {
-      // Try DD/MM/YYYY
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1;
-      const year = parseInt(parts[2], 10);
-      dateObj = new Date(year, month, day);
-    }
-  }
-
-  if (isNaN(dateObj.getTime())) return null;
-
-  dateObj.setHours(0, 0, 0, 0);
-  const diffTime = today.getTime() - dateObj.getTime();
-  return Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
-};
-
 const IssuesList: React.FC<IssuesListProps> = ({ language, onProtectedAction }) => {
   const t = (key: string) => TRANSLATIONS[language]?.[key] || key;
 
@@ -79,54 +39,22 @@ const IssuesList: React.FC<IssuesListProps> = ({ language, onProtectedAction }) 
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
-  const SHEET_URL = "https://docs.google.com/spreadsheets/d/1FbTT_F03Od1R85TjyaB6qLWyqEm6SOoqLRZATjO26EM/edit?gid=0#gid=0";
+  const getDefectsSheetId = () => {
+    return getEffectiveDefectsSheetId();
+  };
+
+  const SHEET_URL = `https://docs.google.com/spreadsheets/d/${getDefectsSheetId()}/edit?gid=0#gid=0`;
 
   const loadDefectsData = async () => {
     setLoading(true);
     try {
-      const res = await fetch('https://docs.google.com/spreadsheets/d/1FbTT_F03Od1R85TjyaB6qLWyqEm6SOoqLRZATjO26EM/export?format=csv&gid=0');
-      const text = await res.text();
-      const csv = parseCSV(text);
-
-      const dataRows = csv.slice(1);
-
-      const parsedItems: DefectItem[] = dataRows
-        .filter(row => row.length > 1 && row[1] && row[1].trim() !== '')
-        .map((row, idx) => {
-          const description = (row[1] || '').trim();
-          const location = (row[2] || '').trim() || 'Chưa phân loại';
-          const priority = (row[3] || '').trim();
-          const assignee = (row[4] || '').trim() || 'Chưa bàn giao';
-          const dateStr = (row[5] || '').trim();
-          const status = (row[6] || '').trim() || 'Chưa sửa';
-
-          const statusLower = status.toLowerCase();
-          const isPending = statusLower.includes('chưa') || statusLower.includes('đang') || statusLower.includes('mới');
-          const isResolved = statusLower.includes('đã') || statusLower.includes('xong') || statusLower.includes('hoàn thành');
-          
-          const priorityLower = priority.toLowerCase();
-          const isHighPriority = priorityLower.includes('level 2') || priorityLower.includes('level 3') || priorityLower.includes('cao') || priorityLower.includes('gấp');
-
-          const daysElapsed = calculateDaysElapsed(dateStr);
-
-          return {
-            id: row[0] ? String(row[0]).trim() : `DEF-${idx + 1}`,
-            description,
-            location,
-            priority,
-            assignee,
-            dateStr,
-            status,
-            isPending,
-            isResolved,
-            isHighPriority,
-            daysElapsed
-          };
-        });
-
-      setDefects(parsedItems);
+      const sheetId = getDefectsSheetId();
+      const text = await fetchDefectsSheetCSV(sheetId);
+      const parsedItems = parseDefectsFromCSV(text);
+      setDefects(parsedItems.length > 0 ? parsedItems : parseDefectsFromCSV(FALLBACK_DEFECTS_CSV));
     } catch (err) {
       console.error("Failed to fetch defects data from Sheet:", err);
+      setDefects(parseDefectsFromCSV(FALLBACK_DEFECTS_CSV));
     } finally {
       setLoading(false);
     }
@@ -134,6 +62,9 @@ const IssuesList: React.FC<IssuesListProps> = ({ language, onProtectedAction }) 
 
   useEffect(() => {
     loadDefectsData();
+    const handleResourceUpdated = () => loadDefectsData();
+    window.addEventListener('c10-resource-updated', handleResourceUpdated);
+    return () => window.removeEventListener('c10-resource-updated', handleResourceUpdated);
   }, []);
 
   // Compute statistics

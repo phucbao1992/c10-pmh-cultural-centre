@@ -431,6 +431,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     // 8. Apps Script Webhook
     const webhookUrl = localStorage.getItem('c10_daily_report_webhook_url') || '';
 
+    // 9. Defects & NCR Sheet
+    const defectsOverride = localStorage.getItem('c10_override_defects_sheet_id');
+    const defectsSheetId = defectsOverride ? extractSheetId(defectsOverride) : '1yPaZhqlwRk0RQje_Ferb17XdpheR2nPEcbWlYuQVdWI';
+    const defectsSheetUrl = `https://docs.google.com/spreadsheets/d/${defectsSheetId}/edit?gid=0#gid=0`;
+
+    // 10. Procurement Plan Sheet
+    const procurementOverride = localStorage.getItem('c10_procurement_sheet_id');
+    const procurementSheetId = procurementOverride ? extractSheetId(procurementOverride) : '1Ei9tAIdX9VrZuOURw0MFy51-d0JTg8dkboNz8GLzWz0';
+    const procurementSheetUrl = `https://docs.google.com/spreadsheets/d/${procurementSheetId}/edit`;
+
+
     return [
       {
         id: 'main_sheet',
@@ -443,7 +454,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         openUrl: mainSheetUrl,
         targetModules: [
           { name: 'Dashboard', tagColor: 'bg-blue-100 text-blue-800 border-blue-200' },
-          { name: 'Tiến độ tổng & S-Curve', tagColor: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
+          { name: 'Tiến độ phần hầm & S-Curve', tagColor: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
           { name: 'Báo cáo tuần', tagColor: 'bg-sky-100 text-sky-800 border-sky-200' },
           { name: 'Defects (Lỗi)', tagColor: 'bg-rose-100 text-rose-800 border-rose-200' },
           { name: 'Thanh toán EV', tagColor: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
@@ -597,6 +608,42 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         description: language === 'VN'
           ? 'Đường dẫn Webhook Google Apps Script thực hiện lưu trữ file PDF trực tiếp vào Google Drive và ghi thêm dòng dữ liệu tự động vào Google Sheet mà không bị chặn bởi quyền tài khoản.'
           : 'Google Apps Script Webhook receiving JSON payloads to upload daily report PDFs and append rows to Google Sheets.',
+        isEditable: true
+      },
+            {
+        id: 'defects_sheet',
+        name: language === 'VN' ? 'Google Sheet Lỗi Tồn Đọng & NCR (Defects Sheet)' : 'Defects & NCR Tracking Google Sheet',
+        category: 'sheet',
+        categoryLabel: 'Google Sheet',
+        storageKey: 'c10_override_defects_sheet_id',
+        defaultUrl: 'https://docs.google.com/spreadsheets/d/1yPaZhqlwRk0RQje_Ferb17XdpheR2nPEcbWlYuQVdWI/edit?gid=0#gid=0',
+        currentDisplayUrl: defectsSheetUrl,
+        openUrl: defectsSheetUrl,
+        targetModules: [
+          { name: 'Defects (Lỗi & NCR)', tagColor: 'bg-rose-100 text-rose-800 border-rose-200' },
+          { name: 'Biểu đồ Defects tồn đọng (Dashboard)', tagColor: 'bg-amber-100 text-amber-800 border-amber-200' }
+        ],
+        description: language === 'VN'
+          ? 'Cung cấp danh sách lỗi hiện trường, mức độ ưu tiên (Level 2/3), đơn vị xử lý và số ngày tồn đọng cho tab Vấn đề tồn đọng & thẻ KPI trên Dashboard.'
+          : 'Feeds site defect items, priority levels, assignees, and aging metrics for the Issues tab and Dashboard.',
+        isEditable: true
+      },
+      {
+        id: 'procurement_sheet',
+        name: language === 'VN' ? 'Google Sheet Kế Hoạch Mua Sắm (Procurement Sheet)' : 'Procurement Plan Google Sheet',
+        category: 'sheet',
+        categoryLabel: 'Google Sheet',
+        storageKey: 'c10_procurement_sheet_id',
+        defaultUrl: 'https://docs.google.com/spreadsheets/d/1Ei9tAIdX9VrZuOURw0MFy51-d0JTg8dkboNz8GLzWz0/edit',
+        currentDisplayUrl: procurementSheetUrl,
+        openUrl: procurementSheetUrl,
+        targetModules: [
+          { name: 'Kế hoạch mua hàng (PMH & Nhà thầu)', tagColor: 'bg-blue-100 text-blue-800 border-blue-200' },
+          { name: 'Hạng mục mua sắm sắp tới (Dashboard)', tagColor: 'bg-indigo-100 text-indigo-800 border-indigo-200' }
+        ],
+        description: language === 'VN'
+          ? 'Cung cấp tiến độ mời thầu và ngày yêu cầu vật tư về công trường của Chủ đầu tư PMH và Nhà thầu chính Delta.'
+          : 'Feeds tender schedule and required delivery dates for PMH and Main Contractor procurement items.',
         isEditable: true
       },
       {

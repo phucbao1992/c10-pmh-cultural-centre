@@ -512,7 +512,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* BENTO GRID: 3 Balanced KPI Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-4">
         
-        {/* Card 1: Tiến độ tổng thể (4 cols) */}
+        {/* Card 1: Tiến độ phần hầm (4 cols) */}
         <div className="md:col-span-2 lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between group">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('overall_progress')}</span>
@@ -719,7 +719,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       </div>
 
-      {/* SECTION: Tiến độ tổng (Full Width Line Chart) */}
+      {/* SECTION: Tiến độ phần hầm (Full Width Line Chart) */}
       <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200/80 shadow-2xs w-full overflow-hidden">
         <div className="flex justify-between items-center mb-6">
           <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">

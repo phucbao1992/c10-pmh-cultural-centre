@@ -406,34 +406,8 @@ const Schedule: React.FC<ScheduleProps> = ({ data, loading, error, language, onP
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-3">
-          <a 
-            href={DEFECT_LIST_URL}
-            target="_blank" 
-            rel="noopener noreferrer"
-            onClick={(e) => onProtectedAction && onProtectedAction(e, DEFECT_LIST_URL)}
-            className="flex items-center justify-center gap-2 px-3.5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs hover:shadow-md active:scale-95"
-          >
-            <ExternalLink className="w-3.5 h-3.5 text-white" />
-            Defect list
-          </a>
-          {reportLink && (
-            <a 
-              href={reportLink} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              onClick={(e) => onProtectedAction && onProtectedAction(e, reportLink)}
-              className="flex items-center justify-center gap-2 px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs hover:shadow-md active:scale-95"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              {t('open_weekly_report')}
-            </a>
-          )}
         </div>
-      </div>
-
-      {/* Quick Schedule Sub-Navigation Bar */}
+{/* Quick Schedule Sub-Navigation Bar */}
       <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-2 overflow-x-auto custom-scrollbar">
         {[
           { id: 'all', num: '★', labelVN: 'Tất cả mục', labelEN: 'All Sections' },

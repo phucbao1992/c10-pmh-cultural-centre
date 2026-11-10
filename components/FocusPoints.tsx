@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import PasswordProtection from './PasswordProtection';
 import { Lock, Unlock } from 'lucide-react';
@@ -70,7 +70,35 @@ const FocusPoints: React.FC<FocusPointsProps> = ({ language = 'VN' }) => {
     }
   };
 
+  const hideIframeControls = useCallback(() => {
+    try {
+      const docRef = iframeRef.current?.contentDocument || iframeRef.current?.contentWindow?.document;
+      if (!docRef) return;
+      if (!docRef.getElementById('c10-hide-controls-style')) {
+        const styleEl = docRef.createElement('style');
+        styleEl.id = 'c10-hide-controls-style';
+        styleEl.textContent = `
+          #exportBtn,
+          .control-date,
+          #lblControlDate,
+          #controlDate,
+          #lblControlDateHint {
+            display: none !important;
+          }
+        `;
+        docRef.head?.appendChild(styleEl);
+      }
+      const exportBtn = docRef.getElementById('exportBtn');
+      if (exportBtn) exportBtn.remove();
+      const controlDates = docRef.querySelectorAll('.control-date');
+      controlDates.forEach((el) => el.remove());
+    } catch (e) {
+      // Ignore cross-origin if any
+    }
+  }, []);
+
   const sendStateToIframe = useCallback((stateVal?: any) => {
+    hideIframeControls();
     const val = stateVal !== undefined ? stateVal : latestStateRef.current;
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage({
@@ -78,7 +106,7 @@ const FocusPoints: React.FC<FocusPointsProps> = ({ language = 'VN' }) => {
         state: val
       }, '*');
     }
-  }, []);
+  }, [hideIframeControls]);
 
   useEffect(() => {
     const handleMessage = async (e: MessageEvent) => {
@@ -119,24 +147,12 @@ const FocusPoints: React.FC<FocusPointsProps> = ({ language = 'VN' }) => {
 
     window.addEventListener('message', handleMessage);
 
-    // Primary listener on 'c10' collection with fallback check to 'cn82'
-    const unsub = onSnapshot(doc(db, 'c10', 'focusPointsState'), async (docSnap) => {
+    // Primary listener on 'c10' collection
+    const unsub = onSnapshot(doc(db, 'c10', 'focusPointsState'), (docSnap) => {
       if (docSnap.exists()) {
         latestStateRef.current = docSnap.data();
         sendStateToIframe();
       } else {
-        // Fallback check on old cn82 collection once
-        try {
-          const oldSnap = await getDoc(doc(db, 'cn82', 'focusPointsState'));
-          if (oldSnap.exists()) {
-            const oldData = oldSnap.data();
-            latestStateRef.current = oldData;
-            sendStateToIframe(oldData);
-            // Migrate to c10 seamlessly
-            setDoc(doc(db, 'c10', 'focusPointsState'), oldData).catch(() => {});
-            return;
-          }
-        } catch {}
         latestStateRef.current = null;
         sendStateToIframe(null);
       }

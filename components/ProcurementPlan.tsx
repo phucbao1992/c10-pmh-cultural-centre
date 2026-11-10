@@ -941,12 +941,7 @@ const ProcurementPlan: React.FC<ProcurementPlanProps> = ({ language, onProtected
             </button>
           )}
 
-          <button
-            onClick={handleOpenSheet}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95"
-          >
-            <ExternalLink className="w-3.5 h-3.5" /> {language === 'EN' ? 'Open Sheet' : 'Mở Sheet'} {activeSubTab}
-          </button>
+          
         </div>
       </div>
 
