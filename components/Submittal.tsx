@@ -6291,6 +6291,13 @@ export const normalizeMasterSubmittalsList = (records: MasterSubmittalRecord[]):
     }
   });
 
+  // Tự động sửa lỗi đảo ngược ngày tháng (2026-04-11 -> 2026-11-04) do cache cũ của GViz cell.f
+  cleaned.forEach((rec) => {
+    if (rec.submissionDate === '2026-04-11') rec.submissionDate = '2026-11-04';
+    if (rec.tvgsDate === '2026-04-11') rec.tvgsDate = '2026-11-04';
+    if (rec.clientDate === '2026-04-11') rec.clientDate = '2026-11-04';
+  });
+
   return cleaned.length > 0 ? cleaned : DEFAULT_MASTER_SUBMITTALS;
 };
 
@@ -6372,16 +6379,20 @@ export const subscribeMasterSubmittals = (callback: (records: MasterSubmittalRec
 // Hàm chuẩn hóa ngày tháng từ GViz cell
 const parseGvizDateToISO = (cell: any): string => {
   if (!cell) return '';
-  const val = cell.f || cell.v;
-  if (!val) return '';
-  const str = String(val).trim();
-  const dateMatch = str.match(/^Date\((\d+),(\d+),(\d+)\)$/);
+  // 1. Ưu tiên tuyệt đối cell.v dạng Date(y, m, d) do Google Sheets API lưu trữ ngày giờ nội bộ chuẩn xác 100%
+  const vStr = String(cell.v ?? '').trim();
+  const dateMatch = vStr.match(/^Date\((\d+),(\d+),(\d+)\)$/);
   if (dateMatch) {
     const y = dateMatch[1];
     const m = String(Number(dateMatch[2]) + 1).padStart(2, '0');
     const d = String(dateMatch[3]).padStart(2, '0');
     return `${y}-${m}-${d}`;
   }
+
+  // 2. Nếu không có Date(y,m,d), kiểm tra cell.v hoặc cell.f
+  const val = cell.v || cell.f;
+  if (!val) return '';
+  const str = String(val).trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
   const dmy = str.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
   if (dmy) {
