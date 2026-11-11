@@ -2555,13 +2555,3 @@ function doPost(e) {
 }
 `;
 };
-
-
-export const syncCloudResourceLinksToFirestore = async (): Promise<void> => {
-  // No-op fallback for cloud resource links sync
-};
-
-
-export const subscribeCloudResourceLinksFromFirestore = (callback: (links?: any) => void): (() => void) => {
-  return () => {};
-};
