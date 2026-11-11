@@ -2555,3 +2555,8 @@ function doPost(e) {
 }
 `;
 };
+
+
+export const syncCloudResourceLinksToFirestore = async (): Promise<void> => {
+  // No-op fallback for cloud resource links sync
+};
