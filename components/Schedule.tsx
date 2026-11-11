@@ -866,15 +866,13 @@ const Schedule: React.FC<ScheduleProps> = ({ data, loading, error, language, onP
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
                     <FileText className="w-12 h-12 text-slate-300 mb-3" />
                     <p className="text-slate-600 font-medium text-sm">{t('no_weekly_meeting_file')}</p>
-                    <a
-                      href="https://drive.google.com/drive/folders/1t5YjAEDdfx7qQmdHXX7IxdV4-REBCJ3G"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1.5"
+                    <button
+                      type="button"
+                      className="mt-3 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1.5 cursor-default"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                       {t('open_drive_folder')}
-                    </a>
+                    </button>
                   </div>
                 )}
               </div>
@@ -923,15 +921,13 @@ const Schedule: React.FC<ScheduleProps> = ({ data, loading, error, language, onP
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
                     <FileText className="w-12 h-12 text-slate-300 mb-3" />
                     <p className="text-slate-600 font-medium text-sm">{t('file_not_found')}</p>
-                    <a
-                      href={MEP_FOLDER_LINK}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1.5"
+                    <button
+                      type="button"
+                      className="mt-3 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1.5 cursor-default"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                       {t('open_drive_folder')}
-                    </a>
+                    </button>
                   </div>
                 )}
               </div>

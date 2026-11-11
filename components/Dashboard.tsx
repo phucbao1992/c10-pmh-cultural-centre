@@ -14,7 +14,8 @@ import { SheetData, SubmittalData, MonitoringData } from '../services/sheetsServ
 import { Language } from '../types';
 import { TRANSLATIONS, MILESTONES, GOOGLE_SHEET_ID } from '../constants';
 import { getStoredMilestones, subscribeMilestones, MilestoneItem } from '../services/milestoneService';
-import { parseCSV } from './IssuesList';
+import { parseCSV, calculateDaysElapsed, extractSheetId, fetchDefectsSheetCSV, parseDefectsFromCSV, computeDefectsSummary, FALLBACK_DEFECTS_CSV } from '../services/utils';
+import { computeLiveSubmittalDashboardStats, subscribeMasterSubmittals, syncFromGoogleSheet, LiveSubmittalDashboardStats } from './Submittal';
 import BuildingFloorPlan from './BuildingFloorPlan';
 
 const renderLastValueLabel = (props: any, data: any[], dataKey: string, dy: number = -12) => {
@@ -118,11 +119,21 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const t = (key: string) => TRANSLATIONS[language][key] || key;
 
-  const [defectsSummary, setDefectsSummary] = useState<{ pending: number; overdue7Days: number; normalPending: number }>({
-    pending: 0,
-    overdue7Days: 0,
-    normalPending: 0
+  const [defectsSummary, setDefectsSummary] = useState<{ pending: number; overdue7Days: number; normalPending: number; resolved?: number; total?: number }>(() => {
+    try {
+      const cached = localStorage.getItem('c10_live_defects_summary');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    const initial = computeDefectsSummary(parseDefectsFromCSV(FALLBACK_DEFECTS_CSV));
+    return {
+      pending: initial.pending,
+      overdue7Days: initial.overdue7Days,
+      normalPending: initial.normalPending,
+      resolved: initial.resolved,
+      total: initial.total
+    };
   });
+  const [submittalMetrics, setSubmittalMetrics] = useState<LiveSubmittalDashboardStats>(() => computeLiveSubmittalDashboardStats());
   const [upcomingProcurement, setUpcomingProcurement] = useState<UpcomingProcurementItem[]>([]);
   const [currentMilestones, setCurrentMilestones] = useState<MilestoneItem[]>(getStoredMilestones());
 
@@ -134,60 +145,65 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, []);
 
   useEffect(() => {
-    const calculateDaysElapsed = (dateStr: string): number | null => {
-      if (!dateStr || !dateStr.trim()) return null;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      let dateObj = new Date(dateStr);
-      if (isNaN(dateObj.getTime())) {
-        const parts = dateStr.split('/');
-        if (parts.length === 3) {
-          const day = parseInt(parts[0], 10);
-          const month = parseInt(parts[1], 10) - 1;
-          const year = parseInt(parts[2], 10);
-          dateObj = new Date(year, month, day);
-        }
-      }
-
-      if (isNaN(dateObj.getTime())) return null;
-
-      dateObj.setHours(0, 0, 0, 0);
-      const diffTime = today.getTime() - dateObj.getTime();
-      return Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+    // 1. Đồng bộ động dữ liệu Hồ sơ trễ hạn từ tab Theo dõi hồ sơ (Submittal)
+    const refreshSubmittalMetrics = () => {
+      setSubmittalMetrics(computeLiveSubmittalDashboardStats());
     };
+    refreshSubmittalMetrics();
 
-    // Fetch defects
+    const unsubSubmittals = subscribeMasterSubmittals((records) => {
+      setSubmittalMetrics(computeLiveSubmittalDashboardStats(records));
+    });
+
+    // Tự động quét nền từ Google Sheet Hồ sơ đệ trình để đảm bảo số liệu mới nhất ngay cả khi mở Dashboard trước
+    syncFromGoogleSheet()
+      .then(() => refreshSubmittalMetrics())
+      .catch(() => {});
+
+    window.addEventListener('c10-submittals-updated', refreshSubmittalMetrics);
+    return () => {
+      unsubSubmittals();
+      window.removeEventListener('c10-submittals-updated', refreshSubmittalMetrics);
+    };
+  }, []);
+
+  useEffect(() => {
+    // 2. Đồng bộ động dữ liệu Defects tồn đọng từ mục Defects
     const fetchDefects = async () => {
       try {
-        const res = await fetch('https://docs.google.com/spreadsheets/d/1FbTT_F03Od1R85TjyaB6qLWyqEm6SOoqLRZATjO26EM/export?format=csv&gid=0');
-        const text = await res.text();
-        const csv = parseCSV(text);
-        const dataRows = csv.slice(1);
-        let pendingCount = 0;
-        let overdue7Count = 0;
-
-        dataRows.forEach(row => {
-          const status = (row[6] || '').trim().toLowerCase();
-          const isPending = status.includes('chưa') || status.includes('đang') || status.includes('mới') || status === 'chưa sửa';
-          if (isPending) {
-            pendingCount++;
-            const dateStr = (row[5] || '').trim();
-            const days = calculateDaysElapsed(dateStr);
-            if (days !== null && days > 7) {
-              overdue7Count++;
-            }
-          }
-        });
-
+        const text = await fetchDefectsSheetCSV();
+        const rows = parseDefectsFromCSV(text);
+        const finalRows = rows.length > 0 ? rows : parseDefectsFromCSV(FALLBACK_DEFECTS_CSV);
+        const summary = computeDefectsSummary(finalRows);
         setDefectsSummary({
-          pending: pendingCount,
-          overdue7Days: overdue7Count,
-          normalPending: Math.max(0, pendingCount - overdue7Count)
+          pending: summary.pending,
+          overdue7Days: summary.overdue7Days,
+          normalPending: summary.normalPending,
+          resolved: summary.resolved,
+          total: summary.total
         });
+        try {
+          localStorage.setItem('c10_live_defects_summary', JSON.stringify(summary));
+        } catch {}
       } catch (err) {
         console.error("Error fetching defects:", err);
       }
+    };
+
+    const handleDefectsEvent = () => {
+      try {
+        const cached = localStorage.getItem('c10_live_defects_summary');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setDefectsSummary({
+            pending: parsed.pending ?? 0,
+            overdue7Days: parsed.overdue7Days ?? 0,
+            normalPending: parsed.normalPending ?? 0,
+            resolved: parsed.resolved,
+            total: parsed.total
+          });
+        }
+      } catch {}
     };
 
     // Fetch procurement PMH sheet data to get all items for this month & next month
@@ -195,10 +211,14 @@ const Dashboard: React.FC<DashboardProps> = ({
       try {
         let text = '';
         const customId = localStorage.getItem('c10_procurement_sheet_id');
+        const targetProcSheetId = extractSheetId(customId || '1Ei9tAIdX9VrZuOURw0MFy51-d0JTg8dkboNz8GLzWz0');
 
-        if (customId) {
+        if (targetProcSheetId) {
           try {
-            const res = await fetch(`https://docs.google.com/spreadsheets/d/${customId}/gviz/tq?tqx=out:csv&gid=1573500963`);
+            const res = await fetch(
+              `https://docs.google.com/spreadsheets/d/${targetProcSheetId}/gviz/tq?tqx=out:csv&gid=1573500963&_t=${Date.now()}`,
+              { cache: 'no-store' }
+            );
             if (res.ok) {
               text = await res.text();
             }
@@ -309,34 +329,36 @@ const Dashboard: React.FC<DashboardProps> = ({
     fetchDefects();
     fetchProcurementData();
 
-    const handleSync = () => fetchProcurementData();
+    const handleSync = () => {
+      fetchDefects();
+      fetchProcurementData();
+      syncFromGoogleSheet()
+        .then(() => setSubmittalMetrics(computeLiveSubmittalDashboardStats()))
+        .catch(() => setSubmittalMetrics(computeLiveSubmittalDashboardStats()));
+    };
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === 'hidden') return;
+      fetchDefects();
+      fetchProcurementData();
+      syncFromGoogleSheet()
+        .then(() => setSubmittalMetrics(computeLiveSubmittalDashboardStats()))
+        .catch(() => {});
+    }, 20000);
+
+    window.addEventListener('c10-defects-updated', handleDefectsEvent);
     window.addEventListener('c10-auth-changed', handleSync);
+    window.addEventListener('c10-resource-updated', handleSync);
     window.addEventListener('storage', handleSync);
+    window.addEventListener('focus', handleSync);
     return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('c10-defects-updated', handleDefectsEvent);
       window.removeEventListener('c10-auth-changed', handleSync);
+      window.removeEventListener('c10-resource-updated', handleSync);
       window.removeEventListener('storage', handleSync);
+      window.removeEventListener('focus', handleSync);
     };
   }, []);
-
-  // Compute Submittal totals
-  const submittalMetrics = useMemo(() => {
-    if (!submittalData) return { approved: 0, unapproved: 0, total: 0, delayed: 0 };
-    const categories = [
-      submittalData.ds, submittalData.sd, submittalData.ma, submittalData.mos,
-      submittalData.ots, submittalData.dsMep, submittalData.sdMep,
-      submittalData.matMep, submittalData.mosMep, submittalData.rfi
-    ].filter(Boolean);
-
-    let approved = 0, unapproved = 0, total = 0, delayed = 0;
-    categories.forEach(item => {
-      approved += item.approved || 0;
-      unapproved += item.unapproved || 0;
-      total += item.total || 0;
-      delayed += item.delayedDocuments ? item.delayedDocuments.length : 0;
-    });
-
-    return { approved, unapproved, total, delayed };
-  }, [submittalData]);
 
   // Delayed days count from latest weekly progress
   const delayedDays = useMemo(() => {
@@ -495,24 +517,12 @@ const Dashboard: React.FC<DashboardProps> = ({
             {language === 'EN' ? 'Progress report, health metrics, manpower & excavation safety' : 'Báo cáo tiến độ, chỉ số sức khỏe, nhân lực & an toàn hố đào'}
           </p>
         </div>
-
-        <div className="flex items-center gap-3">
-          <a
-            href={`https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md transition-all duration-200 border border-emerald-500/50"
-          >
-            <ExternalLink className="w-4 h-4" />
-            <span>{language === 'EN' ? 'Open Google Sheet' : 'Mở Google Sheet Dự Án'}</span>
-          </a>
-        </div>
       </div>
 
       {/* BENTO GRID: 3 Balanced KPI Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-4">
         
-        {/* Card 1: Tiến độ phần hầm (4 cols) */}
+        {/* Card 1: Tiến độ tổng thể (4 cols) */}
         <div className="md:col-span-2 lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between group">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('overall_progress')}</span>
@@ -631,12 +641,12 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className={`text-2xl font-black tracking-tight ${submittalMetrics.delayed > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
               {submittalMetrics.delayed} <span className="text-xs font-semibold text-slate-500">{language === 'EN' ? 'documents' : 'hồ sơ'}</span>
             </div>
-            <div className="flex items-center gap-1.5 mt-2">
+            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                 submittalMetrics.delayed > 0 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
               }`}>
                 {submittalMetrics.delayed > 0 
-                  ? (language === 'EN' ? 'Urgent action required' : 'Cần xử lý gấp') 
+                  ? (language === 'EN' ? `TVGS: ${submittalMetrics.tvgsDelayCount} • CĐT: ${submittalMetrics.cdtDelayCount}` : `TVGS chậm: ${submittalMetrics.tvgsDelayCount} • CĐT chậm: ${submittalMetrics.cdtDelayCount}`) 
                   : (language === 'EN' ? 'Approved on time' : 'Đã duyệt đúng hạn')}
               </span>
             </div>
@@ -719,7 +729,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       </div>
 
-      {/* SECTION: Tiến độ phần hầm (Full Width Line Chart) */}
+      {/* SECTION: Tiến độ tổng (Full Width Line Chart) */}
       <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200/80 shadow-2xs w-full overflow-hidden">
         <div className="flex justify-between items-center mb-6">
           <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">

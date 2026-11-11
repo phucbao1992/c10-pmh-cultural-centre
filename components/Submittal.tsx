@@ -29,6 +29,7 @@ export type SubmittalCategoryKey =
 export type SubmittalDelayType = 'NONE' | 'TVGS_DELAY' | 'CDT_DELAY' | 'CONTRACTOR_DELAY';
 
 export interface MasterSubmittalRecord {
+  submissionCount?: number;
   id: string;
   category: SubmittalCategoryKey;
   stt: string | number;
@@ -113,6 +114,7 @@ export const saveSubmittalFilterConfig = async (cfg: SubmittalFilterConfig): Pro
   };
   try {
     localStorage.setItem(FILTER_CONFIG_STORAGE_KEY, JSON.stringify(normalized));
+    scheduleAutoCloudVaultBackup(false);
   } catch {}
   if (db) {
     try {
@@ -235,6 +237,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "clientCode": "B",
     "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCXki2iKpJJQZjY_hC6ycV5AQJIuqeNjbA57s7uA4IVxew?e=Tf74Tb",
     "notes": "TRA 011"
   },
   {
@@ -267,11 +270,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-23",
     "tvgsDate": "2026-08-03",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "2026-08-03",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCEklKNDFPVQq8byXpx5wlSAQMnBk7DchYruQSVWKQrTf0?e=mN5A6V",
     "notes": "TRA 021"
   },
@@ -286,11 +289,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-08-03",
     "tvgsDate": "2026-08-03",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "2026-09-10",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBoPbqWGu4sQIAa2AtXNBJCAXK-VsYigGLuQB5uNSNfQOM?e=5mtuKD",
     "notes": "TRA 029"
   },
@@ -305,11 +308,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-08-14",
     "tvgsDate": "2026-08-14",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "2026-09-10",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCT-cXxpJraR6ZqKOUobBoPAdJxQYiCwrfje_ElIfRHAJ8?e=gSG779",
     "notes": "TRA 037"
   },
@@ -324,11 +327,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-09-05",
     "tvgsDate": "2026-09-05",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "2026-09-10",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQB9lWxUT-LKRLa1H-ll0x8fAULKREBy_0eeFqRhJUPQzRw?e=6wyHo9",
     "notes": "TRA 047"
   },
@@ -343,11 +346,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-09-09",
     "tvgsDate": "2026-09-09",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
     "notes": "TRA 049"
   },
   {
@@ -360,11 +363,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-09-16",
     "tvgsDate": "2026-10-07",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "2026-10-18",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQC9ob4P3RefQLbtwTSnJ6eDASspHZNEbwVDT_cQ0SMytd4?e=MFnkwK"
   },
   {
@@ -378,7 +381,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-10-20",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
@@ -396,7 +399,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-11-02",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
@@ -404,25 +407,25 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 074"
   },
   {
-    "id": "rfi-11",
+    "id": "rfi-12",
     "category": "rfi",
-    "stt": 11,
+    "stt": 12,
     "code": "C10-BASE-DTA-CV-RFC-01",
     "rev": "00",
     "title": "đề xuất thay đôi mác thép cốt bê tông cho phù hợp với thị trường nghành thép xây dựng",
     "submissionDate": "2026-07-01",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "2026-08-17",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING"
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED"
   },
   {
-    "id": "rfi-12",
+    "id": "rfi-13",
     "category": "rfi",
-    "stt": 12,
+    "stt": 13,
     "code": "C10-MC1-DTA-CV-RFC-002",
     "tra": "021",
     "rev": "00",
@@ -430,16 +433,33 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-23",
     "tvgsDate": "2026-08-03",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "2026-08-04",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCwdcVDnpvFRqwt0-KJxMmdAVvzXKLLltBU28myOjH9l8o?e=yY96ch",
     "notes": "TRA 021"
   },
   {
-    "id": "shopdrawing-13",
+    "id": "rfi-14",
+    "category": "rfi",
+    "stt": 14,
+    "code": "C10-MC1-DTA-MEP-RFC-01",
+    "rev": "00",
+    "title": "Xin Thay đổi Ống của Hệ Thống cấp thoát nước",
+    "submissionDate": "2026-09-25",
+    "tvgsDate": "2026-09-28",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-09-30",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBRJPaw0JcjTZQHG6oOUkIZAaqwuPAbTsjYXWSzJ2apC84?e=xl7lAS"
+  },
+  {
+    "id": "shopdrawing-15",
     "category": "sdw",
     "stt": 1,
     "code": "C10-MC1-DTA-CV-SD-001",
@@ -458,7 +478,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 004"
   },
   {
-    "id": "shopdrawing-14",
+    "id": "shopdrawing-16",
     "category": "sdw",
     "stt": 2,
     "code": "C10-MC1-DTA-CV-SD-002",
@@ -477,7 +497,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 006"
   },
   {
-    "id": "shopdrawing-15",
+    "id": "shopdrawing-17",
     "category": "sdw",
     "stt": 3,
     "code": "C10-MC1-DTA-CV-SD-003",
@@ -496,7 +516,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 024"
   },
   {
-    "id": "shopdrawing-16",
+    "id": "shopdrawing-18",
     "category": "sdw",
     "stt": 4,
     "code": "C10-MC1-DTA-CV-SD-004",
@@ -509,12 +529,12 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "TRA 063"
   },
   {
-    "id": "shopdrawing-17",
+    "id": "shopdrawing-19",
     "category": "sdw",
     "stt": 5,
     "code": "C10-MC1-DTA-CV-SD-005",
@@ -524,15 +544,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-10-07",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING",
+    "finalStatus": "REJECTED",
     "notes": "TRA 063"
   },
   {
-    "id": "shopdrawing-18",
+    "id": "shopdrawing-20",
     "category": "sdw",
     "stt": 6,
     "code": "C10-MC1-DTA-CV-SD-006",
@@ -542,15 +562,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-10-07",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING",
+    "finalStatus": "REJECTED",
     "notes": "TRA 063"
   },
   {
-    "id": "shopdrawing-19",
+    "id": "shopdrawing-21",
     "category": "sdw",
     "stt": 7,
     "code": "C10-MC1-DTA-CV-SD-007",
@@ -560,15 +580,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-10-07",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING",
+    "finalStatus": "REJECTED",
     "notes": "TRA 063"
   },
   {
-    "id": "shopdrawing-20",
+    "id": "shopdrawing-22",
     "category": "sdw",
     "stt": 8,
     "code": "C10-MC1-DTA-CV-SD-008",
@@ -578,15 +598,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-10-07",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING",
+    "finalStatus": "REJECTED",
     "notes": "TRA 063"
   },
   {
-    "id": "shopdrawing-21",
+    "id": "shopdrawing-23",
     "category": "sdw",
     "stt": 9,
     "code": "C10-MC1-DTA-CV-SD-009",
@@ -596,15 +616,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-10-07",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING",
+    "finalStatus": "REJECTED",
     "notes": "TRA 063"
   },
   {
-    "id": "shopdrawing-22",
+    "id": "shopdrawing-24",
     "category": "sdw",
     "stt": 10,
     "code": "C10-MC1-DTA-CV-SD-010",
@@ -614,7 +634,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-11-04",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
@@ -622,7 +642,91 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 076"
   },
   {
-    "id": "mat-23",
+    "id": "shopdrawing-25",
+    "category": "sdw",
+    "stt": 11,
+    "code": "C10-MC1-DTA-MEP-SD-001-REV 002",
+    "rev": "002",
+    "title": "shopdrawing sleeve xuyên dầm capping",
+    "submissionDate": "2026-07-30",
+    "tvgsDate": "2026-08-04",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-08-10",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQDUxQIzULJkRYYF__XRrXsTAfzqHeBh0uzMYL83kgEDg3s?e=UajMSf"
+  },
+  {
+    "id": "shopdrawing-26",
+    "category": "sdw",
+    "stt": 12,
+    "code": "C10-MC1-DTA-MEP-SD-002 -REV004",
+    "rev": "004",
+    "title": "Shop Drawing for Grounding and Lightning Protection Systems",
+    "submissionDate": "2026-09-14",
+    "tvgsDate": "2026-09-17",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-10-03",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAwjgrqmNWwRIkZ0VF46uE9ATnBV123ftF9eGg1gyW-cYw?e=13I4Tr"
+  },
+  {
+    "id": "shopdrawing-27",
+    "category": "sdw",
+    "stt": 13,
+    "code": "C10-MC1-DTA-MEP-SD-003-REV 002",
+    "rev": "002",
+    "title": "bản vẽ Shopdrawing hệ thống thoát nước dưới sàn hầm tầng B2",
+    "submissionDate": "2026-09-29",
+    "tvgsDate": "2026-10-01",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-10-09",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAIhMCluQssSIulQNd446hhAf5l0wPxpmQH3x7CcJxKpb4?e=75eILU"
+  },
+  {
+    "id": "shopdrawing-28",
+    "category": "sdw",
+    "stt": 14,
+    "code": "C10-MC1-DTA-MEP-SD-004- REV 002",
+    "rev": "2",
+    "title": "bản vẽ Shopdrawing hệ thống ổ cắm tầng hầm B2",
+    "submissionDate": "2026-10-03",
+    "tvgsDate": "2026-10-07",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-10-09",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQC5V7Smyiv9RId_ej2fycwgAcjueMroeUhrzO-UhloqW3I?e=zH9XPm"
+  },
+  {
+    "id": "shopdrawing-29",
+    "category": "sdw",
+    "stt": 15,
+    "code": "C10-MC1-DTA-MEP-SD-005",
+    "rev": "00",
+    "title": "bản vẽ Shopdrawing hệ thống máy bơm  tầng hầm B2",
+    "submissionDate": "2026-11-04",
+    "tvgsDate": "",
+    "tvgsCode": "",
+    "tvgsStatus": "Đang trình",
+    "clientDate": "",
+    "clientCode": "",
+    "clientStatus": "",
+    "finalStatus": "PENDING"
+  },
+  {
+    "id": "mat-30",
     "category": "mat",
     "stt": 1,
     "code": "C10-MC1-DTA-CV-MAT-001",
@@ -641,7 +745,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 001"
   },
   {
-    "id": "mat-24",
+    "id": "mat-31",
     "category": "mat",
     "stt": 2,
     "code": "C10-MC1-DTA-CV-MAT-002",
@@ -660,7 +764,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 001"
   },
   {
-    "id": "mat-25",
+    "id": "mat-32",
     "category": "mat",
     "stt": 3,
     "code": "C10-MC1-DTA-CV-MAT-003",
@@ -679,7 +783,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 002"
   },
   {
-    "id": "mat-26",
+    "id": "mat-33",
     "category": "mat",
     "stt": 4,
     "code": "C10-MC1-DTA-CV-MAT-004",
@@ -689,15 +793,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-08",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
-    "notes": "TRA 007"
+    "clientStatus": "Đã thay thế (Đóng)",
+    "finalStatus": "REJECTED",
+    "notes": "TRA 007 • Đã trình Rev mới"
   },
   {
-    "id": "mat-27",
+    "id": "mat-34",
     "category": "mat",
     "stt": 5,
     "code": "C10-MC1-DTA-CV-MAT-004.Rev001",
@@ -716,14 +820,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 007"
   },
   {
-    "id": "mat-28",
+    "id": "mat-35",
     "category": "mat",
     "stt": 6,
     "code": "C10-MC1-DTA-CV-MAT-005",
     "tra": "012",
     "rev": "00",
     "title": "Đệ trình hồ sơ vật liệu:  + Keo khoan cấy: RAWLPLUG R-KEX-II CÔNG TY TNHH RAWLPLUG VIỆT NAM",
-    "submissionDate": "2025-07-14",
+    "submissionDate": "2026-07-14",
     "tvgsDate": "2026-07-18",
     "tvgsCode": "A",
     "tvgsStatus": "Duyệt",
@@ -735,7 +839,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 012"
   },
   {
-    "id": "mat-29",
+    "id": "mat-36",
     "category": "mat",
     "stt": 7,
     "code": "C10-MC1-DTA-CV-MAT-006",
@@ -747,11 +851,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "2026-07-21",
     "clientCode": "C",
-    "clientStatus": "Yêu cầu sửa",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "mat-30",
+    "id": "mat-37",
     "category": "mat",
     "stt": 8,
     "code": "C10-MC1-DTA-CV-MAT-006.Rev001",
@@ -763,44 +867,44 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "2026-07-22",
     "clientCode": "C",
-    "clientStatus": "Yêu cầu sửa",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "mat-31",
+    "id": "mat-38",
     "category": "mat",
     "stt": 9,
     "code": "C10-MC1-DTA-CV-MAT-006.Rev002",
     "rev": "00",
     "title": "Đệ trình hồ sơ vật liệu:  + Vữa không co ngót: Vinkems Grout 4HF (Vị trí sử dụng: Đổ lấp vị trí đục sàn sau khi cắt Kingpost, đầu cọc) CÔNG TY TNHH VINKEMS",
     "submissionDate": "2026-10-19",
-    "tvgsDate": "",
+    "tvgsDate": "2026-10-28",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING"
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "mat-32",
+    "id": "mat-39",
     "category": "mat",
     "stt": 10,
     "code": "C10-MC1-DTA-CV-MAT-007",
     "rev": "00",
     "title": "Đệ trình hồ sơ vật liệu:  +Ống INCLINOMETER CASING MODEL GV-2401 Đơn vị lắp đặt: Công Ty TNHH Tư Vấn Xây Dựng – Đo Đạc Miền Nam",
-    "submissionDate": "2025-09-07",
-    "tvgsDate": "",
+    "submissionDate": "2026-09-07",
+    "tvgsDate": "2026-09-08",
     "tvgsCode": "A",
     "tvgsStatus": "Duyệt",
     "clientDate": "2026-07-23",
     "clientCode": "",
-    "clientStatus": "",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAFquK6RgQGRZuhl03b-x4_AQijl4ppptoRdsKqARId8GY?e=Sf0rre"
   },
   {
-    "id": "mat-33",
+    "id": "mat-40",
     "category": "mat",
     "stt": 11,
     "code": "C10-MC1-DTA-CV-MAT-008",
@@ -809,30 +913,30 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2025-09-19",
     "tvgsDate": "",
     "tvgsCode": "C",
-    "tvgsStatus": "Yêu cầu sửa",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "C",
-    "clientStatus": "Yêu cầu sửa",
+    "clientStatus": "Từ chối",
     "finalStatus": "REJECTED"
   },
   {
-    "id": "mat-34",
+    "id": "mat-41",
     "category": "mat",
     "stt": 12,
     "code": "C10-MC1-DTA-CV-MAT-008.Rev001",
     "rev": "00",
     "title": "Đệ trình hồ sơ vật liệu: Vật liêu vữa M75 +Xi măng Pooc Lăng hỗn hợp PCB40_Công ty cổ phần xi măng  Fico Tây Ninh/  Ncc: Công ty TNHH Hương Huỳnh + Cát  Ncc: Công ty TNHH MTV Vật Liệu Xây Dựng Phước Thịnh Phát",
-    "submissionDate": "2025-09-21",
+    "submissionDate": "2026-09-21",
     "tvgsDate": "2026-09-23",
     "tvgsCode": "A",
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "mat-35",
+    "id": "mat-42",
     "category": "mat",
     "stt": 13,
     "code": "C10-MC1-DTA-CV-MAT-009",
@@ -841,30 +945,30 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2025-09-19",
     "tvgsDate": "",
     "tvgsCode": "C",
-    "tvgsStatus": "Yêu cầu sửa",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "C",
-    "clientStatus": "Yêu cầu sửa",
+    "clientStatus": "Từ chối",
     "finalStatus": "REJECTED"
   },
   {
-    "id": "mat-36",
+    "id": "mat-43",
     "category": "mat",
     "stt": 14,
     "code": "C10-MC1-DTA-CV-MAT-009.Rev001",
     "rev": "00",
     "title": "Đệ trình hồ sơ vật liệu:  Vật tư biện pháp: B05-Chất tẩy ghỉ",
-    "submissionDate": "2025-09-21",
+    "submissionDate": "2026-09-21",
     "tvgsDate": "2026-09-23",
     "tvgsCode": "A",
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
   },
   {
-    "id": "mat-37",
+    "id": "mat-44",
     "category": "mat",
     "stt": 15,
     "code": "C10-MC1-DTA-CV-MAT-010",
@@ -881,7 +985,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAbULa5j6hcRobrCm9urXl7AZ0enH9QWLFuwvJWRFzIk9c?e=wWfnYf"
   },
   {
-    "id": "mat-38",
+    "id": "mat-45",
     "category": "mat",
     "stt": 16,
     "code": "C10-MC1-DTA-CV-MAT-011",
@@ -898,7 +1002,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBax76BhoQvQo5nNzMW_QB3AW0LTui98g_Xok0kIl6PNPg?e=aeHGvr"
   },
   {
-    "id": "mat-39",
+    "id": "mat-46",
     "category": "mat",
     "stt": 17,
     "code": "C10-MC1-DTA-CV-MAT-012",
@@ -907,14 +1011,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-09-29",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "mat-40",
+    "id": "mat-47",
     "category": "mat",
     "stt": 18,
     "code": "C10-MC1-DTA-CV-MAT-012.Rev001",
@@ -923,14 +1027,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-10-05",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "mat-41",
+    "id": "mat-48",
     "category": "mat",
     "stt": 19,
     "code": "C10-MC1-DTA-CV-MAT-012.Rev002",
@@ -942,11 +1046,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
   },
   {
-    "id": "mat-42",
+    "id": "mat-49",
     "category": "mat",
     "stt": 20,
     "code": "C10-MC1-DTA-CV-MAT-013",
@@ -958,11 +1062,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "mat-43",
+    "id": "mat-50",
     "category": "mat",
     "stt": 21,
     "code": "C10-MC1-DTA-CV-MAT-013.Rev001",
@@ -974,11 +1078,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
   },
   {
-    "id": "mat-44",
+    "id": "mat-51",
     "category": "mat",
     "stt": 22,
     "code": "C10-MC1-DTA-CV-MAT-014",
@@ -990,29 +1094,13 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
-  },
-  {
-    "id": "mat-45",
-    "category": "mat",
-    "stt": 23,
-    "code": "MẪU VẬT LIỆU",
-    "rev": "00",
-    "title": "MẪU VẬT LIỆU",
-    "submissionDate": "",
-    "tvgsDate": "",
-    "tvgsCode": "",
-    "tvgsStatus": "",
-    "clientDate": "",
-    "clientCode": "",
-    "clientStatus": "",
+    "clientStatus": "Đang trình",
     "finalStatus": "PENDING"
   },
   {
-    "id": "mat-46",
+    "id": "mat-52",
     "category": "mat",
-    "stt": 24,
+    "stt": 23,
     "code": "C10-MC1-DTA-SAMPLE-TAG-001",
     "tra": "002",
     "rev": "00",
@@ -1020,17 +1108,17 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-06-30",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
     "notes": "TRA 002"
   },
   {
-    "id": "mat-47",
+    "id": "mat-53",
     "category": "mat",
-    "stt": 25,
+    "stt": 24,
     "code": "C10-MC1-DTA-SAMPLE-TAG-002",
     "tra": "020",
     "rev": "00",
@@ -1038,17 +1126,17 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-21",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
     "notes": "TRA 020"
   },
   {
-    "id": "mat-48",
+    "id": "mat-54",
     "category": "mat",
-    "stt": 26,
+    "stt": 25,
     "code": "C10-MC1-DTA-SAMPLE-TAG-003",
     "tra": "020",
     "rev": "00",
@@ -1056,79 +1144,228 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-21",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
     "notes": "TRA 020"
   },
   {
-    "id": "mat-49",
+    "id": "mat-55",
     "category": "mat",
-    "stt": 27,
+    "stt": 26,
     "code": "C10-MC1-DTA-SAMPLE-TAG-004",
     "rev": "00",
     "title": "Ống INCLINOMETER CASING MODEL GV-2404-D70mm",
     "submissionDate": "2026-09-08",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING"
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED"
   },
   {
-    "id": "mat-50",
+    "id": "mat-56",
     "category": "mat",
-    "stt": 28,
+    "stt": 27,
     "code": "C10-MC1-DTA-SAMPLE-TAG-005",
     "rev": "00",
     "title": "Vibrating Wire Strain Gause  Modal GV-2405",
     "submissionDate": "2026-09-28",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
+    "clientStatus": "Đang trình",
     "finalStatus": "PENDING"
   },
   {
-    "id": "mat-51",
+    "id": "mat-57",
     "category": "mat",
-    "stt": 29,
+    "stt": 28,
     "code": "C10-MC1-DTA-SAMPLE-TAG-006",
     "rev": "00",
     "title": "+ Thuốc trừ mối Premise 200 SC  + Đường ống TERMITE-PRO  + Lưới thép không gỉ TEMSTEEL  + Vữa xi măng TERMLOK NCC: Công ty TNHH Một Thành Viên Dịch Vụ Hạnh Long",
     "submissionDate": "2026-09-28",
     "tvgsDate": "2026-10-27",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
+    "clientStatus": "Đang trình",
     "finalStatus": "PENDING"
   },
   {
-    "id": "mat-52",
+    "id": "mat-58",
     "category": "mat",
-    "stt": 30,
+    "stt": 29,
     "code": "C10-MC1-DTA-SAMPLE-TAG-007",
     "rev": "00",
     "title": "Sika Top 540 Seal VN Công ty SIKA Hữu Hạn Việt Nam",
     "submissionDate": "2026-10-24",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
     "finalStatus": "PENDING"
   },
   {
-    "id": "mos-53",
+    "id": "mat-59",
+    "category": "mat",
+    "stt": 30,
+    "code": "C10-MC1-DTA-MEP-MAT-001",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ vật liệu:  + Sleeve thép mạ kẽm nhúng nóng xuyên vách bê tông cốt thép",
+    "submissionDate": "2026-07-16",
+    "tvgsDate": "2026-07-21",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-08-05",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQDBFcJ9v7S1TazLg5pyOQsCAcO34LKap816fVWX1dFIJb4?e=kdu6vk"
+  },
+  {
+    "id": "mat-60",
+    "category": "mat",
+    "stt": 31,
+    "code": "C10-MC1-DTA-MEP-MAT-002",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ vật liệu:  + ống điện PVC và phụ kiện",
+    "submissionDate": "2026-08-06",
+    "tvgsDate": "2026-08-15",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-08-18",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQC4FV1XhDRLQZnIUFitHEgTAQbFtBpOV2wi2M_TC64rOrU?e=EP5jR3"
+  },
+  {
+    "id": "mat-61",
+    "category": "mat",
+    "stt": 32,
+    "code": "C10-MC1-DTA-MEP-MAT-003-REV 001",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ vật liệu:  + vât tư  phụ cho hệ thống  chống sét và nối đất",
+    "submissionDate": "2026-08-26",
+    "tvgsDate": "2026-09-10",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-10-03",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBtEsYluARAR6n5rpOR_wWyAU6C0E8g-xLGZ4sGMgKZTnQ?e=i4ApIP"
+  },
+  {
+    "id": "mat-62",
+    "category": "mat",
+    "stt": 33,
+    "code": "C10-MC1-DTA-MEP-MAT-004 -REV 002-",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ vật liệu:  + Vât tư  Ống Upvc , Ống PPR  và phụ kiện  ( tiền phong )",
+    "submissionDate": "2026-09-15",
+    "tvgsDate": "2026-09-21",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-09-29",
+    "clientCode": "",
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
+  },
+  {
+    "id": "mat-63",
+    "category": "mat",
+    "stt": 34,
+    "code": "C10-MC1-DTA-MEP-MAT-006",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ vật liệu:  + Vât tư  Ống Upvc , Ống PPR  và phụ kiện  ( ĐỒNG NAI )",
+    "submissionDate": "2026-09-25",
+    "tvgsDate": "2026-10-03",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-10-05",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQDPoyNV1kf4QoQNB_f2zIzEASedoZDL8kvMVMd0Q1V4exg?e=RvHXSc"
+  },
+  {
+    "id": "mat-64",
+    "category": "mat",
+    "stt": 35,
+    "code": "C10-MC1-DTA-MEP-MAT-005-REV 001",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ vật liệu:  + vât tư cáp điện  cho hệ thống  chống sét và nối đất",
+    "submissionDate": "2026-09-21",
+    "tvgsDate": "2026-10-03",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-10-05",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBBkS4YAV_QQoWJ141V7HY2AaYsZaL24T3kDsrcOmhvpjQ?e=GOcMg4"
+  },
+  {
+    "id": "mat-65",
+    "category": "mat",
+    "stt": 36,
+    "code": "C10-MC1-DTA-MEP-MAT-007-REV 001",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ vật liệu:  + Sleeve Inox (SS316L ,SS304L)  xuyên vách bể nước",
+    "submissionDate": "2026-10-23",
+    "tvgsDate": "2026-10-27",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-10-29",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED"
+  },
+  {
+    "id": "mat-66",
+    "category": "mat",
+    "stt": 37,
+    "code": "C10-MC1-DTA-MEP-MAT-008",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ vật liệu:  + Vât tư thép cho hệ thống  chống sét và nối đất  + Thép Miền Nam ( V) :  Thép CB400-V  ( Công ty TNHH một thành viên thép Miền Nam – VNSTEEL )",
+    "submissionDate": "2026-11-03",
+    "tvgsDate": "",
+    "tvgsCode": "",
+    "tvgsStatus": "Đang trình",
+    "clientDate": "",
+    "clientCode": "",
+    "clientStatus": "",
+    "finalStatus": "PENDING"
+  },
+  {
+    "id": "mat-67",
+    "category": "mat",
+    "stt": 38,
+    "code": "C10-MC1-DTA-MEP-MAT-009",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ vật liệu:  +Vât tư thép cho hệ thống  chống sét và nối đất  + Thép Miền Nam ( V) :  Thép CB400-V  ( Công ty TNHH  Thép Tung Ho  Việt Nam )",
+    "submissionDate": "2026-11-03",
+    "tvgsDate": "",
+    "tvgsCode": "",
+    "tvgsStatus": "Đang trình",
+    "clientDate": "",
+    "clientCode": "",
+    "clientStatus": "",
+    "finalStatus": "PENDING"
+  },
+  {
+    "id": "mos-68",
     "category": "mos",
     "stt": 1,
     "code": "C10-MC1-DTA-CV-MOS-001",
@@ -1141,12 +1378,12 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "TRA 004"
   },
   {
-    "id": "mos-54",
+    "id": "mos-69",
     "category": "mos",
     "stt": 2,
     "code": "C10-MC1-DTA-CV-MOS-002",
@@ -1164,7 +1401,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 006"
   },
   {
-    "id": "mos-55",
+    "id": "mos-70",
     "category": "mos",
     "stt": 3,
     "code": "C10-MC1-DTA-CV-MOS-003",
@@ -1183,7 +1420,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 008"
   },
   {
-    "id": "mos-56",
+    "id": "mos-71",
     "category": "mos",
     "stt": 4,
     "code": "C10-MC1-DTA-CV-MOS-004",
@@ -1196,12 +1433,12 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "TRA 009"
   },
   {
-    "id": "mos-57",
+    "id": "mos-72",
     "category": "mos",
     "stt": 5,
     "code": "C10-MC1-DTA-CV-MOS-005",
@@ -1219,7 +1456,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 009"
   },
   {
-    "id": "mos-58",
+    "id": "mos-73",
     "category": "mos",
     "stt": 6,
     "code": "C10-MC1-DTA-CV-MOS-006",
@@ -1229,7 +1466,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-14",
     "tvgsDate": "2026-09-08",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "A",
     "clientStatus": "Duyệt",
@@ -1237,7 +1474,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 010"
   },
   {
-    "id": "mos-59",
+    "id": "mos-74",
     "category": "mos",
     "stt": 7,
     "code": "C10-MC1-DTA-CV-MOS-007",
@@ -1256,7 +1493,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 012"
   },
   {
-    "id": "mos-60",
+    "id": "mos-75",
     "category": "mos",
     "stt": 8,
     "code": "C10-MC1-DTA-CV-MOS-008",
@@ -1269,12 +1506,12 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED",
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING",
     "notes": "TRA 024"
   },
   {
-    "id": "mos-61",
+    "id": "mos-76",
     "category": "mos",
     "stt": 9,
     "code": "C10-MC1-DTA-CV-MOS-009",
@@ -1293,7 +1530,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 026"
   },
   {
-    "id": "mos-62",
+    "id": "mos-77",
     "category": "mos",
     "stt": 10,
     "code": "C10-MC1-DTA-CV-MOS-010",
@@ -1303,16 +1540,16 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-31",
     "tvgsDate": "2026-08-17",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/my?sortField=LinkFilename&amp;isAscending=false&amp;viewid=b80bd612%2D926d%2D44f6%2Da755%2D280e573f8ec4&amp;id=%2Fpersonal%2Fc10%5Fphumyhung%5Fphanham%5Fdeltagroup%5Fvn%2FDocuments%2F00%2E%20QA%2EQC%20TEAM%2FMC1%5FC10%5FH%E1%BB%92%20S%C6%A0%20D%E1%BB%B0%20%C3%81N%2F07%2E%20BPTC%2FC10%2DMC1%2DDTA%2DCV%2DMOS%2D010%2DGeneral%20Construction%20Method%20%28SPM%20duyet%29%2Epdf&amp;parent=%2Fpersonal%2Fc10%5Fphumyhung%5Fphanham%5Fdeltagroup%5Fvn%2FDocuments%2F00%2E%20QA%2EQC%20TEAM%2FMC1%5FC10%5FH%E1%BB%92%20S%C6%A0%20D%E1%BB%B0%20%C3%81N%2F07%2E%20BPTC",
     "notes": "TRA 028"
   },
   {
-    "id": "mos-63",
+    "id": "mos-78",
     "category": "mos",
     "stt": 11,
     "code": "C10-MC1-DTA-CV-MOS-011",
@@ -1331,7 +1568,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 030"
   },
   {
-    "id": "mos-64",
+    "id": "mos-79",
     "category": "mos",
     "stt": 12,
     "code": "C10-MC1-DTA-CV-MOS-012",
@@ -1344,13 +1581,13 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/my?sortField=LinkFilename&amp;isAscending=false&amp;viewid=b80bd612%2D926d%2D44f6%2Da755%2D280e573f8ec4&amp;id=%2Fpersonal%2Fc10%5Fphumyhung%5Fphanham%5Fdeltagroup%5Fvn%2FDocuments%2F00%2E%20QA%2EQC%20TEAM%2FMC1%5FC10%5FH%E1%BB%92%20S%C6%A0%20D%E1%BB%B0%20%C3%81N%2F07%2E%20BPTC%2FC10%2DMC1%2DDTA%2DCV%2DMOS%2D012%5FOVERALL%20BASEMENT%20PLAN%20AND%20OVERALL%20OFFICE%20AREA%20PLAN%20%28spm%20duyet%29%2Epdf&amp;parent=%2Fpersonal%2Fc10%5Fphumyhung%5Fphanham%5Fdeltagroup%5Fvn%2FDocuments%2F00%2E%20QA%2EQC%20TEAM%2FMC1%5FC10%5FH%E1%BB%92%20S%C6%A0%20D%E1%BB%B0%20%C3%81N%2F07%2E%20BPTC",
     "notes": "TRA 031"
   },
   {
-    "id": "mos-65",
+    "id": "mos-80",
     "category": "mos",
     "stt": 13,
     "code": "C10-MC1-DTA-CV-MOS-013",
@@ -1363,13 +1600,13 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/my?sortField=LinkFilename&amp;isAscending=false&amp;viewid=b80bd612%2D926d%2D44f6%2Da755%2D280e573f8ec4&amp;id=%2Fpersonal%2Fc10%5Fphumyhung%5Fphanham%5Fdeltagroup%5Fvn%2FDocuments%2F00%2E%20QA%2EQC%20TEAM%2FMC1%5FC10%5FH%E1%BB%92%20S%C6%A0%20D%E1%BB%B0%20%C3%81N%2F07%2E%20BPTC%2FC10%2DMC1%2DDTA%2DCV%2DMOS%2D013%5FTOWER%20CRANE%20ERECTION%20METHOD%20STATEMENT%20%28SPM%20duy%E1%BB%87t%29%2Epdf&amp;parent=%2Fpersonal%2Fc10%5Fphumyhung%5Fphanham%5Fdeltagroup%5Fvn%2FDocuments%2F00%2E%20QA%2EQC%20TEAM%2FMC1%5FC10%5FH%E1%BB%92%20S%C6%A0%20D%E1%BB%B0%20%C3%81N%2F07%2E%20BPTC",
     "notes": "TRA 036"
   },
   {
-    "id": "mos-66",
+    "id": "mos-81",
     "category": "mos",
     "stt": 14,
     "code": "C10-MC1-DTA-CV-MOS-014",
@@ -1388,7 +1625,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 039"
   },
   {
-    "id": "mos-67",
+    "id": "mos-82",
     "category": "mos",
     "stt": 15,
     "code": "C10-MC1-DTA-CV-MOS-015",
@@ -1398,7 +1635,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-10-30",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
@@ -1406,7 +1643,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 073"
   },
   {
-    "id": "mos-68",
+    "id": "mos-83",
     "category": "mos",
     "stt": 16,
     "code": "C10-MC1-DTA-CV-MOS-016",
@@ -1416,7 +1653,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-11-03",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
@@ -1424,7 +1661,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 069"
   },
   {
-    "id": "mos-69",
+    "id": "mos-84",
     "category": "mos",
     "stt": 17,
     "code": "C10-MC1-DTA-CV-MOS-017",
@@ -1434,15 +1671,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-10-14",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING",
+    "finalStatus": "REJECTED",
     "notes": "TRA 066"
   },
   {
-    "id": "mos-70",
+    "id": "mos-85",
     "category": "mos",
     "stt": 18,
     "code": "C10-MC1-DTA-CV-MOS-018",
@@ -1452,7 +1689,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-10-20",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
@@ -1460,7 +1697,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 068"
   },
   {
-    "id": "mos-71",
+    "id": "mos-86",
     "category": "mos",
     "stt": 19,
     "code": "C10-MC1-DTA-CV-MOS-019",
@@ -1470,7 +1707,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-10-21",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
@@ -1478,7 +1715,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 070"
   },
   {
-    "id": "mos-72",
+    "id": "mos-87",
     "category": "mos",
     "stt": 20,
     "code": "C10-MC1-DTA-CV-MOS-020",
@@ -1488,7 +1725,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-11-03",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
@@ -1496,13 +1733,122 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 075"
   },
   {
-    "id": "ots-73",
+    "id": "mos-88",
+    "category": "mos",
+    "stt": 21,
+    "code": "C10-MC1-DTA-CV-MOS-001",
+    "tra": "004",
+    "rev": "00",
+    "title": "Đệ trình bản vẽ hạng mục thi công Hầm:  + Bản vẽ BPTC tổng mặt bằng điện nước phục vụ thi công",
+    "submissionDate": "2026-07-06",
+    "tvgsDate": "2026-08-04",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-09-29",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQApCipUzsijTZ-8POhbL0YiATEYmeHmgTA49fmBMha08xc?e=D61SQP",
+    "notes": "TRA 004"
+  },
+  {
+    "id": "mos-89",
+    "category": "mos",
+    "stt": 22,
+    "code": "C10-MC1-DTA-CV-MOS-002",
+    "tra": "006",
+    "rev": "00",
+    "title": "Đệ trình biện pháp thi công: + Biện pháp thi công lắp đặt Sleeve và lỗ mở",
+    "submissionDate": "2026-07-08",
+    "tvgsDate": "2026-07-16",
+    "tvgsCode": "A",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-07-17",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCMZinBIU0MRq03cj7tq7cyAXPik8zfqapwN7gPR4SMsIY?e=4yt73t",
+    "notes": "TRA 006"
+  },
+  {
+    "id": "mos-90",
+    "category": "mos",
+    "stt": 23,
+    "code": "C10-MC1-DTA-CV-MOS-004",
+    "tra": "009",
+    "rev": "00",
+    "title": "Đệ trình biện pháp thi công: + Biện pháp thi công hệ thống chống sét nối đất",
+    "submissionDate": "2026-07-13",
+    "tvgsDate": "2026-08-05",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-08-08",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCYgycleMIYRI11q-B2AjmaAWcJbR7U1vmvAlzCpjeYQ6Q?e=bE6082",
+    "notes": "TRA 009"
+  },
+  {
+    "id": "mos-91",
+    "category": "mos",
+    "stt": 24,
+    "code": "C10-MC1-DTA-CV-MOS-005",
+    "tra": "009",
+    "rev": "00",
+    "title": "Đệ trình biện pháp thi công: + Biện pháp thi công lắp đặt ống điện",
+    "submissionDate": "2026-07-13",
+    "tvgsDate": "2026-07-30",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-07-31",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBOa91Vza6pSIEsR9Ii8XjqAXqrrgHMj80W7ddjxkxp-GU?e=BTDZmI",
+    "notes": "TRA 009"
+  },
+  {
+    "id": "mos-92",
+    "category": "mos",
+    "stt": 25,
+    "code": "C10-MC1-DTA-CV-MOS-006",
+    "rev": "00",
+    "title": "Đệ trình biện pháp thi công: + bản vẽ tổng mặt bằng vị trí camera của dự án",
+    "submissionDate": "2026-09-22",
+    "tvgsDate": "2026-09-24",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-10-05",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED",
+    "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBNm9cPTQXGSojY_y3hl6eUATHKPZTtNV_KmXQ9_2xIH_E?e=4e69Up"
+  },
+  {
+    "id": "mos-93",
+    "category": "mos",
+    "stt": 26,
+    "code": "C10-MC1-DTA-MEP-MOS-007",
+    "rev": "00",
+    "title": "Đệ trình biện pháp thi công: + BIỆN PHÁP THI CÔNG CHO HỆ THỐNG NƯỚC NGẦM",
+    "submissionDate": "2026-10-30",
+    "tvgsDate": "2026-10-31",
+    "tvgsCode": "B",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "2026-11-02",
+    "clientCode": "B",
+    "clientStatus": "Duyệt",
+    "finalStatus": "APPROVED"
+  },
+  {
+    "id": "ots-94",
     "category": "ots",
     "stt": 1,
     "code": "C10-MC1-DTA-CV-OST-001",
     "tra": "001",
     "rev": "001",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Form Nhật ký thi công",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Form Nhật ký thi công: - Form mẫu nhật ký thi công",
     "submissionDate": "2026-06-30",
     "tvgsDate": "2026-07-04",
     "tvgsCode": "A",
@@ -1515,13 +1861,13 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 001"
   },
   {
-    "id": "ots-74",
+    "id": "ots-95",
     "category": "ots",
     "stt": 2,
     "code": "C10-MC1-DTA-CV-OST-002",
     "tra": "001",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực: Đơn vị cung cấp bê tông cho dự án (Bê tông Nguyên Thịnh) Công ty Cổ Phần Đầu Tư Xây Dựng Nguyên Thịnh",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực: Đơn vị cung cấp bê tông cho dự án (Bê tông Nguyên Thịnh) Công ty Cổ Phần Đầu Tư Xây Dựng Nguyên Thịnh: Hồ sơ năng lực công ty  Hồ sơ vật liệu dùng cho bê tông  Hồ sơ kiểm định trạm trộn  Quy trình sản xuất và kiểm tra chất lượng bê tông Giấy chứng nhận đăng ký doanh nghiệp công ty cổ phần mã số doanh  nghiệp: 0310370177, Đăng ký lần đầu: ngày 06 tháng 10 năm 2010,  Đăng ký thay đổi lần thứ: 8, ngày 13/10/2025",
     "submissionDate": "2026-06-30",
     "tvgsDate": "2026-07-12",
     "tvgsCode": "A",
@@ -1534,13 +1880,13 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 001"
   },
   {
-    "id": "ots-75",
+    "id": "ots-96",
     "category": "ots",
     "stt": 3,
     "code": "C10-MC1-DTA-CV-OST-003",
     "tra": "001",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực: Đơn vị cung cấp bê tông cho dự án (Bê tông Việt Đức) Công ty TNHH Xây Dựng Bê Tông Việt Đức",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực: Đơn vị cung cấp bê tông cho dự án (Bê tông Việt Đức) Công ty TNHH Xây Dựng Bê Tông Việt Đức: -Hồ sơ năng lực công ty  -Hồ sơ vật liệu dùng cho bê tông - Hồ sơ kiểm định trạm trộn - Quy trình sản xuất và kiểm tra chất lượng bê tông",
     "submissionDate": "2026-06-30",
     "tvgsDate": "2026-07-03",
     "tvgsCode": "B",
@@ -1553,13 +1899,13 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 001"
   },
   {
-    "id": "ots-76",
+    "id": "ots-97",
     "category": "ots",
     "stt": 4,
     "code": "C10-MC1-DTA-CV-OST-004",
     "tra": "001",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực: LAS-XD 357 (Công ty CP Tư Vấn – Thiết Kế - Kiểm Định Xây Dựng Toàn Cầu)",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực: LAS-XD 357 (Công ty CP Tư Vấn – Thiết Kế - Kiểm Định Xây Dựng Toàn Cầu): Giấy chứng nhận đủ điều kiện hoạt đông thí nghiệm chuyên ngành xây  dựng – LAS-XD 357: số 153/GCN-BXD , ngày 19/05/2023 Ông: Nguyễn Hữu Cơ– Trưởng phòng thí nghiệm: -        Bằng ĐH: Trường ĐH Giao Thông Vận Tải chuyên ngành Kỹ thuật  xây dựng công trình giao thông. Số hiệu: GTS-DH 010231. -        Chứng nhận hoàn thành chương trình đào tạo: Quản lý Phòng thí  nghiệm chuyên ngành Xây dựng theo TCVN ISO/IEC 17025:2017.  Số hiệu: 2024/QL1-005/VKHCN. -        Chứng nhận đã hoàn thành chương trình đào tạo thí nghiệm:  Không phá hủy; Số hiệu: 13485/2016/VKH-TNXD. -        Chứng chỉ tốt nghiệp khóa đào tạo: Thí nghiệm tính chất cơ lý  của Vật liệu xây dựng. Số hiệu chứng chỉ: 201511202/VKHCN -        Chứng chỉ hoàn thành chương trình: Thí nghiệm viên chuyên  ngành xây dựng.",
     "submissionDate": "2026-06-30",
     "tvgsDate": "2026-07-12",
     "tvgsCode": "A",
@@ -1567,18 +1913,18 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "clientDate": "2026-07-14",
     "clientCode": "A",
     "clientStatus": "Duyệt",
-    "finalStatus": "APPROVED",
+    "finalStatus": "REJECTED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQDKZXv1omPTTLlc6tj5DK2hAdyqt1zVO1NqXHDsdbjirhg?e=mKJFmP",
     "notes": "TRA 001"
   },
   {
-    "id": "ots-77",
+    "id": "ots-98",
     "category": "ots",
     "stt": 5,
     "code": "C10-MC1-DTA-CV-OST-005",
     "tra": "001",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực: Đơn vị cung cấp thép cho dự án (Thép Miền Nam,Tung Ho) Công ty TNHH ACE (Việt Nam)",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực: Đơn vị cung cấp thép cho dự án (Thép Miền Nam,Tung Ho) Công ty TNHH ACE (Việt Nam): -Giấy chứng nhận đăng kí doanh nghiệp - Hồ sơ năng lực ACE - Giấy chứng nhận phân phối độc quyền",
     "submissionDate": "2026-06-30",
     "tvgsDate": "2026-06-27",
     "tvgsCode": "A",
@@ -1591,13 +1937,13 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 001"
   },
   {
-    "id": "ots-78",
+    "id": "ots-99",
     "category": "ots",
     "stt": 6,
     "code": "C10-MC1-DTA-CV-OST-006",
     "tra": "001",
     "rev": "00",
-    "title": "Hồ sơ năng lực nhà thầu thi công_ Công ty TNHH Tập Đoàn Xây Dựng DELTA 1.Giấy chứng nhận đăng ký doanh nghiệp (bản công chứng); 2.Hồ sơ năng lực DELTA (tiếng Việt) – bản gốc; 3. Chứng chỉ năng lực hoạt động xây dựng (bản công chứng); 4. Chứng chỉ năng lực PCCC (bản công chứng);",
+    "title": "Hồ sơ năng lực nhà thầu thi công_ Công ty TNHH Tập Đoàn Xây Dựng DELTA 1.Giấy chứng nhận đăng ký doanh nghiệp (bản công chứng); 2.Hồ sơ năng lực DELTA (tiếng Việt) – bản gốc; 3. Chứng chỉ năng lực hoạt động xây dựng (bản công chứng); 4. Chứng chỉ năng lực PCCC (bản công chứng);: Giấy chứng nhận đăng ký doanh nghiệp Giấy chứng nhận đăng ký kinh doanh số: 0100512717 + do Sở Kế hoạch đầu tư Tp.HN cấp lần đầu ngày 19/01/1993 +  đăng ký thay đổi lần thứ 21, ngày 25/12/2025 Chứng chỉ năng lực . - Chứng chỉ năng lực hoạt động xây dựng số: BXD-00000015  + do BXD Cục quản lý hoạt động xây dựng cấp  + ngày 30/09/2021 có giá trị đến hết ngày 30/09/2031  --- Giấy chứng nhận PCCC - Chứng chỉ năng lực số: 78/GXN-PCCC + do CA TP HN (Phòng cảnh sát phòng cháy, chữa cháy và cứu nạn,  cứu hộ cấp ngày 07/05/2023 + Tư vấn TK về PC&amp;CC / Thi công lắp đặt PC&amp;CC / Kinh doanh phương  tiện, thiết bị , vật tư PC&amp;CC",
     "submissionDate": "2026-06-30",
     "tvgsDate": "2026-07-14",
     "tvgsCode": "B",
@@ -1610,13 +1956,13 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 001"
   },
   {
-    "id": "ots-79",
+    "id": "ots-100",
     "category": "ots",
     "stt": 7,
     "code": "C10-MC1-DTA-CV-OST-007",
     "tra": "001",
     "rev": "00",
-    "title": "Hồ sơ năng lực đơn vị thẩm tra biện pháp thi công: + Công Ty TNHH Tư Vấn Thiết Kế Và Đầu Tư Xây Dựng Nam Phát",
+    "title": "Hồ sơ năng lực đơn vị thẩm tra biện pháp thi công: + Công Ty TNHH Tư Vấn Thiết Kế Và Đầu Tư Xây Dựng Nam Phát: Chứng chỉ năng lực hoạt động số BDG-00049543 + Do Sở kế hoạch và Đầu tư thành phố Hồ Chí Minh +Ngày 11/12/2020 có giá trị đến ngày 10/12/2030 Giấy chứng nhận đăng ký doanh nghiệp số : 0315258242 + Do sở Kế hoạch và đầu tư thành phố Hồ Chí Minh đăng ký lần  đầu: 06/09/2018 Chủ trì thẩm tra- Ông Kim Minh,  Chứng chỉ hành nghề hoạt động xây dựng Số: BXD-00141491, Thiết kế  kết cấu công trình, Hạng I, từ 04/05/2022 đến 04/05/2027",
     "submissionDate": "2026-06-30",
     "tvgsDate": "2026-07-14",
     "tvgsCode": "A",
@@ -1629,7 +1975,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 001"
   },
   {
-    "id": "ots-80",
+    "id": "ots-101",
     "category": "ots",
     "stt": 8,
     "code": "C10-MC1-DTA-CV-OST-008",
@@ -1639,7 +1985,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-06-30",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
@@ -1647,13 +1993,13 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 001"
   },
   {
-    "id": "ots-81",
+    "id": "ots-102",
     "category": "ots",
     "stt": 9,
     "code": "C10-MC1-DTA-CV-OST-009",
     "tra": "001",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Đề cương thí nghiệm LAS-XD 357 (Công ty CP Tư Vấn – Thiết Kế - Kiểm Định Xây Dựng Toàn Cầu)",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Đề cương thí nghiệm LAS-XD 357 (Công ty CP Tư Vấn – Thiết Kế - Kiểm Định Xây Dựng Toàn Cầu): Đề cương thí nghiệm LAS-XD 357 (Công ty CP Tư Vấn –  Thiết Kế - Kiểm Định Xây Dựng Toàn Cầu)",
     "submissionDate": "2026-06-30",
     "tvgsDate": "2026-07-24",
     "tvgsCode": "A",
@@ -1666,7 +2012,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 001"
   },
   {
-    "id": "ots-82",
+    "id": "ots-103",
     "category": "ots",
     "stt": 10,
     "code": "C10-MC1-DTA-CV-OST-010",
@@ -1676,15 +2022,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-06-30",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
-    "notes": "TRA 001"
+    "clientStatus": "Đã thay thế (Đóng)",
+    "finalStatus": "REJECTED",
+    "notes": "TRA 001 • Đã trình Rev mới"
   },
   {
-    "id": "ots-83",
+    "id": "ots-104",
     "category": "ots",
     "stt": 11,
     "code": "C10-MC1-DTA-CV-OST-010.Rev001",
@@ -1701,7 +2047,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQDaAVAKy5FXSYQU1pRse6n0AQbZsEi33Zuane_iSN0-10U?e=RNzQFr"
   },
   {
-    "id": "ots-84",
+    "id": "ots-105",
     "category": "ots",
     "stt": 12,
     "code": "C10-MC1-DTA-CV-OST-011",
@@ -1711,15 +2057,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-02",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Hủy không\r\n trình lại",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING",
+    "finalStatus": "REJECTED",
     "notes": "TRA 003"
   },
   {
-    "id": "ots-85",
+    "id": "ots-106",
     "category": "ots",
     "stt": 13,
     "code": "C10-MC1-DTA-CV-OST-012",
@@ -1729,15 +2075,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-06",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
-    "notes": "TRA 005"
+    "clientStatus": "Đã thay thế (Đóng)",
+    "finalStatus": "REJECTED",
+    "notes": "TRA 005 • Đã trình Rev mới"
   },
   {
-    "id": "ots-86",
+    "id": "ots-107",
     "category": "ots",
     "stt": 14,
     "code": "C10-MC1-DTA-CV-OST-012.Rev001",
@@ -1754,7 +2100,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAsPquMJ6lqT6hll7eSC5ZmAcWR1HQ6sfhpM5z9jRznO1k?e=skZuA4"
   },
   {
-    "id": "ots-87",
+    "id": "ots-108",
     "category": "ots",
     "stt": 15,
     "code": "C10-MC1-DTA-CV-OST-013",
@@ -1764,15 +2110,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-08",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
-    "notes": "TRA 007"
+    "clientStatus": "Đã thay thế (Đóng)",
+    "finalStatus": "REJECTED",
+    "notes": "TRA 007 • Đã trình Rev mới"
   },
   {
-    "id": "ots-88",
+    "id": "ots-109",
     "category": "ots",
     "stt": 16,
     "code": "C10-MC1-DTA-CV-OST-013.Rev001",
@@ -1781,14 +2127,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-17",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING"
+    "clientStatus": "Rejcet",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-89",
+    "id": "ots-110",
     "category": "ots",
     "stt": 17,
     "code": "C10-MC1-DTA-CV-OST-013.Rev002",
@@ -1805,7 +2151,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQB6VrmW1hV2TJOB4pKn2eMgAd0YBJyiQO7f9RxaelKf4KQ?e=PYTXWb"
   },
   {
-    "id": "ots-90",
+    "id": "ots-111",
     "category": "ots",
     "stt": 18,
     "code": "C10-MC1-DTA-CV-OST-014",
@@ -1815,15 +2161,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-11",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
-    "notes": "TRA 002"
+    "clientStatus": "Đã thay thế (Đóng)",
+    "finalStatus": "REJECTED",
+    "notes": "TRA 002 • Đã trình Rev mới"
   },
   {
-    "id": "ots-91",
+    "id": "ots-112",
     "category": "ots",
     "stt": 19,
     "code": "C10-MC1-DTA-CV-OST-014.Rev001",
@@ -1833,15 +2179,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-21",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Rejcet",
+    "finalStatus": "REJECTED",
     "notes": "TRA 021"
   },
   {
-    "id": "ots-92",
+    "id": "ots-113",
     "category": "ots",
     "stt": 20,
     "code": "C10-MC1-DTA-CV-OST-014.Rev002",
@@ -1860,7 +2206,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 021"
   },
   {
-    "id": "ots-93",
+    "id": "ots-114",
     "category": "ots",
     "stt": 21,
     "code": "C10-MC1-DTA-CV-OST-015",
@@ -1870,15 +2216,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-13",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Rejcet",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING",
+    "finalStatus": "REJECTED",
     "notes": "TRA 009"
   },
   {
-    "id": "ots-94",
+    "id": "ots-115",
     "category": "ots",
     "stt": 22,
     "code": "C10-MC1-DTA-CV-OST-016",
@@ -1897,7 +2243,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 012"
   },
   {
-    "id": "ots-95",
+    "id": "ots-116",
     "category": "ots",
     "stt": 23,
     "code": "C10-MC1-DTA-CV-OST-017",
@@ -1907,15 +2253,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-17",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Rejcet",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING",
+    "finalStatus": "REJECTED",
     "notes": "TRA 013"
   },
   {
-    "id": "ots-96",
+    "id": "ots-117",
     "category": "ots",
     "stt": 24,
     "code": "C10-MC1-DTA-CV-OST-017.Rev001",
@@ -1925,15 +2271,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-17",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Rejcet",
+    "finalStatus": "REJECTED",
     "notes": "TRA 18"
   },
   {
-    "id": "ots-97",
+    "id": "ots-118",
     "category": "ots",
     "stt": 25,
     "code": "C10-MC1-DTA-CV-OST-017.Rev003",
@@ -1942,14 +2288,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-08-19",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-98",
+    "id": "ots-119",
     "category": "ots",
     "stt": 26,
     "code": "C10-MC1-DTA-CV-OST-017.Rev004",
@@ -1967,7 +2313,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 45"
   },
   {
-    "id": "ots-99",
+    "id": "ots-120",
     "category": "ots",
     "stt": 27,
     "code": "C10-MC1-DTA-CV-OST-018",
@@ -1976,14 +2322,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-17",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Rejcet",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-100",
+    "id": "ots-121",
     "category": "ots",
     "stt": 28,
     "code": "C10-MC1-DTA-CV-OST-019",
@@ -1992,14 +2338,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-17",
     "tvgsDate": "",
     "tvgsCode": "C",
-    "tvgsStatus": "Yêu cầu sửa",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "C",
-    "clientStatus": "Yêu cầu sửa",
+    "clientStatus": "Từ chối",
     "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-101",
+    "id": "ots-122",
     "category": "ots",
     "stt": 29,
     "code": "C10-MC1-DTA-CV-OST-020",
@@ -2009,21 +2355,21 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-19",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Rejcet",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING",
+    "finalStatus": "REJECTED",
     "notes": "TRA 16"
   },
   {
-    "id": "ots-102",
+    "id": "ots-123",
     "category": "ots",
     "stt": 30,
     "code": "C10-MC1-DTA-CV-OST-021",
     "tra": "18",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực đơn vị cung cấp ván phủ phim 12mm Công Ty TNHH Đầu Tư Thương Mại Việt Trung Phát",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực đơn vị cung cấp ván phủ phim 12mm Công Ty TNHH Đầu Tư Thương Mại Việt Trung Phát: Giấy chứng nhận đăng ký doanh nghiệp mã số  doanh nghiệp:  0110758082.Đăng ký lần đầu: ngày 20 tháng 06 năm 2024.  Đăng ký thay đổi lần thứ : 2, ngày 10 tháng 04 năm 2026 Hồ sơ năng lực Công Ty TNHH Đầu Tư Thương Mại Việt Trung Phát Hồ sơ vật liệu: Kết quả thí nghiệm số 626/1609/LAS-XD 357,  sản phẩm Tấm gỗ dán ván lạng dày 12mm",
     "submissionDate": "2026-07-20",
     "tvgsDate": "2026-07-30",
     "tvgsCode": "A",
@@ -2036,13 +2382,13 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 18"
   },
   {
-    "id": "ots-103",
+    "id": "ots-124",
     "category": "ots",
     "stt": 31,
     "code": "C10-MC1-DTA-CV-OST-022",
     "tra": "21",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực đơn vị cung cấp cừ larsen biện pháp Công Ty TNHH Dịch Vụ Thương Mại Phú Nguyên Giàu",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực đơn vị cung cấp cừ larsen biện pháp Công Ty TNHH Dịch Vụ Thương Mại Phú Nguyên Giàu: Giấy chứng nhận đăng ký doanh nghiệp mã số  doanh nghiệp: 0312799684. Đăng ký lần đầu : ngày 30 tháng 05 năm 2014 Đăng ký thau đổi lần thứ 04, ngày 09 tháng 06 năm 2025 Hồ sơ năng lực Công Ty TNHH Dịch Vụ Thương Mại Phú Nguyên Giàu Chứng chỉ chất lượng",
     "submissionDate": "2026-07-21",
     "tvgsDate": "2026-07-24",
     "tvgsCode": "A",
@@ -2055,7 +2401,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 21"
   },
   {
-    "id": "ots-104",
+    "id": "ots-125",
     "category": "ots",
     "stt": 32,
     "code": "C10-MC1-DTA-CV-OST-023",
@@ -2065,15 +2411,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-20",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED",
     "notes": "TRA 18"
   },
   {
-    "id": "ots-105",
+    "id": "ots-126",
     "category": "ots",
     "stt": 33,
     "code": "C10-MC1-DTA-CV-OST-023.Rev001",
@@ -2082,19 +2428,19 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-20",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING"
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-106",
+    "id": "ots-127",
     "category": "ots",
     "stt": 34,
     "code": "C10-MC1-DTA-CV-OST-023.Rev002",
     "rev": "00",
-    "title": "Đệ trình hồ sơ: + Hồ sơ năng lực ban chỉ huy nhà thầu Delta",
+    "title": "Đệ trình hồ sơ: + Hồ sơ năng lực ban chỉ huy nhà thầu Delta: Ông: Nguyễn Văn Sáng_Chỉ huy trưởng Quyết định bổ nhiệm CHT: số 02/2026/QĐ/DT-PMH.C10  Ngày 10/06/2026 Bằng ĐH: Trường ĐH Giao Thông Vận Tải– Chuyên ngành:  Xây dựng dân dụng Chứng chỉ hành nghề giám sát Dân dụng, công nghiệp và Hạ tầng  kỹ thuật, Hạng II, Số: CNT-00126393. Thời hạn từ 17/11/2021  đến 17/11/2026. Bản kê khai kinh nghiệm; Sơ đồ tổ chức ngày 03/07/2026; Quyết định thành lập Ban chỉ huy công trường,  Số: 01/2026/QĐ/DT-PMH.MC1.C10, Ngày 03/07/2026",
     "submissionDate": "2026-08-18",
     "tvgsDate": "2026-08-20",
     "tvgsCode": "B",
@@ -2106,7 +2452,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQA7SFzSVRO1TaEgUQp1isRcAancGG80_PnHkI1owPY2sXU?e=J9cPLP"
   },
   {
-    "id": "ots-107",
+    "id": "ots-128",
     "category": "ots",
     "stt": 35,
     "code": "C10-MC1-DTA-CV-OST-024",
@@ -2125,7 +2471,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 19"
   },
   {
-    "id": "ots-108",
+    "id": "ots-129",
     "category": "ots",
     "stt": 36,
     "code": "C10-MC1-DTA-CV-OST-025",
@@ -2144,7 +2490,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "notes": "TRA 20"
   },
   {
-    "id": "ots-109",
+    "id": "ots-130",
     "category": "ots",
     "stt": 37,
     "code": "C10-MC1-DTA-CV-OST-026",
@@ -2161,7 +2507,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCd6HN8-fiZQYI_KHwYerCNAVOyLGG3AiLEzZFk-tHCyKE?e=Vl1bII"
   },
   {
-    "id": "ots-110",
+    "id": "ots-131",
     "category": "ots",
     "stt": 38,
     "code": "C10-MC1-DTA-CV-OST-027",
@@ -2171,15 +2517,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-27",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED",
     "notes": "TRA 21"
   },
   {
-    "id": "ots-111",
+    "id": "ots-132",
     "category": "ots",
     "stt": 39,
     "code": "C10-MC1-DTA-CV-OST-027.Rev.001",
@@ -2196,7 +2542,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBXQWySD7M8RJxgs2TgOg21AQhCcmcn10sO7TPL0bAJgwE?e=pgDgrD"
   },
   {
-    "id": "ots-112",
+    "id": "ots-133",
     "category": "ots",
     "stt": 40,
     "code": "C10-MC1-DTA-CV-OST-028",
@@ -2213,7 +2559,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQD7GGPby3f-Q6bVscA38yyKAcVObLXdwAX67Sa3j3zQbkc?e=0JhUVF"
   },
   {
-    "id": "ots-113",
+    "id": "ots-134",
     "category": "ots",
     "stt": 41,
     "code": "C10-MC1-DTA-CV-OST-029",
@@ -2222,14 +2568,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-29",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING"
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-114",
+    "id": "ots-135",
     "category": "ots",
     "stt": 42,
     "code": "C10-MC1-DTA-CV-OST-030",
@@ -2246,7 +2592,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBKLejftnHQQIQJUdiOuKq7Ac9J6AXrCRrACOqDcMVKdlw?e=yHE9Ql"
   },
   {
-    "id": "ots-115",
+    "id": "ots-136",
     "category": "ots",
     "stt": 43,
     "code": "C10-MC1-DTA-CV-OST-031",
@@ -2258,11 +2604,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
   },
   {
-    "id": "ots-116",
+    "id": "ots-137",
     "category": "ots",
     "stt": 44,
     "code": "C10-MC1-DTA-CV-OST-032",
@@ -2279,7 +2625,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAu5lsJR9GXQ5VDSjvgfoWpAQ37P1CE1omh97Iu_D-nEzs?e=hYOkeG"
   },
   {
-    "id": "ots-117",
+    "id": "ots-138",
     "category": "ots",
     "stt": 45,
     "code": "C10-MC1-DTA-CV-OST-033",
@@ -2296,7 +2642,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQDN_QqCu3s-RYP7aQ_h4_7PAXLOivDIK_5C5zOMw3L8Bic?e=YfGvkO"
   },
   {
-    "id": "ots-118",
+    "id": "ots-139",
     "category": "ots",
     "stt": 46,
     "code": "C10-MC1-DTA-CV-OST-034",
@@ -2313,7 +2659,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBIWuMVGXtCT6UEk3zxbcOeAYBJaBXVXogxyzSoUAGOZxY?e=NpE45v"
   },
   {
-    "id": "ots-119",
+    "id": "ots-140",
     "category": "ots",
     "stt": 47,
     "code": "C10-MC1-DTA-CV-OST-035",
@@ -2322,14 +2668,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-08-28",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-120",
+    "id": "ots-141",
     "category": "ots",
     "stt": 48,
     "code": "C10-MC1-DTA-CV-OST-036",
@@ -2341,11 +2687,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED"
   },
   {
-    "id": "ots-121",
+    "id": "ots-142",
     "category": "ots",
     "stt": 49,
     "code": "C10-MC1-DTA-CV-OST-037",
@@ -2362,7 +2708,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAe71yUptZxQYlvvIytW7OzAeQvHMuIsaSe-SxTAb24AdQ?e=mWvhA6"
   },
   {
-    "id": "ots-122",
+    "id": "ots-143",
     "category": "ots",
     "stt": 50,
     "code": "C10-MC1-DTA-CV-OST-038",
@@ -2379,7 +2725,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAeoqqynLi6QqvJyL92CjkqAS-Jnqvy6fENJEXznjPs2pk?e=jF49zB"
   },
   {
-    "id": "ots-123",
+    "id": "ots-144",
     "category": "ots",
     "stt": 51,
     "code": "C10-MC1-DTA-CV-OST-039",
@@ -2396,7 +2742,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQA-6_EEz0kSTpc496NcNtEHAURi2hVYJDodnndPJqMWv3k?e=EX4boU"
   },
   {
-    "id": "ots-124",
+    "id": "ots-145",
     "category": "ots",
     "stt": 52,
     "code": "C10-MC1-DTA-CV-OST-040",
@@ -2413,7 +2759,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQB2No8vtcrWQKO9UHIrR6djAStGz_NzpdEAKCo4O4DTtjQ?e=TDQpcp"
   },
   {
-    "id": "ots-125",
+    "id": "ots-146",
     "category": "ots",
     "stt": 53,
     "code": "C10-MC1-DTA-CV-OST-041",
@@ -2425,11 +2771,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "2026-08-27",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-126",
+    "id": "ots-147",
     "category": "ots",
     "stt": 54,
     "code": "C10-MC1-DTA-CV-OST-041.Rev001",
@@ -2446,7 +2792,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAZ4xQ2DBY8S4rnx2CA_wf9AcPQ8W7bF1PEgL9r_cXrvDY?e=wEvOAE"
   },
   {
-    "id": "ots-127",
+    "id": "ots-148",
     "category": "ots",
     "stt": 55,
     "code": "C10-MC1-DTA-CV-OST-042",
@@ -2462,7 +2808,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "ots-128",
+    "id": "ots-149",
     "category": "ots",
     "stt": 56,
     "code": "C10-MC1-DTA-CV-OST-043",
@@ -2474,11 +2820,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "C",
-    "clientStatus": "Yêu cầu sửa",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Đang trình",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-129",
+    "id": "ots-150",
     "category": "ots",
     "stt": 57,
     "code": "C10-MC1-DTA-CV-OST-044",
@@ -2490,11 +2836,11 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "C",
-    "clientStatus": "Yêu cầu sửa",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Đang trình",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-130",
+    "id": "ots-151",
     "category": "ots",
     "stt": 58,
     "code": "C10-MC1-DTA-CV-OST-045",
@@ -2511,7 +2857,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAGEKRg9seyTbUrYg2mLVUBAT2OTbXdO-DtUHGoHUsE0YU?e=QIeXYm"
   },
   {
-    "id": "ots-131",
+    "id": "ots-152",
     "category": "ots",
     "stt": 59,
     "code": "C10-MC1-DTA-CV-OST-046",
@@ -2520,14 +2866,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-09-15",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING"
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-132",
+    "id": "ots-153",
     "category": "ots",
     "stt": 60,
     "code": "C10-MC1-DTA-CV-OST-046.Rev001",
@@ -2536,14 +2882,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-09-23",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING"
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-133",
+    "id": "ots-154",
     "category": "ots",
     "stt": 61,
     "code": "C10-MC1-DTA-CV-OST-047",
@@ -2559,25 +2905,9 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "ots-134",
+    "id": "ots-155",
     "category": "ots",
     "stt": 62,
-    "code": "C10-MC1-DTA-CV-OST-048",
-    "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực: Đơn vị cung cấp bê tông cho dự án (Bê tông Yamaken) Công Ty Cổ Phần Bê Tông Terra Yamaken",
-    "submissionDate": "",
-    "tvgsDate": "2026-09-24",
-    "tvgsCode": "B",
-    "tvgsStatus": "Duyệt",
-    "clientDate": "",
-    "clientCode": "C",
-    "clientStatus": "Yêu cầu sửa",
-    "finalStatus": "APPROVED"
-  },
-  {
-    "id": "ots-135",
-    "category": "ots",
-    "stt": 63,
     "code": "C10-MC1-DTA-CV-OST-048.Rev001",
     "rev": "00",
     "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực: Đơn vị cung cấp bê tông cho dự án (Bê tông Yamaken) Công Ty Cổ Phần Bê Tông Terra Yamaken",
@@ -2592,9 +2922,9 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBlSitRLlGpT7IPuQTjw0uyASSfswz40MNcswAK-qqUO54?e=Sms5Hw"
   },
   {
-    "id": "ots-136",
+    "id": "ots-156",
     "category": "ots",
-    "stt": 64,
+    "stt": 63,
     "code": "C10-MC1-DTA-CV-OST-049",
     "tra": "056",
     "rev": "00",
@@ -2605,14 +2935,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "TRA 056"
   },
   {
-    "id": "ots-137",
+    "id": "ots-157",
     "category": "ots",
-    "stt": 65,
+    "stt": 64,
     "code": "C10-MC1-DTA-CV-OST-050",
     "tra": "066",
     "rev": "001",
@@ -2620,33 +2950,33 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-09-29",
     "tvgsDate": "2026-10-26",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
+    "clientStatus": "Đang trình",
     "finalStatus": "PENDING",
     "notes": "TRA 066"
   },
   {
-    "id": "ots-138",
+    "id": "ots-158",
     "category": "ots",
-    "stt": 66,
+    "stt": 65,
     "code": "C10-MC1-DTA-CV-OST-051",
     "rev": "00",
     "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 00\"",
     "submissionDate": "2026-10-03",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING"
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-139",
+    "id": "ots-159",
     "category": "ots",
-    "stt": 67,
+    "stt": 66,
     "code": "C10-MC1-DTA-CV-OST-051.Rev001",
     "rev": "001",
     "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 00\"",
@@ -2661,9 +2991,9 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAPdxMXGShpRp-O92LCCmC1AVqZtEgXDfACPpwIWIX0iOU?e=MjbDWE"
   },
   {
-    "id": "ots-140",
+    "id": "ots-160",
     "category": "ots",
-    "stt": 68,
+    "stt": 67,
     "code": "C10-MC1-DTA-CV-OST-052",
     "rev": "00",
     "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền đường chu kỳ 00 &amp; 01)",
@@ -2678,25 +3008,25 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQD6a5mT3yIhR6-aNSWBXeLJAfH5jFuUGU3QV2WJ0G72Q1g?e=qe6bg9"
   },
   {
-    "id": "ots-141",
+    "id": "ots-161",
     "category": "ots",
-    "stt": 69,
+    "stt": 68,
     "code": "C10-MC1-DTA-CV-OST-053",
     "rev": "00",
     "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 01\"",
     "submissionDate": "2026-10-03",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING"
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-142",
+    "id": "ots-162",
     "category": "ots",
-    "stt": 70,
+    "stt": 69,
     "code": "C10-MC1-DTA-CV-OST-053.Rev001",
     "rev": "001",
     "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 01\"",
@@ -2711,156 +3041,140 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCIUeslP2BYQ7Akn8DbxhS5AUDCqfTfmpjMI2iTmZYLPlE?e=JHqGbZ"
   },
   {
-    "id": "ots-143",
+    "id": "ots-163",
     "category": "ots",
-    "stt": 71,
+    "stt": 70,
     "code": "C10-MC1-DTA-CV-OST-054",
     "rev": "00",
     "title": "Đệ trình hồ sơ:  + Biện pháp thi công Mock-Up bê tông khối lớn Nhà cung cấp: Công Ty Cổ Phần Đầu Tư Xây Dựng Nguyên Thịnh",
     "submissionDate": "2026-10-05",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-144",
+    "id": "ots-164",
     "category": "ots",
-    "stt": 72,
-    "code": "C10-MC1-DTA-CV-OST-054.Rev001",
-    "rev": "001",
-    "title": "Đệ trình hồ sơ:  + Biện pháp thi công Mock-Up bê tông khối lớn Nhà cung cấp: Công Ty Cổ Phần Đầu Tư Xây Dựng Nguyên Thịnh",
-    "submissionDate": "",
-    "tvgsDate": "",
-    "tvgsCode": "",
-    "tvgsStatus": "",
-    "clientDate": "",
-    "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING"
-  },
-  {
-    "id": "ots-145",
-    "category": "ots",
-    "stt": 73,
+    "stt": 71,
     "code": "C10-MC1-DTA-CV-OST-055",
     "rev": "00",
     "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền đường chu kỳ 02\"",
     "submissionDate": "2026-10-12",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-146",
+    "id": "ots-165",
     "category": "ots",
-    "stt": 74,
+    "stt": 72,
     "code": "C10-MC1-DTA-CV-OST-055.Rev001",
     "rev": "001",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền đường chu kỳ 02\"",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền đường chu kỳ 02\": Báo cáo quan trắc",
     "submissionDate": "2026-10-14",
     "tvgsDate": "2026-10-22",
     "tvgsCode": "A",
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
   },
   {
-    "id": "ots-147",
+    "id": "ots-166",
     "category": "ots",
-    "stt": 75,
+    "stt": 73,
     "code": "C10-MC1-DTA-CV-OST-056",
     "rev": "00",
     "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền đường chu kỳ 03\"",
     "submissionDate": "2026-10-12",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-148",
+    "id": "ots-167",
     "category": "ots",
-    "stt": 76,
+    "stt": 74,
     "code": "C10-MC1-DTA-CV-OST-056.Rev001",
     "rev": "001",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền đường chu kỳ 03\"",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền đường chu kỳ 03\": Báo cáo quan trắc",
     "submissionDate": "2026-10-14",
     "tvgsDate": "2026-10-22",
     "tvgsCode": "A",
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
   },
   {
-    "id": "ots-149",
+    "id": "ots-168",
     "category": "ots",
-    "stt": 77,
+    "stt": 75,
     "code": "C10-MC1-DTA-CV-OST-057",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 02\"",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 02\": Báo cáo quan trắc",
     "submissionDate": "2026-10-23",
     "tvgsDate": "2026-10-24",
     "tvgsCode": "A",
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
   },
   {
-    "id": "ots-150",
+    "id": "ots-169",
     "category": "ots",
-    "stt": 78,
+    "stt": 76,
     "code": "C10-MC1-DTA-CV-OST-058",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 03\"",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 03\": Báo cáo quan trắc",
     "submissionDate": "2026-10-23",
     "tvgsDate": "2026-10-24",
     "tvgsCode": "A",
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
   },
   {
-    "id": "ots-151",
+    "id": "ots-170",
     "category": "ots",
-    "stt": 79,
+    "stt": 77,
     "code": "C10-MC1-DTA-CV-OST-059.Rev001",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 03a, 04, 04a\"",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 03a, 04, 04a\": Báo cáo quan trắc",
     "submissionDate": "2026-10-27",
     "tvgsDate": "2026-10-29",
     "tvgsCode": "A",
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
   },
   {
-    "id": "ots-152",
+    "id": "ots-171",
     "category": "ots",
-    "stt": 80,
+    "stt": 78,
     "code": "C10-MC1-DTA-CV-OST-060",
     "rev": "00",
-    "title": "Đệ trình hồ sơ:   + Hồ sơ năng lực đơn vị cung cấp và lắp đặt Shoring (H350) CÔNG TY CỔ PHẦN KỸ THUẬT NỀN MÓNG IPC",
+    "title": "Đệ trình hồ sơ:   + Hồ sơ năng lực đơn vị cung cấp và lắp đặt Shoring (H350) CÔNG TY CỔ PHẦN KỸ THUẬT NỀN MÓNG IPC: Hồ sơ trình bao gồm: + Giấy chứng nhận đăng kí doanh nghiệp  + Hồ sơ năng lực + Hồ sơ vật tư",
     "submissionDate": "2026-10-15",
     "tvgsDate": "2026-10-22",
     "tvgsCode": "A",
@@ -2871,60 +3185,60 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "ots-153",
+    "id": "ots-172",
     "category": "ots",
-    "stt": 81,
+    "stt": 79,
     "code": "C10-MC1-DTA-CV-OST-061",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền  đường chu kỳ 04\"",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền  đường chu kỳ 04\": Báo cáo quan trắc",
     "submissionDate": "2026-10-19",
     "tvgsDate": "2026-10-22",
     "tvgsCode": "A",
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
-  },
-  {
-    "id": "ots-154",
-    "category": "ots",
-    "stt": 82,
-    "code": "C10-MC1-DTA-CV-OST-062",
-    "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền  đường chu kỳ 05\"",
-    "submissionDate": "2026-10-19",
-    "tvgsDate": "2026-10-22",
-    "tvgsCode": "A",
-    "tvgsStatus": "Duyệt",
-    "clientDate": "",
-    "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
-  },
-  {
-    "id": "ots-155",
-    "category": "ots",
-    "stt": 83,
-    "code": "C10-MC1-DTA-CV-OST-063",
-    "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: - Hệ giáo chống dầm, sàn: + Giáo RINGCLOCK A1200x600mm, dày 2.5mm + Giáo RINGCLOCK A600x600mm, dày 2.5mm NCC: Công ty TNHH Giải Pháp Thi Công Trường Thịnh",
-    "submissionDate": "2026-10-19",
-    "tvgsDate": "2026-10-29",
-    "tvgsCode": "",
-    "tvgsStatus": "",
-    "clientDate": "",
-    "clientCode": "",
-    "clientStatus": "",
+    "clientStatus": "Đang trình",
     "finalStatus": "PENDING"
   },
   {
-    "id": "ots-156",
+    "id": "ots-173",
     "category": "ots",
-    "stt": 84,
+    "stt": 80,
+    "code": "C10-MC1-DTA-CV-OST-062",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền  đường chu kỳ 05\": Báo cáo quan trắc",
+    "submissionDate": "2026-10-19",
+    "tvgsDate": "2026-10-22",
+    "tvgsCode": "A",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "",
+    "clientCode": "",
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
+  },
+  {
+    "id": "ots-174",
+    "category": "ots",
+    "stt": 81,
+    "code": "C10-MC1-DTA-CV-OST-063",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: - Hệ giáo chống dầm, sàn: + Giáo RINGCLOCK A1200x600mm, dày 2.5mm + Giáo RINGCLOCK A600x600mm, dày 2.5mm NCC: Công ty TNHH Giải Pháp Thi Công Trường Thịnh: -Hồ sơ năng lực  Công ty TNHH Giải Pháp Thi Công  Trường Thịnh -Kết quả kí nghiệm giáo",
+    "submissionDate": "2026-10-19",
+    "tvgsDate": "2026-10-29",
+    "tvgsCode": "",
+    "tvgsStatus": "Từ chối",
+    "clientDate": "",
+    "clientCode": "",
+    "clientStatus": "Từ chối",
+    "finalStatus": "REJECTED"
+  },
+  {
+    "id": "ots-175",
+    "category": "ots",
+    "stt": 82,
     "code": "C10-MC1-DTA-CV-OST-064.Rev001",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực đơn vị cung cấp và lắp đặt Shoring (H400) CÔNG TY TNHH HORIZON CONSTRUCTION DEVELOPMENT OVERSEAS (VIỆT NAM)",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Hồ sơ năng lực đơn vị cung cấp và lắp đặt Shoring (H400) CÔNG TY TNHH HORIZON CONSTRUCTION DEVELOPMENT OVERSEAS (VIỆT NAM): Hồ sơ trình bao gồm: + Giấy chứng nhận đăng kí doanh nghiệp  + Hồ sơ năng lực + Hồ sơ vật tư",
     "submissionDate": "2026-10-26",
     "tvgsDate": "2026-10-27",
     "tvgsCode": "A",
@@ -2935,199 +3249,199 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "ots-157",
+    "id": "ots-176",
     "category": "ots",
-    "stt": 85,
+    "stt": 83,
     "code": "C10-MC1-DTA-CV-OST-065",
     "rev": "00",
     "title": "Đệ trình hồ sơ:  + Quy trình kiểm tra khuyết tật của cọc bằng phương pháp soi camera tại hiện trường (CCTV) Đơn vị thực hiện: Công ty Cổ phần Tư vấn-Thiết kế-Kiểm định-Xây dựng Toàn Cầu (LAS 357)",
     "submissionDate": "2026-10-22",
     "tvgsDate": "2026-11-03",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-158",
+    "id": "ots-177",
     "category": "ots",
-    "stt": 86,
+    "stt": 84,
     "code": "C10-MC1-DTA-CV-OST-065.Rev001",
     "rev": "001",
     "title": "Đệ trình hồ sơ:  + Quy trình kiểm tra khuyết tật của cọc bằng phương pháp soi camera tại hiện trường (CCTV) Đơn vị thực hiện: Công ty Cổ phần Tư vấn-Thiết kế-Kiểm định-Xây dựng Toàn Cầu (LAS 357)",
     "submissionDate": "2026-11-03",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
     "finalStatus": "PENDING"
   },
   {
-    "id": "ots-159",
+    "id": "ots-178",
     "category": "ots",
-    "stt": 87,
+    "stt": 85,
     "code": "C10-MC1-DTA-CV-OST-066",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 05, 05a\"",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 05, 05a\": Báo cáo quan trắc",
     "submissionDate": "2026-10-27",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-160",
+    "id": "ots-179",
     "category": "ots",
-    "stt": 88,
+    "stt": 86,
     "code": "C10-MC1-DTA-CV-OST-066.Rev001",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 05, 05a\"",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 05, 05a\": Báo cáo quan trắc",
     "submissionDate": "2026-10-28",
     "tvgsDate": "2026-10-29",
     "tvgsCode": "A",
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
   },
   {
-    "id": "ots-161",
+    "id": "ots-180",
     "category": "ots",
-    "stt": 89,
+    "stt": 87,
     "code": "C10-MC1-DTA-CV-OST-067",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền  đường chu kỳ 06\"",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền  đường chu kỳ 06\": Báo cáo quan trắc",
     "submissionDate": "2026-10-30",
     "tvgsDate": "2026-10-31",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "ots-162",
+    "id": "ots-181",
     "category": "ots",
-    "stt": 90,
+    "stt": 88,
     "code": "C10-MC1-DTA-CV-OST-067.Rev.001",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền  đường chu kỳ 06\"",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền  đường chu kỳ 06\": Báo cáo quan trắc",
     "submissionDate": "2026-11-02",
     "tvgsDate": "2026-11-03",
     "tvgsCode": "A",
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
-  },
-  {
-    "id": "ots-163",
-    "category": "ots",
-    "stt": 91,
-    "code": "C10-MC1-DTA-CV-OST-068",
-    "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền  đường chu kỳ 07\"",
-    "submissionDate": "2026-10-30",
-    "tvgsDate": "2026-10-31",
-    "tvgsCode": "A",
-    "tvgsStatus": "Duyệt",
-    "clientDate": "",
-    "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
-  },
-  {
-    "id": "ots-164",
-    "category": "ots",
-    "stt": 92,
-    "code": "C10-MC1-DTA-CV-OST-069",
-    "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền  đường chu kỳ 08\"",
-    "submissionDate": "2026-10-30",
-    "tvgsDate": "2026-10-31",
-    "tvgsCode": "A",
-    "tvgsStatus": "Duyệt",
-    "clientDate": "",
-    "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
-  },
-  {
-    "id": "ots-165",
-    "category": "ots",
-    "stt": 93,
-    "code": "C10-MC1-DTA-CV-OST-070",
-    "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 06\"",
-    "submissionDate": "2026-10-30",
-    "tvgsDate": "2026-10-31",
-    "tvgsCode": "A",
-    "tvgsStatus": "Duyệt",
-    "clientDate": "",
-    "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
-  },
-  {
-    "id": "ots-166",
-    "category": "ots",
-    "stt": 94,
-    "code": "C10-MC1-DTA-CV-OST-071",
-    "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 07\"",
-    "submissionDate": "2026-10-30",
-    "tvgsDate": "2026-10-31",
-    "tvgsCode": "",
-    "tvgsStatus": "",
-    "clientDate": "",
-    "clientCode": "",
-    "clientStatus": "",
+    "clientStatus": "Đang trình",
     "finalStatus": "PENDING"
   },
   {
-    "id": "ots-167",
+    "id": "ots-182",
     "category": "ots",
-    "stt": 95,
-    "code": "C10-MC1-DTA-CV-OST-071.Rev.001",
+    "stt": 89,
+    "code": "C10-MC1-DTA-CV-OST-068",
     "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 07\"",
-    "submissionDate": "2026-11-02",
-    "tvgsDate": "2026-11-03",
-    "tvgsCode": "A",
-    "tvgsStatus": "Duyệt",
-    "clientDate": "",
-    "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
-  },
-  {
-    "id": "ots-168",
-    "category": "ots",
-    "stt": 96,
-    "code": "C10-MC1-DTA-CV-OST-072",
-    "rev": "00",
-    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 08\"",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền  đường chu kỳ 07\": Báo cáo quan trắc",
     "submissionDate": "2026-10-30",
     "tvgsDate": "2026-10-31",
     "tvgsCode": "A",
     "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
   },
   {
-    "id": "hse-169",
+    "id": "ots-183",
+    "category": "ots",
+    "stt": 90,
+    "code": "C10-MC1-DTA-CV-OST-069",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \" Lún, nghiêng lận cận và lún nền  đường chu kỳ 08\": Báo cáo quan trắc",
+    "submissionDate": "2026-10-30",
+    "tvgsDate": "2026-10-31",
+    "tvgsCode": "A",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "",
+    "clientCode": "",
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
+  },
+  {
+    "id": "ots-184",
+    "category": "ots",
+    "stt": 91,
+    "code": "C10-MC1-DTA-CV-OST-070",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 06\": Báo cáo quan trắc",
+    "submissionDate": "2026-10-30",
+    "tvgsDate": "2026-10-31",
+    "tvgsCode": "A",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "",
+    "clientCode": "",
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
+  },
+  {
+    "id": "ots-185",
+    "category": "ots",
+    "stt": 92,
+    "code": "C10-MC1-DTA-CV-OST-071",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 07\": Báo cáo quan trắc",
+    "submissionDate": "2026-10-30",
+    "tvgsDate": "2026-10-31",
+    "tvgsCode": "",
+    "tvgsStatus": "Từ chối",
+    "clientDate": "",
+    "clientCode": "",
+    "clientStatus": "",
+    "finalStatus": "REJECTED"
+  },
+  {
+    "id": "ots-186",
+    "category": "ots",
+    "stt": 93,
+    "code": "C10-MC1-DTA-CV-OST-071.Rev.001",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 07\": Báo cáo quan trắc",
+    "submissionDate": "2026-11-02",
+    "tvgsDate": "2026-11-03",
+    "tvgsCode": "A",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "",
+    "clientCode": "",
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
+  },
+  {
+    "id": "ots-187",
+    "category": "ots",
+    "stt": 94,
+    "code": "C10-MC1-DTA-CV-OST-072",
+    "rev": "00",
+    "title": "Đệ trình hồ sơ hạng mục thi công tầng hầm: + Báo cáo kết quả quan trắc \"Chuyển vị ngang tường vây chu kỳ 08\": Báo cáo quan trắc",
+    "submissionDate": "2026-10-30",
+    "tvgsDate": "2026-10-31",
+    "tvgsCode": "A",
+    "tvgsStatus": "Duyệt",
+    "clientDate": "",
+    "clientCode": "",
+    "clientStatus": "Đang trình",
+    "finalStatus": "PENDING"
+  },
+  {
+    "id": "hse-188",
     "category": "hse",
     "stt": 1,
     "code": "C10-MC1-DTA-CV-HSE-001",
@@ -3136,14 +3450,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-17",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "hse-170",
+    "id": "hse-189",
     "category": "hse",
     "stt": 2,
     "code": "C10-MC1-DTA-CV-HSE-001.Rev001",
@@ -3152,14 +3466,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-08-07",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "hse-171",
+    "id": "hse-190",
     "category": "hse",
     "stt": 3,
     "code": "C10-MC1-DTA-CV-HSE-002",
@@ -3169,15 +3483,15 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-21",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING",
-    "notes": "TRA 20"
+    "clientStatus": "Đã thay thế (Đóng)",
+    "finalStatus": "REJECTED",
+    "notes": "TRA 20 • Đã trình Rev mới"
   },
   {
-    "id": "hse-172",
+    "id": "hse-191",
     "category": "hse",
     "stt": 4,
     "code": "C10-MC1-DTA-CV-HSE-002.Rev001",
@@ -3193,7 +3507,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-173",
+    "id": "hse-192",
     "category": "hse",
     "stt": 5,
     "code": "C10-MC1-DTA-CV-HSE-004",
@@ -3202,32 +3516,16 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-27",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "hse-174",
+    "id": "hse-193",
     "category": "hse",
     "stt": 6,
-    "code": "C10-MC1-DTA-CV-HSE-004.Rev001",
-    "rev": "00",
-    "title": "Xác định vùng nguy hiểm trong thi công xây dựng công trình",
-    "submissionDate": "",
-    "tvgsDate": "",
-    "tvgsCode": "",
-    "tvgsStatus": "",
-    "clientDate": "",
-    "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING"
-  },
-  {
-    "id": "hse-175",
-    "category": "hse",
-    "stt": 7,
     "code": "C10-MC1-DTA-CV-HSE-005",
     "rev": "00",
     "title": "Form mẫu nhật ký an toàn",
@@ -3241,153 +3539,153 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-176",
+    "id": "hse-194",
     "category": "hse",
-    "stt": 8,
+    "stt": 7,
     "code": "C10-MC1-DTA-CV-HSE-006",
     "rev": "00",
     "title": "Đệ trình hồ sơ HSE hạng mục thi công tầng hầm: + Hồ sơ máy đào bánh xích lắp búa rung",
     "submissionDate": "2026-08-11",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "hse-177",
+    "id": "hse-195",
     "category": "hse",
-    "stt": 9,
+    "stt": 8,
     "code": "C10-MC1-DTA-CV-HSE-007",
     "rev": "00",
     "title": "Hồ sơ công nhân Số lượng 13 Công ty TNHH Tập Đoàn Xây Dựng DELTA",
     "submissionDate": "2026-08-11",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "hse-178",
+    "id": "hse-196",
     "category": "hse",
-    "stt": 10,
+    "stt": 9,
     "code": "C10-MC1-DTA-CV-HSE-008",
     "rev": "00",
     "title": "Đệ trình hồ sơ: - Quyết định thành lập lực lượng sơ cấp cứu cơ sở -Quyết định thành lập Ban an toàn-Vệ sinh lao động công trường Quyết định phân định trách nhiệm công tác An toàn vệ sinh lao động -Quyết định thành lập Bộ phận y tế cơ sở - Quyết định Thành lập đội phòng cháy, chữa cháy và cứu nạn, cứu hộ, phòng chống lụt bão, ứng cứu khẩn cấp và chức năng, nhiệm vụ -Quyết định thành lập mạng lưới An toàn, vệ sinh",
     "submissionDate": "2026-08-11",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "hse-179",
+    "id": "hse-197",
     "category": "hse",
-    "stt": 11,
+    "stt": 10,
     "code": "C10-MC1-DTA-CV-HSE-009",
     "rev": "00",
     "title": "Đệ trình hồ sơ: -Cẩu tháp mã hiệu: QTZ250 (W7020-12E) Công ty TNHH TM DV Xây Lắp Phước Tiến",
     "submissionDate": "2026-08-12",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-180",
+    "id": "hse-198",
     "category": "hse",
-    "stt": 12,
+    "stt": 11,
     "code": "C10-MC1-DTA-CV-HSE-010",
     "rev": "00",
     "title": "- Hồ sơ xe vận chuyển đất Toàn Phước Huy (4 xe) - Sơ đồ tổ chức Toàn Phước Huy",
     "submissionDate": "2026-08-13",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "hse-181",
+    "id": "hse-199",
     "category": "hse",
-    "stt": 13,
+    "stt": 12,
     "code": "C10-MC1-DTA-CV-HSE-011",
     "rev": "00",
     "title": "- Hồ sơ vận hành cẩu tháp (2 người)",
     "submissionDate": "2026-08-25",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-182",
+    "id": "hse-200",
     "category": "hse",
-    "stt": 14,
+    "stt": 13,
     "code": "C10-MC1-DTA-CV-HSE-004.Rev002",
     "rev": "00",
     "title": "Xác định vùng nguy hiểm trong thi công xây dựng công trình",
     "submissionDate": "2026-08-28",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "hse-183",
+    "id": "hse-201",
     "category": "hse",
-    "stt": 15,
+    "stt": 14,
     "code": "C10-MC1-DTA-CV-HSE-012",
     "rev": "00",
     "title": "Biện pháp ATLĐ quản lý vận hành sử dụng cần trục tháp trong thi công",
     "submissionDate": "2026-08-28",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "hse-184",
+    "id": "hse-202",
     "category": "hse",
-    "stt": 16,
+    "stt": 15,
     "code": "C10-MC1-DTA-CV-HSE-007.REV001",
     "rev": "00",
     "title": "Hồ sơ công nhân Số lượng 12 Công ty TNHH Tập Đoàn Xây Dựng DELTA",
     "submissionDate": "2026-08-29",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-185",
+    "id": "hse-203",
     "category": "hse",
-    "stt": 17,
+    "stt": 16,
     "code": "C10-MC1-DTA-CV-HSE-013",
     "rev": "00",
     "title": "Đệ trình hồ sơ: -Cẩu tháp mã hiệu: TOPKIT MC 180 Công ty TNHH TM DV Xây Lắp Phước Tiến",
@@ -3401,9 +3699,9 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-186",
+    "id": "hse-204",
     "category": "hse",
-    "stt": 18,
+    "stt": 17,
     "code": "C10-MC1-DTA-CV-HSE-014",
     "rev": "00",
     "title": "Hồ sơ công nhân Số lượng: 16 Công ty TNHH Tập Đoàn Xây Dựng DELTA",
@@ -3417,25 +3715,25 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-187",
+    "id": "hse-205",
     "category": "hse",
-    "stt": 19,
+    "stt": 18,
     "code": "C10-MC1-DTA-CV-HSE-015",
     "rev": "00",
     "title": "Đệ trình hồ sơ: + Quyết định bổ nhiệm Trưởng ban AT, cán bộ an toàn mới + Bổ sung hồ sơ BCH (giấy khám sức khoẻ, thẻ an toàn)",
     "submissionDate": "2026-09-03",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "hse-188",
+    "id": "hse-206",
     "category": "hse",
-    "stt": 20,
+    "stt": 19,
     "code": "C10-MC1-DTA-CV-HSE-007.REV002",
     "rev": "00",
     "title": "Hồ sơ công nhân Số lượng 12 Công ty TNHH Tập Đoàn Xây Dựng DELTA",
@@ -3450,25 +3748,25 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:f:/g/personal/c10_phumyhung_phanham_deltagroup_h%E1%BB%93%20s%C6%A1%2012%20c%C3%B4ng%20nh%C3%A2n"
   },
   {
-    "id": "hse-189",
+    "id": "hse-207",
     "category": "hse",
-    "stt": 21,
+    "stt": 20,
     "code": "C10-MC1-DTA-CV-HSE 008.Rev001",
     "rev": "00",
     "title": "- Quyết định thành lập Ban an toàn-vệ sinh lao đông công trường - Quyết định phân định trách nhiệm công tác An toàn vệ sinh lao động. - Quyết định thành lập Đội PCCC-CNCH, phòng chống lụt bão, ứng cứu khẩn cấp và chức năng nhiệm vụ - Quyết định thành lập mạng lưới An toàn vệ sinh.",
     "submissionDate": "2026-09-07",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "hse-190",
+    "id": "hse-208",
     "category": "hse",
-    "stt": 22,
+    "stt": 21,
     "code": "C10-MC1-DTA-CV-HSE 001.Rev002",
     "rev": "00",
     "title": "Đệ trình hồ sơ nhà thầu phụ công ty Toàn Phước Huy gồm: - Hồ sơ năng lực - Hồ sơ nhân sự",
@@ -3482,9 +3780,9 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-191",
+    "id": "hse-209",
     "category": "hse",
-    "stt": 23,
+    "stt": 22,
     "code": "C10-MC1-DTA-CV-HSE 010.Rev001",
     "rev": "00",
     "title": "Đệ trình hồ sơ nhà thầu phụ công ty Toàn Phước Huy gồm: - Hồ sơ máy móc, thiết bị.",
@@ -3498,9 +3796,9 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-192",
+    "id": "hse-210",
     "category": "hse",
-    "stt": 24,
+    "stt": 23,
     "code": "C10-MC1-DTA-CV-HSE-016",
     "rev": "00",
     "title": "Đệ trình hồ sơ nhân sự vận hành cẩu tháp CT2 (TOPKIT MC180)",
@@ -3514,41 +3812,9 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-193",
+    "id": "hse-211",
     "category": "hse",
-    "stt": 25,
-    "code": "C10-MC1-DTA-CV-HSE-012-REV001",
-    "rev": "00",
-    "title": "Biện pháp ATLĐ quản lý vận hành sử dụng cần trục tháp trong thi công",
-    "submissionDate": "",
-    "tvgsDate": "2026-09-15",
-    "tvgsCode": "A",
-    "tvgsStatus": "Duyệt",
-    "clientDate": "",
-    "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
-  },
-  {
-    "id": "hse-194",
-    "category": "hse",
-    "stt": 26,
-    "code": "C10-MC1-DTA-CV-HSE-017",
-    "rev": "00",
-    "title": "Đệ trình hồ sơ kiểm định 2 cẩu tháp",
-    "submissionDate": "",
-    "tvgsDate": "",
-    "tvgsCode": "A",
-    "tvgsStatus": "Duyệt",
-    "clientDate": "",
-    "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "APPROVED"
-  },
-  {
-    "id": "hse-195",
-    "category": "hse",
-    "stt": 27,
+    "stt": 24,
     "code": "C10-MC1-DTA-CV-HSE-018",
     "rev": "00",
     "title": "Đệ trình hồ sơ máy đào bánh xích lắp búa rung công ty CP xử lý nền móng Việt Nam",
@@ -3562,9 +3828,9 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-196",
+    "id": "hse-212",
     "category": "hse",
-    "stt": 28,
+    "stt": 25,
     "code": "C10-MC1-DTA-CV-HSE-019",
     "rev": "00",
     "title": "Đệ trình hồ sơ cẩu·tháp: C/0, C/Q của dây cáp",
@@ -3578,9 +3844,9 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-197",
+    "id": "hse-213",
     "category": "hse",
-    "stt": 29,
+    "stt": 26,
     "code": "C10-MC1-DTA-CV-HSE-015.REV001",
     "rev": "00",
     "title": "Đệ trình hồ sơ : - Bảo hiểm trách nhiệm bên thứ 3 - Hồ sơ BCH còn thiếu (giấy khám sức khỏe, thẻ an toàn, bảo hiểm tai nạn)",
@@ -3594,9 +3860,9 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-198",
+    "id": "hse-214",
     "category": "hse",
-    "stt": 30,
+    "stt": 27,
     "code": "C10-MC1-DTA-CV-HSE 008.Rev002",
     "rev": "00",
     "title": "- Quyết định thành lập Ban an toàn-vệ sinh lao động công trường - Quyết định phân định trách nhiệm công tác An toàn vệ sinh lao động. - Quyết định thành lập Đội PCCC-CNCH, phòng chống lụt bão, ứng cứu khẩn cấp và chức năng nhiệm vụ - Quyết định thành lập mạng lưới An toàn vệ sinh.",
@@ -3610,144 +3876,128 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-199",
+    "id": "hse-215",
     "category": "hse",
-    "stt": 31,
+    "stt": 28,
     "code": "C10-MC1-DTA-CV-HSE-004.Rev003",
     "rev": "00",
     "title": "Xác định vùng nguy hiểm trong thi công xây dựng công trình",
     "submissionDate": "2026-09-14",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-200",
+    "id": "hse-216",
     "category": "hse",
-    "stt": 32,
+    "stt": 29,
     "code": "C10-MC1-DTA-CV-HSE-020",
     "rev": "00",
     "title": "Đệ trình biên bản nghiệm thu 2 cẩu tháp (CT1 và CT2)",
     "submissionDate": "2026-09-17",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-201",
+    "id": "hse-217",
     "category": "hse",
-    "stt": 33,
+    "stt": 30,
     "code": "C10-MC1-DTA-CV-HSE 021",
     "rev": "00",
     "title": "Hồ sơ bản vẽ biện pháp an toàn lắp đặt kingpost",
     "submissionDate": "2026-10-02",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "hse-202",
+    "id": "hse-218",
     "category": "hse",
-    "stt": 34,
+    "stt": 31,
     "code": "C10-MC1-DTA-CV-HSE 022",
     "rev": "00",
     "title": "Hồ sơ bản vẽ lối thoát hiểm",
     "submissionDate": "2026-10-03",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Từ chối",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "REJECTED"
   },
   {
-    "id": "hse-203",
+    "id": "hse-219",
     "category": "hse",
-    "stt": 35,
+    "stt": 32,
     "code": "C10-MC1-DTA-CV-HSE 023",
     "rev": "00",
     "title": "hồ sơ công nhân NTP TFVN",
     "submissionDate": "2026-10-06",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-204",
+    "id": "hse-220",
     "category": "hse",
-    "stt": 36,
+    "stt": 33,
     "code": "C10-MC1-DTA-CV-HSE 024",
     "rev": "00",
     "title": "hồ sơ máy móc thiết bị NTP HPCONS",
     "submissionDate": "2026-10-05",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-205",
+    "id": "hse-221",
     "category": "hse",
-    "stt": 37,
+    "stt": 34,
     "code": "C10-MC1-DTA-CV-HSE 021.rev001",
     "rev": "00",
     "title": "Hồ sơ bản vẽ biện pháp an toàn lắp đặt kingpost",
     "submissionDate": "2026-10-12",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Duyệt",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
-    "finalStatus": "PENDING"
+    "finalStatus": "APPROVED"
   },
   {
-    "id": "hse-206",
+    "id": "hse-222",
     "category": "hse",
-    "stt": 38,
-    "code": "C10-MC1-DTA-CV-HSE 022rev001",
-    "rev": "00",
-    "title": "Hồ sơ bản vẽ lối thoát hiểm",
-    "submissionDate": "",
-    "tvgsDate": "",
-    "tvgsCode": "",
-    "tvgsStatus": "",
-    "clientDate": "",
-    "clientCode": "",
-    "clientStatus": "",
-    "finalStatus": "PENDING"
-  },
-  {
-    "id": "hse-207",
-    "category": "hse",
-    "stt": 39,
+    "stt": 35,
     "code": "C10-MC1-DTA-CV-HSE 025",
     "rev": "00",
     "title": "Hồ sơ nhân sự NTP nền móng Việt Nam",
     "submissionDate": "2026-10-21",
     "tvgsDate": "",
     "tvgsCode": "",
-    "tvgsStatus": "",
+    "tvgsStatus": "Đang trình",
     "clientDate": "",
     "clientCode": "",
     "clientStatus": "",
@@ -3766,6 +4016,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 • - m3"
   },
@@ -3782,6 +4034,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B30 • - m3"
   },
@@ -3798,6 +4052,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 • - m3"
   },
@@ -3814,6 +4070,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Yamaken • Mác B30 • - m3"
   },
@@ -3830,6 +4088,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  3H • 24,5 m3 m3"
   },
@@ -3846,6 +4106,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  3H • 26 m3 m3"
   },
@@ -3862,6 +4124,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B30 R28 20+-  3H • 28m3 m3"
   },
@@ -3878,6 +4142,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B30 R28 20+-  3H • 26m3 m3"
   },
@@ -3894,6 +4160,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B30 R28 20+-  3H • 25m3 m3"
   },
@@ -3910,6 +4178,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B30 R28 20+-  3H • 26m3 m3"
   },
@@ -3926,6 +4196,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 9 m3 m3"
   },
@@ -3942,6 +4214,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B30 R28 20+-  4H • 9,5 m3 m3"
   },
@@ -3958,6 +4232,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11 m3 m3"
   },
@@ -3974,6 +4250,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11 m3 m3"
   },
@@ -3990,6 +4268,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11 m3 m3"
   },
@@ -4006,6 +4286,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11.5 m3 m3"
   },
@@ -4022,6 +4304,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11 m3 m3"
   },
@@ -4038,6 +4322,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11 m3 m3"
   },
@@ -4054,6 +4340,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11 m3 m3"
   },
@@ -4070,6 +4358,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11 m3 m3"
   },
@@ -4086,6 +4376,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11 m3 m3"
   },
@@ -4102,6 +4394,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11 m3 m3"
   },
@@ -4118,6 +4412,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11 m3 m3"
   },
@@ -4134,6 +4430,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11 m3 m3"
   },
@@ -4150,6 +4448,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11 m3 m3"
   },
@@ -4166,6 +4466,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11 m3 m3"
   },
@@ -4182,6 +4484,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 11 m3 m3"
   },
@@ -4198,6 +4502,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 10,5 m3 m3"
   },
@@ -4214,6 +4520,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 10,5 m3 m3"
   },
@@ -4230,6 +4538,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 10,5 m3 m3"
   },
@@ -4246,6 +4556,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 10,5 m3 m3"
   },
@@ -4262,6 +4574,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 10,5 m3 m3"
   },
@@ -4278,6 +4592,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 10,5 m3 m3"
   },
@@ -4294,6 +4610,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 10,5 m3 m3"
   },
@@ -4310,6 +4628,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 10,5 m3 m3"
   },
@@ -4326,6 +4646,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B30 R28 20+-  4H • 11m3 m3"
   },
@@ -4342,6 +4664,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B30 R28 20+-  4H • 10,5 m3 m3"
   },
@@ -4358,6 +4682,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 10,5 m3 m3"
   },
@@ -4374,6 +4700,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 10,5 m3 m3"
   },
@@ -4390,6 +4718,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B30 R28 20+-  4H • 10,5 m3 m3"
   },
@@ -4406,6 +4736,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B7.5 R28  12+-2 • 5m3 m3"
   },
@@ -4422,6 +4754,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B40, M500, R7, Độ sụt 14+-2 • 26,5m3 m3"
   },
@@ -4438,6 +4772,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B7.5 R28  12+-2 • 4m3 m3"
   },
@@ -4454,6 +4790,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B40, M500, R7, Độ sụt 14+-2 • 27m3 m3"
   },
@@ -4470,6 +4808,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B7.5 R28  12+-2 • 4m3 m3"
   },
@@ -4486,6 +4826,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B7.5 R28  12+-2 • Cùng mẻ đổ cẩu tháp CT2 m3"
   },
@@ -4502,6 +4844,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B40 R28  14+-2 • 38m3 m3"
   },
@@ -4518,6 +4862,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B40 R28  14+-2 • 39m3 m3"
   },
@@ -4534,6 +4880,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B40 R28  14+-2 • 37m3 m3"
   },
@@ -4550,6 +4898,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B40 R28  14+-2 • 65,5m3 m3"
   },
@@ -4566,6 +4916,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B40 R28  14+-2 • 47m3 m3"
   },
@@ -4582,6 +4934,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B40 R28  14+-2 • 72,5m3 m3"
   },
@@ -4598,6 +4952,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B40 R28  16+-2 • 71,5m3 m3"
   },
@@ -4614,6 +4970,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B40 R28  14+-2 • 35m3 m3"
   },
@@ -4630,6 +4988,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B40 R28  16+-2 • 80 m3 m3"
   },
@@ -4646,6 +5006,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B20 R28   12+-2 • 3m3 m3"
   },
@@ -4662,6 +5024,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B22,5 R28   14+-2 • 4,5m3 m3"
   },
@@ -4678,6 +5042,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B7.5 R28  12+-2 • 15m3 m3"
   },
@@ -4694,6 +5060,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B7.5 R28  12+-2 • 4m3 m3"
   },
@@ -4710,6 +5078,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B40, M500, R7, Độ sụt 14+-2 • 3m3 m3"
   },
@@ -4726,6 +5096,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B35, M450, R7 S14 • 3m3 m3"
   },
@@ -4742,6 +5114,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B35, M450, R7 S14 • 3m3 m3"
   },
@@ -4758,6 +5132,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B40, M500. R7, Độ sụt 14+-2 • 6.5 m3 m3"
   },
@@ -4774,6 +5150,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B40, M500. R7, Độ sụt 14+-2 • 6.5 m3 m3"
   },
@@ -4790,6 +5168,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác B40, M500. R7, Độ sụt 14+-2 • 6.5 m3 m3"
   },
@@ -4806,6 +5186,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Nguyên Thịnh • Mác B40, M500. R7, Độ sụt 14+-2 • 46152 m3"
   },
@@ -4822,40 +5204,10 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Yamaken • Mác B30 • - m3"
-  },
-  {
-    "id": "conc-2",
-    "category": "concrete",
-    "stt": 2,
-    "code": "C10-DTA-CONC-02",
-    "title": "Đổ bê tông ngày ",
-    "concreteGrade": "B30",
-    "volumeM3": "-",
-    "supplier": "Việt Đức",
-    "submissionDate": "",
-    "testR7Date": "",
-    "testR28Date": "",
-    "rating": "Đạt",
-    "finalStatus": "APPROVED",
-    "notes": "Nhà CC: Việt Đức • Mác B30 • - m3"
-  },
-  {
-    "id": "conc-3",
-    "category": "concrete",
-    "stt": 3,
-    "code": "C10-DTA-CONC-03",
-    "title": "Đổ bê tông ngày ",
-    "concreteGrade": "B30",
-    "volumeM3": "-",
-    "supplier": "Việt Đức",
-    "submissionDate": "",
-    "testR7Date": "",
-    "testR28Date": "",
-    "rating": "Đạt",
-    "finalStatus": "APPROVED",
-    "notes": "Nhà CC: Việt Đức • Mác B30 • - m3"
   },
   {
     "id": "conc-1",
@@ -4870,6 +5222,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác M300 • - m3"
   },
@@ -4886,6 +5240,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác 3 thanh 1 tổ kéo\r\n3 thanh 1 tổ uốn • 44201707N321 m3"
   },
@@ -4902,6 +5258,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác 1 tổ 3 con • - m3"
   },
@@ -4918,88 +5276,10 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "testR7Date": "",
     "testR28Date": "",
     "rating": "Đạt",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Nhà CC: Việt Đức • Mác 1 tổ 3 con • - m3"
-  },
-  {
-    "id": "conc-4",
-    "category": "concrete",
-    "stt": 4,
-    "code": "C10-DTA-CONC-04",
-    "title": "Đổ bê tông ngày ",
-    "concreteGrade": "B30",
-    "volumeM3": "-",
-    "supplier": "Việt Đức",
-    "submissionDate": "",
-    "testR7Date": "",
-    "testR28Date": "",
-    "rating": "Đạt",
-    "finalStatus": "APPROVED",
-    "notes": "Nhà CC: Việt Đức • Mác B30 • - m3"
-  },
-  {
-    "id": "conc-5",
-    "category": "concrete",
-    "stt": 5,
-    "code": "C10-DTA-CONC-05",
-    "title": "Đổ bê tông ngày ",
-    "concreteGrade": "B30",
-    "volumeM3": "-",
-    "supplier": "Việt Đức",
-    "submissionDate": "",
-    "testR7Date": "",
-    "testR28Date": "",
-    "rating": "Đạt",
-    "finalStatus": "APPROVED",
-    "notes": "Nhà CC: Việt Đức • Mác B30 • - m3"
-  },
-  {
-    "id": "conc-6",
-    "category": "concrete",
-    "stt": 6,
-    "code": "C10-DTA-CONC-06",
-    "title": "Đổ bê tông ngày ",
-    "concreteGrade": "B30",
-    "volumeM3": "-",
-    "supplier": "Việt Đức",
-    "submissionDate": "",
-    "testR7Date": "",
-    "testR28Date": "",
-    "rating": "Đạt",
-    "finalStatus": "APPROVED",
-    "notes": "Nhà CC: Việt Đức • Mác B30 • - m3"
-  },
-  {
-    "id": "conc-7",
-    "category": "concrete",
-    "stt": 7,
-    "code": "C10-DTA-CONC-07",
-    "title": "Đổ bê tông ngày ",
-    "concreteGrade": "B30",
-    "volumeM3": "-",
-    "supplier": "Việt Đức",
-    "submissionDate": "",
-    "testR7Date": "",
-    "testR28Date": "",
-    "rating": "Đạt",
-    "finalStatus": "APPROVED",
-    "notes": "Nhà CC: Việt Đức • Mác B30 • - m3"
-  },
-  {
-    "id": "conc-8",
-    "category": "concrete",
-    "stt": 8,
-    "code": "C10-DTA-CONC-08",
-    "title": "Đổ bê tông ngày ",
-    "concreteGrade": "B30",
-    "volumeM3": "-",
-    "supplier": "Việt Đức",
-    "submissionDate": "",
-    "testR7Date": "",
-    "testR28Date": "",
-    "rating": "Đạt",
-    "finalStatus": "APPROVED",
-    "notes": "Nhà CC: Việt Đức • Mác B30 • - m3"
   },
   {
     "id": "mat-imp-1",
@@ -5014,6 +5294,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-10",
     "acceptanceDate": "2026-07-11",
     "rating": "Đạt kiểm định",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Số KQ: 726/1625 • NCC: VINAONE"
   },
@@ -5030,6 +5312,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-28",
     "acceptanceDate": "2026-07-28",
     "rating": "Đạt kiểm định",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Số KQ: 109/37\r\n109/38 • NCC: MINH CHI"
   },
@@ -5046,6 +5330,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-28",
     "acceptanceDate": "2026-07-29",
     "rating": "Đạt kiểm định",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Số KQ: 726/3136 • NCC: IPC Sài Gòn"
   },
@@ -5062,6 +5348,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-07-16",
     "acceptanceDate": "2026-07-29",
     "rating": "Đạt kiểm định",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Số KQ: - • NCC: Phú Nguyên Giàu"
   },
@@ -5078,6 +5366,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-08-05",
     "acceptanceDate": "2026-08-06",
     "rating": "Đạt kiểm định",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Số KQ: - • NCC: Phú Nguyên Giàu"
   },
@@ -5094,6 +5384,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-08-10",
     "acceptanceDate": "2026-08-10",
     "rating": "Đạt kiểm định",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Số KQ: - • NCC: Phú Nguyên Giàu"
   },
@@ -5110,6 +5402,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-08-11",
     "acceptanceDate": "2026-08-12",
     "rating": "Đạt kiểm định",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Số KQ: - • NCC: IPC Sài Gòn"
   },
@@ -5126,6 +5420,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-08-14",
     "acceptanceDate": "2026-08-14",
     "rating": "Đạt kiểm định",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Số KQ: - • NCC: IPC Sài Gòn"
   },
@@ -5142,6 +5438,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-09-11",
     "acceptanceDate": "2026-09-14",
     "rating": "Đạt kiểm định",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Số KQ: - • NCC: IPC Sài Gòn"
   },
@@ -5158,6 +5456,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-09-15",
     "acceptanceDate": "2026-09-16",
     "rating": "Đạt kiểm định",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Số KQ: - • NCC: IPC Sài Gòn"
   },
@@ -5174,6 +5474,8 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-09-19",
     "acceptanceDate": "2026-09-20",
     "rating": "Đạt kiểm định",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Số KQ: - • NCC: IPC Sài Gòn"
   },
@@ -5190,151 +5492,173 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "submissionDate": "2026-09-21",
     "acceptanceDate": "2026-09-22",
     "rating": "Đạt kiểm định",
+    "tvgsStatus": "Duyệt",
+    "clientStatus": "Duyệt",
     "finalStatus": "APPROVED",
     "notes": "Số KQ: - • NCC: Nền móng Việt Nam"
   },
   {
-    "id": "moa-298",
+    "id": "moa-306",
     "category": "inspection_moa",
     "stt": 1,
     "code": "C10-MC1-DTA-MOA-M-STE-001",
     "title": "Nghiệm thu vật liệu đầu vào Thép thanh vằn: D10 CB400-V; D12 CB400-V; D16 CB500-V; D18 CB500-V; D20 CB500-V; D22 CB500-V; D25 CB500-V; D32 CB500-V.",
     "moaType": "MOA-M",
     "volumeNo": "1",
-    "submissionDate": "2026-07-28",
+    "submissionDate": "",
     "acceptanceDate": "2026-07-28",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBqx_eZvbvPSIsvdJSinjQVAeJHdS2xiP-TkLKcPJbdHPE?e=kOgjbU",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-299",
+    "id": "moa-307",
     "category": "inspection_moa",
     "stt": 2,
     "code": "C10-MC1-DTA-MOA-M-STE-002",
     "title": "Nghiệm thu vật liệu đầu vào Thép thanh vằn: D10 CB400-V; D16 CB500-V; D20 CB500-V; D32 CB500-V;",
     "moaType": "MOA-M",
     "volumeNo": "1",
-    "submissionDate": "2026-08-05",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-05",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQChrTIPNy6IRpTorviyQlKWAaVOnsth-0AnDXD1NnHWjb0?e=cvEd0x",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-300",
+    "id": "moa-308",
     "category": "inspection_moa",
     "stt": 3,
     "code": "C10-MC1-DTA-MOA-M-STE-003",
     "title": "Nghiệm thu vật liệu đầu vào Thép thanh vằn: D14 CB500-V; D16 CB500-V; D25 CB500-V; D32 CB500-V;",
     "moaType": "MOA-M",
     "volumeNo": "1",
-    "submissionDate": "2026-09-25",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-25",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQChJhVyJLYLTZOlz98MkLWmAR6XRKy-uJfKOaur21eExA4?e=4FEIhO",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-301",
+    "id": "moa-309",
     "category": "inspection_moa",
     "stt": 4,
     "code": "C10-MC1-DTA-MOA-M-ANCHOR BOLT-001",
     "title": "Bulong neo M42x1400; Ren 200; Bẻ L-200  (1 Thân + 2 Tán + 1 Long đền)",
     "moaType": "MOA-M",
     "volumeNo": "1",
-    "submissionDate": "2026-08-06",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-06",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "C10-MC1-DTA-MOA-M-ANCHOR BOLT-001.pdf",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-302",
+    "id": "moa-310",
     "category": "inspection_moa",
     "stt": 5,
     "code": "C10-MC1-DTA-MOA-M-WP MAT-001",
     "title": "Nghiệm thu vật liệu: + Băng trương nở Hydrotite CJ + Sikaflex - 140 Contruction + Sika Latex TH + Sika grout 214 - 11",
     "moaType": "MOA-M",
     "volumeNo": "1",
-    "submissionDate": "2026-08-12",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-12",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCMpDba0khRRosierP5ba_5ARkbk8L4nDkuR0j9W-sR3-k?e=qH18Fe",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-303",
+    "id": "moa-311",
     "category": "inspection_moa",
     "stt": 6,
     "code": "C10-MC1-DTA-MOA-M-STEEL PILE-001",
     "title": "Nghiệm thu vật liệu đầu vào Thép ống: -Thép ống D60x1.8x6m ĐSX STK 290 L1",
     "moaType": "MOA-M",
     "volumeNo": "1",
-    "submissionDate": "2026-07-15",
+    "submissionDate": "",
     "acceptanceDate": "2026-07-15",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQDFQZyS8YgdQo2QfsKjJnbvARxrVO-p_kTvMC3LlTvThQY?e=CSO2XK",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-304",
+    "id": "moa-312",
     "category": "inspection_moa",
     "stt": 7,
     "code": "C10-MC1-DTA-MOA-M-INCL-001",
     "title": "Nghiệm thu vật liệu đầu vào:  + Ống Inclinometer Casing GV2404-C0-2-70;  Đường kính 70mm, L= 3m  + Đầu nối GV2404-CP-4F-70;  Đường kính 70mm, L= 160mm  + Nắp bịt GV2404-CP-4C-70",
     "moaType": "MOA-M",
     "volumeNo": "1",
-    "submissionDate": "2026-08-05",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-05",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAzEDw04x9-TJDUIQR0FZikAeVfdgF44aXo5Glfs2z2VoM?e=nkdbyM",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-305",
+    "id": "moa-313",
     "category": "inspection_moa",
     "stt": 8,
     "code": "C10-MC1-DTA-MOA-M-VTBP-001",
     "title": "Nghiệm thu vật liệu đầu vào vật liệu biện pháp: Thép cừ Larsen IV; L=6m",
     "moaType": "MOA-M",
     "volumeNo": "1",
-    "submissionDate": "2026-08-13",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-13",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBlwk5BtfbWSIVvNhFPDuZyAcI1vTDfgLFaXzalWLVzX6o?e=YHMxxd",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-306",
+    "id": "moa-314",
     "category": "inspection_moa",
     "stt": 9,
     "code": "C10-MC1-DTA-MOA-M-VTBP-002",
     "title": "Nghiệm thu vật liệu đầu vào vật tư biện pháp: Ván phủ phim 1220x2440x12mm",
     "moaType": "MOA-M",
     "volumeNo": "1",
-    "submissionDate": "2026-07-30",
+    "submissionDate": "",
     "acceptanceDate": "2026-07-30",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAKsP0Q7OKISaaX-SUdsM_MAT1PqPK6m81uhmKF45wW0rU?e=8hfgR6",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-307",
+    "id": "moa-315",
     "category": "inspection_moa",
     "stt": 10,
     "code": "C10-MC1-DTA-MOA-M-VTBP-003",
     "title": "Nghiệm thu vật liệu đầu vào vật tư biện pháp:  + Kingpost đỡ sàn đạo  + Kingpost hệ shoring",
     "moaType": "MOA-M",
     "volumeNo": "1",
-    "submissionDate": "2026-09-24",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-24",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBBULEPmrOUS4TrO5IVSARSAeP8mcwOFX1dwcv_WFCrbEg?e=fMPcbK",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-308",
+    "id": "moa-316",
     "category": "inspection_moa",
     "stt": 11,
     "code": "C10-MC1-DTA-MOA-M-VTBP-004",
@@ -5343,12 +5667,14 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "volumeNo": "1",
     "submissionDate": "2026-10-17",
     "acceptanceDate": "2026-10-17",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAKUJmbOhpkQ4eIGa2zlX_OAbI355tpHZnyV45-wW-7CIg?e=5uWe1C",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-309",
+    "id": "moa-317",
     "category": "inspection_moa",
     "stt": 12,
     "code": "C10-MC1-DTA-MOA-M-VTBP-005",
@@ -5357,790 +5683,906 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
     "volumeNo": "1",
     "submissionDate": "",
     "acceptanceDate": "",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCQguH8yL9aRbOaRT6TKri-AUHwu2-S5pm_pFROdYsXumo?e=uLGpQT",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-310",
+    "id": "moa-318",
     "category": "inspection_moa",
     "stt": 13,
     "code": "C10-MC1-DTA-MOA-M-CA-001",
     "title": "Nghiệm thu vật liệu đầu vào:  + Fischer hộp keo FIS EB 390S và phụ kiện đi kèm",
     "moaType": "MOA-M",
     "volumeNo": "1",
-    "submissionDate": "",
+    "submissionDate": "2026-10-31",
     "acceptanceDate": "",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQDHinyp75zQRJPEIA-hTBKoAcgLD3gfXf4XhifIvDE6nWI?e=j9zcEI",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-311",
+    "id": "moa-319",
     "category": "inspection_moa",
     "stt": 14,
     "code": "C10-MC1-DTA-MOA-W-COCCAUTHAP_01",
     "title": "Cọc CT1-A3",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-07-16",
+    "submissionDate": "",
     "acceptanceDate": "2026-07-16",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAQCvjQ2509TLL_EB9vp5ZCASG9Zl_6qSGztmyoAQIxQHw?e=waDM58",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-312",
+    "id": "moa-320",
     "category": "inspection_moa",
     "stt": 15,
     "code": "C10-MC1-DTA-MOA-W-COCCAUTHAP_02",
     "title": "Cọc CT2-B2",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-07-18",
+    "submissionDate": "",
     "acceptanceDate": "2026-07-18",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAJN7rnJ8QHQIkN9vUlqMKEAXJ163jTsWrA5QAoIGwnRqY?e=J0Jzv9",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-313",
+    "id": "moa-321",
     "category": "inspection_moa",
     "stt": 16,
     "code": "C10-MC1-DTA-MOA-W-COCCAUTHAP_03",
     "title": "Cọc CT1-A1",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-07-19",
+    "submissionDate": "",
     "acceptanceDate": "2026-07-19",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBPNpaGldEWT4vqQ-p5QpP8AQbZ2v82eWgLfnhdyootxXc?e=3ph1mc",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-314",
+    "id": "moa-322",
     "category": "inspection_moa",
     "stt": 17,
     "code": "C10-MC1-DTA-MOA-W-COCCAUTHAP_04",
     "title": "Cọc CT2-B3",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-07-20",
+    "submissionDate": "",
     "acceptanceDate": "2026-07-20",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBtXoeLPTvAQIT0CaWwGvm2AfYiAwF1nFbmY5ypxzdxQqs?e=HJF1qg",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-315",
+    "id": "moa-323",
     "category": "inspection_moa",
     "stt": 18,
     "code": "C10-MC1-DTA-MOA-W-COCCAUTHAP_05",
     "title": "Cọc CT1-A2",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-07-21",
+    "submissionDate": "",
     "acceptanceDate": "2026-07-21",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQANb_mYSue2QbxPJptXgZisAebIDaxKf9y4z0yVphAKu5w?e=rLYsNn",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-316",
+    "id": "moa-324",
     "category": "inspection_moa",
     "stt": 19,
     "code": "C10-MC1-DTA-MOA-W-COCCAUTHAP_06",
     "title": "Cọc CT2-B1",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-07-22",
+    "submissionDate": "",
     "acceptanceDate": "2026-07-22",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQADAZMBX0M0T4Z42NBTWy57AdsbYuA-RkqyP9ApKuF78_A?e=AReR0h",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-317",
+    "id": "moa-325",
     "category": "inspection_moa",
     "stt": 20,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_01",
     "title": "Cọc C1-7.6",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-08-29",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-29",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBr1GJ7J6g4Roy8Wq4lVt-3AdMCTuwM0wuSMEgJF6vTad0?e=E3MOk7",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-318",
+    "id": "moa-326",
     "category": "inspection_moa",
     "stt": 21,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_02",
     "title": "Cọc C1-7.5",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-08-29",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-29",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBZqvTJoERhQ5tYqp97NwBbAVSWLMB_T5xzFl-O4gqXr0U?e=kiaHe6",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-319",
+    "id": "moa-327",
     "category": "inspection_moa",
     "stt": 22,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_03",
     "title": "Cọc C1-6.2",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-08-30",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-30",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAEmGkmCAWUTqODbFrcq7FgAUuT06URwgjSaAj6k3-I5fg?e=nYLxw0",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-320",
+    "id": "moa-328",
     "category": "inspection_moa",
     "stt": 23,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_04",
     "title": "Cọc C1-6.3",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-08-31",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-31",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAq_O5jHd7HRLdFzsQtsCiTAWqeo3VpAbRbUEB64U-Rn0g?e=97GSxB",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-321",
+    "id": "moa-329",
     "category": "inspection_moa",
     "stt": 24,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_05",
     "title": "Cọc C1-7.8",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-08-31",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-31",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQB-2e-Aos3bTqzRi8qhcfCJARhRFBzDEPaVJn_jlyxvUKk?e=6Lfz6r",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-322",
+    "id": "moa-330",
     "category": "inspection_moa",
     "stt": 25,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_06",
     "title": "Cọc C1-7.7",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-09-01",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-01",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQC75iqNWmZCQIXOWp043ABIATw3JAXYyNL5chqWk_XFS1k?e=eZrQeJ",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-323",
+    "id": "moa-331",
     "category": "inspection_moa",
     "stt": 26,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_07",
     "title": "Cọc C1-6.1",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-09-01",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-01",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQA8N6hra5voS4_T4vJhjO98AVtsHU8Gi6_oO4x-uKvIMAY?e=J4ldpH",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-324",
+    "id": "moa-332",
     "category": "inspection_moa",
     "stt": 27,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_08",
     "title": "Cọc C1-7.9",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-09-03",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-03",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQDPvMDXsxdPQ5-rvSXW9s9AAchAIh1rfkP-dcZXimoGRJM?e=3fj8n1",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-325",
+    "id": "moa-333",
     "category": "inspection_moa",
     "stt": 28,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_09",
     "title": "Cọc C1-7.4",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-09-03",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-03",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBOGyYjQmOwTqontQSD2H0hAbK6-JhFVjUU0m7mMycmS7E?e=fnORcA",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-326",
+    "id": "moa-334",
     "category": "inspection_moa",
     "stt": 29,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_10",
     "title": "Cọc C1-7.2",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-09-03",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-03",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAECd-COuX8SoJBsqev8YKmAXAyaRtovT1nptiFw3jD1Yo?e=GGPCxw",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-327",
+    "id": "moa-335",
     "category": "inspection_moa",
     "stt": 30,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_11",
     "title": "Cọc C3-E6",
     "moaType": "MOA-W",
     "volumeNo": "2",
-    "submissionDate": "2026-09-11",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-11",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQArWSKFgSpuR5UHbU2uKh2iAUbwTH1U3zGxj0WZ3_sQUUc?e=GAVD6m",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-328",
+    "id": "moa-336",
     "category": "inspection_moa",
     "stt": 31,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_12",
     "title": "Cọc C3-E5",
     "moaType": "MOA-W",
     "volumeNo": "2",
-    "submissionDate": "2026-09-11",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-11",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAOKXer9OvJQpx4LDJoasU4AZKxZqnB9SOw5rdTyOahFrw?e=DEZYmL",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-329",
+    "id": "moa-337",
     "category": "inspection_moa",
     "stt": 32,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_13",
     "title": "Cọc C1-7.1",
     "moaType": "MOA-W",
     "volumeNo": "2",
-    "submissionDate": "2026-09-11",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-11",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBBM99IE95UTaZ5_CbcYq8zASsTCH9weOyvibJ2Vz96fO4?e=qiqLQV",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-330",
+    "id": "moa-338",
     "category": "inspection_moa",
     "stt": 33,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_14",
     "title": "Cọc C1-7.3",
     "moaType": "MOA-W",
     "volumeNo": "2",
-    "submissionDate": "2026-09-12",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-12",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCuhiAowLU_Qq6242MGHFvoAQL0nxsTaV2V80MosKhmVK8?e=T8SPtn",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-331",
+    "id": "moa-339",
     "category": "inspection_moa",
     "stt": 34,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_15",
     "title": "Cọc C2-B5",
     "moaType": "MOA-W",
     "volumeNo": "2",
-    "submissionDate": "2026-09-13",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-13",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAd-Jrb72S-Tp4Azkb7TOoXAXA2DmlXlJOi86yVCEjgE8g?e=48ZyzC",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-332",
+    "id": "moa-340",
     "category": "inspection_moa",
     "stt": 35,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_16",
     "title": "Cọc  C1-B6",
     "moaType": "MOA-W",
     "volumeNo": "2",
-    "submissionDate": "2026-09-14",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-14",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQDZEyalcGtKSrw_Y5BhRKn-AU6Zqly5Yb-JWm9NlpZCR_0?e=u9qfZC",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-333",
+    "id": "moa-341",
     "category": "inspection_moa",
     "stt": 36,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_17",
     "title": "Cọc  C1-E4",
     "moaType": "MOA-W",
     "volumeNo": "2",
-    "submissionDate": "2026-09-14",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-14",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQDeVwxzwFQyRK5w6Ms-f84eASY2tMq70N5oQefZnQ1lRWc?e=I6uiq9",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-334",
+    "id": "moa-342",
     "category": "inspection_moa",
     "stt": 37,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_18",
     "title": "Cọc  C1-B4",
     "moaType": "MOA-W",
     "volumeNo": "2",
-    "submissionDate": "2026-09-15",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-15",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQDT5bBVKDdgSL9kNyBfGaiIAXjTB2SKCIP1MUDaNMA8Y8E?e=WIY5jN",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-335",
+    "id": "moa-343",
     "category": "inspection_moa",
     "stt": 38,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_19",
     "title": "Cọc  C1-B3",
     "moaType": "MOA-W",
     "volumeNo": "2",
-    "submissionDate": "2026-09-15",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-15",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCSueEMZyrbTaodzlPkV9pJAeSem7VoS5NtU79Ukmt8yO4?e=BlQp9K",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-336",
+    "id": "moa-344",
     "category": "inspection_moa",
     "stt": 39,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_20",
     "title": "Cọc  C1-F4",
     "moaType": "MOA-W",
     "volumeNo": "2",
-    "submissionDate": "2026-08-19",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-19",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCvaXJssH6LQJuovd1H9R-mAVutHgNNiKaaDZoVTrgFHs0?e=ybeH2r",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-337",
+    "id": "moa-345",
     "category": "inspection_moa",
     "stt": 40,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_21",
     "title": "Cọc  C1-F6",
     "moaType": "MOA-W",
     "volumeNo": "3",
-    "submissionDate": "2026-09-17",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-17",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBPw8c-jdDuQJb6q558GKQNAXEY2JDmn6UDqEQeMG4mOQI?e=MofGGY",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-338",
+    "id": "moa-346",
     "category": "inspection_moa",
     "stt": 41,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_22",
     "title": "Cọc  C1-F5",
     "moaType": "MOA-W",
     "volumeNo": "3",
-    "submissionDate": "2026-09-17",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-17",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBsvcjByePEQ6Vsk5il1LFpAUMFssKB-9PKolzMoJdgHJM?e=3ZywLX",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-339",
+    "id": "moa-347",
     "category": "inspection_moa",
     "stt": 42,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_23",
     "title": "Cọc  C1-F1",
     "moaType": "MOA-W",
     "volumeNo": "3",
-    "submissionDate": "2026-09-18",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-18",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQClXEJ_Rwy2TKOebfdZWPHEAT5J-igVB07C-7A1Wv6Re1c?e=Rh9dbx",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-340",
+    "id": "moa-348",
     "category": "inspection_moa",
     "stt": 43,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_24",
     "title": "Cọc  C1-F3",
     "moaType": "MOA-W",
     "volumeNo": "3",
-    "submissionDate": "2026-09-19",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-19",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQB4StR1FI-qSJsciaWlBADbAfyO3jl_usVv6JKOU4sQMqs?e=L4Sbwe",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-341",
+    "id": "moa-349",
     "category": "inspection_moa",
     "stt": 44,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_25",
     "title": "Cọc  C1-F2",
     "moaType": "MOA-W",
     "volumeNo": "3",
-    "submissionDate": "2026-09-19",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-19",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQDeRUpRJf1DQYIlf_MhaojsAQ8LZt6Fthk7OfnFWvhBRPU?e=6nZBuO",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-342",
+    "id": "moa-350",
     "category": "inspection_moa",
     "stt": 45,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_26",
     "title": "Cọc  C1-E1",
     "moaType": "MOA-W",
     "volumeNo": "3",
-    "submissionDate": "2026-09-23",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-23",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQA_0pxeolI3TrR7sfwPhlbsAe8K8nhV4LfQzsK-dWpDM0E?e=MXpwzr",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-343",
+    "id": "moa-351",
     "category": "inspection_moa",
     "stt": 46,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_27",
     "title": "Cọc  C1-E3",
     "moaType": "MOA-W",
     "volumeNo": "3",
-    "submissionDate": "2026-09-23",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-23",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCOujv50159RacbApcGFzBzAYSdln2j6Bhd95wYD44M6_k?e=0kRPBj",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-344",
+    "id": "moa-352",
     "category": "inspection_moa",
     "stt": 47,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_28",
     "title": "Cọc  C1-E2",
     "moaType": "MOA-W",
     "volumeNo": "3",
-    "submissionDate": "2026-09-24",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-24",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBfX4wzQvfpQo1gzjLAos3NAUpX6ClqQi5Ja0fNi7EgeqI?e=b2rIaj",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-345",
+    "id": "moa-353",
     "category": "inspection_moa",
     "stt": 48,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_29",
     "title": "Cọc  C1-B1",
     "moaType": "MOA-W",
     "volumeNo": "3",
-    "submissionDate": "2026-09-24",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-24",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQA46uQ1GSKfR559Ewdnx3dmAdZlUXk-TvYretzki0faRlM?e=3dJI4F",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-346",
+    "id": "moa-354",
     "category": "inspection_moa",
     "stt": 49,
     "code": "C10-MC1-DTA-MOA-W-COCBIENPHAP_30",
     "title": "Cọc  C1-B2",
     "moaType": "MOA-W",
     "volumeNo": "3",
-    "submissionDate": "2026-09-24",
+    "submissionDate": "",
     "acceptanceDate": "2026-09-24",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCKUq64TczARZ38s0pDRW1eAZppcVUysR-YFObyYZYM7QA?e=feCcqc",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-347",
+    "id": "moa-355",
     "category": "inspection_moa",
     "stt": 50,
     "code": "C10-MC1-DTA-MOA-W-BTL-001",
     "title": "Bê tông lót móng cẩu tháp CT1",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-07-29",
+    "submissionDate": "",
     "acceptanceDate": "2026-07-29",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "C10-MC1-DTA-MOA-W-BTL-001.pdf",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-348",
+    "id": "moa-356",
     "category": "inspection_moa",
     "stt": 51,
     "code": "C10-MC1-DTA-MOA-W- MCT-001",
     "title": "Bê tông móng cẩu tháp CT1",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-08-06",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-06",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCLGkrT2ZsHTJWKc1L5i5rWAYz3p9jE1QEQ_Cac5wHIM94?e=MY69do",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-349",
+    "id": "moa-357",
     "category": "inspection_moa",
     "stt": 52,
     "code": "C10-MC1--DTA-MOA-W-BTL-002",
     "title": "Bê tông lót móng cẩu tháp CT2",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-08-06",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-06",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCH-FKY_bHYTYGZkUR1snMxAffmUdfh4iCviO24ajUZhLY?e=uQFoV9",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-350",
+    "id": "moa-358",
     "category": "inspection_moa",
     "stt": 53,
     "code": "C10-MC1-DTA-MOA-W- MCT-002",
     "title": "Bê tông móng cẩu tháp CT2",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-08-11",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-11",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBIJ-GFvce0R4FAsLhTGdoxAYF7Y8QDSCpVqwmxbzPYTWo?e=siAXX8",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-351",
+    "id": "moa-359",
     "category": "inspection_moa",
     "stt": 54,
     "code": "C10-MC1-DTA-MOA-W-BTL-003",
     "title": "Bê tông lót dầm mũ: - Trục C -F/ Cách trục 1A + 10.290m - Trục 1-A",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-07-31",
+    "submissionDate": "",
     "acceptanceDate": "2026-07-31",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQCzMfCRhhXzSb9pnGT6FbFYAeDqQOlb8AvrMJxpEPc5-_w?e=1plXUA",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-352",
+    "id": "moa-360",
     "category": "inspection_moa",
     "stt": 55,
     "code": "C10-MC1-DTA-MOA-W-BTL-004",
     "title": "Bê tông lót dầm mũ: - Trục F-GA/ Cách trục 1A + 10.290m",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-08-06",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-06",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBZlCFR3z4LQp1u1r-6LPyNAfysznUHsVNE9BoSwmZ5oa8?e=Rgl0sk",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-353",
+    "id": "moa-361",
     "category": "inspection_moa",
     "stt": 56,
     "code": "C10-MC1-DTA-MOA-W-CP-001",
     "title": "Thi công cốt thép, ván khuôn, bê tông dầm mũ: - Trục GA-D/ Cách trục 1A -10.290m",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-08-15",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-15",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQDAEdudIbWiRptUt5E5oo0_AT4WSXrE-WWG5sDbnVzMD0s?e=XF5WJT",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-354",
+    "id": "moa-362",
     "category": "inspection_moa",
     "stt": 57,
     "code": "C10-MC1-DTA-MOA-W-CP-002",
     "title": "Thi công cốt thép, ván khuôn, bê tông dầm mũ: (Capping beam 3) - Trục B-F",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-08-28",
+    "submissionDate": "",
     "acceptanceDate": "2026-08-28",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBHpMAHHgZnTIOLmqBRIY_-AcWJbLuHrSTNkU2qIE6Otlw?e=wKTsLt",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-355",
+    "id": "moa-363",
     "category": "inspection_moa",
     "stt": 58,
     "code": "C10-MC1-DTA-MOA-W-CP-003",
     "title": "Thi công cốt thép, ván khuôn, bê tông dầm mũ:(Capping beam 1) - Trục A-1",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-09-01",
+    "submissionDate": "2026-10-17",
     "acceptanceDate": "2026-09-01",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBXuZ4jPKoVT6j9g9Tfr719Adh_V29mdKzV28di6j2yTZI?e=cvjJ3P",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-356",
+    "id": "moa-364",
     "category": "inspection_moa",
     "stt": 59,
     "code": "C10-MC1-DTA-MOA-W-CP-004",
     "title": "Thi công cốt thép, ván khuôn, bê tông dầm mũ:(Capping beam 2) -Trục 3-10",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-09-11",
+    "submissionDate": "2026-10-17",
     "acceptanceDate": "2026-09-11",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAaw2YXMjyoR7PqHxl_z-yaAWKcrnjh0brorCP6psxjNzU?e=QJ2Wf7",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-357",
+    "id": "moa-365",
     "category": "inspection_moa",
     "stt": 60,
     "code": "C10-MC1-DTA-MOA-W-CP-005",
     "title": "Thi công cốt thép, ván khuôn, bê tông dầm mũ:(Capping beam 3) -Trục F-10",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-09-20",
+    "submissionDate": "2026-10-30",
     "acceptanceDate": "2026-09-20",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAF1Zyp1PmnSpJU2UqeMYacAYmULFXEwEwdeyORNg5zkAU?e=RCaw5m",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-358",
+    "id": "moa-366",
     "category": "inspection_moa",
     "stt": 61,
     "code": "C10-MC1-DTA-MOA-W-CP-006",
     "title": "Bê tông dầm mũ: (Capping beam 2) - Trục GA-3",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-09-22",
+    "submissionDate": "2026-10-30",
     "acceptanceDate": "2026-09-22",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQAA3Cm75cKqTKYz6kdUZMkmAb9laf6dOhn6I5LfkLoGU64?e=pxZpI4",
     "notes": "Đã scan + nhân bản 5"
   },
   {
-    "id": "moa-359",
+    "id": "moa-367",
     "category": "inspection_moa",
     "stt": 62,
     "code": "C10-MC1-DTA-MOA-W-CP-007",
     "title": "Bê tông dầm mũ: (Capping beam 1) - Trục A-D",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-10-01",
+    "submissionDate": "",
     "acceptanceDate": "2026-10-01",
-    "finalStatus": "APPROVED"
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "",
+    "finalStatus": "NOT_STARTED"
   },
   {
-    "id": "moa-360",
+    "id": "moa-368",
     "category": "inspection_moa",
     "stt": 63,
     "code": "C10-MC1-DTA-MOA-W-CP-008",
     "title": "Bê tông dầm mũ: (Capping beam 3) - Trục B-10",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-10-03",
+    "submissionDate": "",
     "acceptanceDate": "2026-10-03",
-    "finalStatus": "APPROVED"
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "",
+    "finalStatus": "NOT_STARTED"
   },
   {
-    "id": "moa-361",
+    "id": "moa-369",
     "category": "inspection_moa",
     "stt": 64,
     "code": "C10-MC1-DTA-MOA-W-CP-009",
     "title": "Bê tông dầm mũ: (Capping beam 4) - Trục 1 - 10",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-10-10",
+    "submissionDate": "",
     "acceptanceDate": "2026-10-10",
-    "finalStatus": "APPROVED"
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "",
+    "finalStatus": "NOT_STARTED"
   },
   {
-    "id": "moa-362",
+    "id": "moa-370",
     "category": "inspection_moa",
     "stt": 65,
     "code": "C10-MC1-DTA-MOA-W-SS-001",
     "title": "Nghiệm thu Lắp đặt hệ văng chống, kích hệ văng lớp 1, Zone 3,  Zone 9",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-10-28",
+    "submissionDate": "",
     "acceptanceDate": "2026-10-28",
-    "finalStatus": "APPROVED"
+    "tvgsStatus": "Đang trình",
+    "clientStatus": "",
+    "finalStatus": "NOT_STARTED"
   },
   {
-    "id": "moa-363",
+    "id": "moa-371",
     "category": "inspection_moa",
     "stt": 66,
     "code": "C10-MC1-DTA-MOA-W-SS-002",
     "title": "Nghiệm thu Lắp đặt hệ văng chống, kích hệ văng lớp 1, Zone 4, Zone 5, Zone 6",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-10-30",
+    "submissionDate": "",
     "acceptanceDate": "2026-10-30",
-    "finalStatus": "APPROVED"
+    "tvgsStatus": "Đang trình",
+    "clientStatus": "",
+    "finalStatus": "NOT_STARTED"
   },
   {
-    "id": "moa-364",
+    "id": "moa-372",
     "category": "inspection_moa",
     "stt": 67,
     "code": "C10-MC1-DTA-MOA-W-SS-003",
     "title": "Nghiệm thu Lắp đặt hệ văng chống, kích hệ văng lớp 1, Zone 7, Zone 5, Zone 2",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-11-03",
+    "submissionDate": "",
     "acceptanceDate": "2026-11-03",
-    "finalStatus": "APPROVED"
+    "tvgsStatus": "Đang trình",
+    "clientStatus": "",
+    "finalStatus": "NOT_STARTED"
   },
   {
-    "id": "moa-365",
+    "id": "moa-373",
     "category": "inspection_moa",
     "stt": 68,
     "code": "C10-MC1-DTA-MOA-W-SS-004",
     "title": "Nghiệm thu Lắp đặt hệ văng chống, kích hệ văng lớp 1, Zone 8, Zone 1",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-11-04",
+    "submissionDate": "",
     "acceptanceDate": "2026-11-04",
-    "finalStatus": "APPROVED"
+    "tvgsStatus": "Đang trình",
+    "clientStatus": "",
+    "finalStatus": "NOT_STARTED"
   },
   {
-    "id": "moa-366",
+    "id": "moa-374",
     "category": "inspection_moa",
     "stt": 69,
     "code": "C10-MC1-DTA-MOA-W-EXC-001",
     "title": "Nghiệm thu công tác đào và vận chuyển đất: - Từ cao độ mặt đất tự nhiên đến cao độ -3.5m",
     "moaType": "MOA-W",
     "volumeNo": "1",
-    "submissionDate": "2026-10-28",
+    "submissionDate": "",
     "acceptanceDate": "2026-10-28",
+    "tvgsStatus": "Đã kí",
+    "clientStatus": "Đã kí",
     "finalStatus": "APPROVED",
     "linkUrl": "https://deltagroupvn-my.sharepoint.com/:b:/g/personal/c10_phumyhung_phanham_deltagroup_vn/IQBFj-fgqbTmSpRyhGirRS_tAf9euUbBEYQvEBXPBX-F8Qs?e=1Pbcpg",
     "notes": "Đã scan + nhân bản 5"
@@ -6148,27 +6590,7 @@ export const DEFAULT_MASTER_SUBMITTALS: MasterSubmittalRecord[] = [
 ];
 
 
-
 export const LOCAL_STORAGE_KEY_MASTER_SUBMITTALS = 'c10_master_submittals_v5';
-const MOA_EMPTY_STATUS_CODES = new Set([
-  'C10-MC1-DTA-MOA-W-CP-007',
-  'C10-MC1-DTA-MOA-W-CP-008',
-  'C10-MC1-DTA-MOA-W-CP-009',
-  'C10-MC1-DTA-MOA-W-SS-001',
-  'C10-MC1-DTA-MOA-W-SS-002',
-  'C10-MC1-DTA-MOA-W-SS-003',
-  'C10-MC1-DTA-MOA-W-SS-004'
-]);
-DEFAULT_MASTER_SUBMITTALS.forEach((r) => {
-  if (r.category === 'inspection_moa') {
-    const c = String(r.code || '').trim().toUpperCase();
-    if (MOA_EMPTY_STATUS_CODES.has(c)) {
-      r.clientStatus = '';
-      r.submissionDate = '';
-      r.finalStatus = 'NOT_STARTED';
-    }
-  }
-});
 
 export const normalizeSubmittalCategory = (cat: string): SubmittalCategoryKey => {
   const c = String(cat || '').trim().toLowerCase();
@@ -6205,6 +6627,7 @@ export const isApprovedStatusText = (str?: string): boolean => {
   return (
     s === 'duyệt' ||
     s.includes('đã duyệt') ||
+    s.includes('đã hoàn thành') ||
     s.includes('không cần trình') ||
     s.includes('đã kí') ||
     s.includes('đã ký') ||
@@ -6214,10 +6637,15 @@ export const isApprovedStatusText = (str?: string): boolean => {
   );
 };
 
-// Chuẩn hóa trạng thái dựa trên cột Trạng thái CĐT phê duyệt (và Từ chối = Đã đóng)
+// Chuẩn hóa trạng thái dựa trên cột Trạng thái CĐT phê duyệt (Riêng MOA lấy cột Trạng thái của Trình kí MOA)
 export const computeNormalizedFinalStatus = (rec: Partial<MasterSubmittalRecord>): MasterSubmittalRecord['finalStatus'] => {
   const cat = normalizeSubmittalCategory(String(rec.category || 'ots'));
   if (cat === 'concrete' || cat === 'material_import') return 'APPROVED';
+
+  // Quy tắc riêng cho Hồ sơ nghiệm thu MOA (lấy cột Trạng thái của Trình kí MOA - clientStatus):
+  // - Nếu đã ký ("Đã kí" / "Đã ký" / "Duyệt") -> Đã hoàn thành (APPROVED)
+  // - Nếu "Đang trình" -> Đang trình (PENDING)
+  // - Nếu rỗng -> Chưa trình (NOT_STARTED)
   if (cat === 'inspection_moa') {
     const moaStatus = String(rec.clientStatus ?? '').trim();
     if (!moaStatus) return 'NOT_STARTED';
@@ -6225,6 +6653,7 @@ export const computeNormalizedFinalStatus = (rec: Partial<MasterSubmittalRecord>
     if (isApprovedStatusText(moaStatus)) return 'APPROVED';
     return 'PENDING';
   }
+
   if (
     isRejectedStatusText(rec.clientStatus) ||
     isRejectedStatusText(rec.clientCode) ||
@@ -6257,41 +6686,42 @@ export const normalizeMasterSubmittalsList = (records: MasterSubmittalRecord[]):
     .filter((r) => {
       const code = String(r.code || '').trim();
       if (!code || code === 'MẪU VẬT LIỆU' || code === 'STT' || code === 'CODE') return false;
+      const cat = normalizeSubmittalCategory(r.category || defaultRecordByCodeMap.get(code.toUpperCase())?.category || 'ots');
+      // Đối với hồ sơ MOA, giữ lại cả các mục có trạng thái trình ký MOA rỗng (nhóm Chưa trình)
+      if (cat === 'inspection_moa') return code.length >= 3;
+      // Loại bỏ các mục tiêu chuẩn chưa có ngày đệ trình thực tế
       const def = defaultRecordByCodeMap.get(code.toUpperCase());
-      const cat = normalizeSubmittalCategory(r.category || def?.category || 'ots');
-      if (cat === 'inspection_moa') return true;
-      // Loại bỏ các mục chưa có ngày đệ trình thực tế
       const subDate = r.submissionDate || def?.submissionDate || r.acceptanceDate;
       return Boolean(subDate && String(subDate).trim());
     })
     .map((r) => {
       const codeKey = String(r.code || '').trim().toUpperCase();
       const def = defaultRecordByCodeMap.get(codeKey);
-      const isMoa = (r.category === 'inspection_moa' || def?.category === 'inspection_moa');
+      const cat = normalizeSubmittalCategory(r.category || def?.category || 'ots');
+      const isMoa = cat === 'inspection_moa';
       const merged: MasterSubmittalRecord = {
         ...(def || {}),
         ...r,
-        category: normalizeSubmittalCategory(r.category || def?.category || 'ots'),
-        submissionDate: isMoa ? (r.submissionDate !== undefined ? r.submissionDate : (def?.submissionDate || '')) : (r.submissionDate || def?.submissionDate || r.acceptanceDate || ''),
+        category: cat,
+        submissionDate: isMoa
+          ? (r.submissionDate !== undefined ? r.submissionDate : (def?.submissionDate || ''))
+          : (r.submissionDate || def?.submissionDate || r.acceptanceDate),
+        acceptanceDate: r.acceptanceDate || def?.acceptanceDate || '',
         plannedDate: r.plannedDate || def?.plannedDate,
         tvgsStatus: r.tvgsStatus !== undefined && r.tvgsStatus !== '' ? r.tvgsStatus : (def?.tvgsStatus || ''),
         tvgsDate: r.tvgsDate || def?.tvgsDate || '',
         tvgsCode: r.tvgsCode || def?.tvgsCode || '',
-        clientStatus: isMoa ? (r.clientStatus !== undefined ? r.clientStatus : (def?.clientStatus || '')) : (r.clientStatus !== undefined && r.clientStatus !== '' ? r.clientStatus : (def?.clientStatus || '')),
+        clientStatus: isMoa
+          ? (r.clientStatus !== undefined ? r.clientStatus : (def?.clientStatus || ''))
+          : (r.clientStatus !== undefined && r.clientStatus !== '' ? r.clientStatus : (def?.clientStatus || '')),
         clientDate: r.clientDate || def?.clientDate || '',
         clientCode: r.clientCode || def?.clientCode || '',
         linkUrl: r.linkUrl || def?.linkUrl,
         notes: r.notes || def?.notes,
         finalStatus: 'PENDING'
       };
-      if (isMoa && MOA_EMPTY_STATUS_CODES.has(codeKey)) {
-        if (!r.clientStatus || r.clientStatus === r.tvgsStatus) {
-          merged.clientStatus = '';
-          merged.submissionDate = '';
-        }
-      }
       // Nếu def đã được đánh dấu Đã thay thế (Đóng) do có bản Rev mới hơn thì giữ trạng thái REJECTED (Đã đóng)
-      if (def?.finalStatus === 'REJECTED' && String(def.clientStatus || '').includes('Đã thay thế')) {
+      if (!isMoa && def?.finalStatus === 'REJECTED' && String(def.clientStatus || '').includes('Đã thay thế')) {
         merged.finalStatus = 'REJECTED';
         merged.clientStatus = def.clientStatus;
       } else {
@@ -6333,7 +6763,35 @@ export const normalizeMasterSubmittalsList = (records: MasterSubmittalRecord[]):
     if (rec.clientDate === '2026-04-11') rec.clientDate = '2026-11-04';
   });
 
-  return cleaned.length > 0 ? cleaned : DEFAULT_MASTER_SUBMITTALS;
+  // Khử trùng lặp hoàn toàn theo (category + code + rev) và chuẩn hóa id duy nhất tuyệt đối + STT theo từng phân hệ
+  const deduped: MasterSubmittalRecord[] = [];
+  const codeRevIndexMap = new Map<string, number>();
+  cleaned.forEach((rec) => {
+    const key = `${rec.category}__${String(rec.code || '').trim().toUpperCase()}__${String(rec.rev || '00').trim().toUpperCase()}`;
+    const existingIdx = codeRevIndexMap.get(key);
+    if (existingIdx !== undefined) {
+      const existing = deduped[existingIdx];
+      if (!existing.linkUrl && rec.linkUrl) existing.linkUrl = rec.linkUrl;
+      if (!existing.notes && rec.notes) existing.notes = rec.notes;
+      if (!existing.tra && rec.tra) existing.tra = rec.tra;
+    } else {
+      codeRevIndexMap.set(key, deduped.length);
+      deduped.push({ ...rec });
+    }
+  });
+
+  const seenIds = new Set<string>();
+  const catCounter: Record<string, number> = {};
+  deduped.forEach((rec, index) => {
+    catCounter[rec.category] = (catCounter[rec.category] || 0) + 1;
+    rec.stt = catCounter[rec.category];
+    const cleanCode = String(rec.code || '').replace(/[^a-zA-Z0-9]/g, '');
+    const candidateId = `${rec.category}-${catCounter[rec.category]}-${cleanCode || index + 1}`;
+    rec.id = seenIds.has(candidateId) ? `${candidateId}-${index + 1}` : candidateId;
+    seenIds.add(rec.id);
+  });
+
+  return deduped.length > 0 ? deduped : DEFAULT_MASTER_SUBMITTALS;
 };
 
 // Đọc danh mục hồ sơ từ bộ nhớ máy
@@ -6373,8 +6831,8 @@ export const saveSubmittalsToFirestore = async (records: MasterSubmittalRecord[]
     if (!db) return true;
     const docRef = doc(db, 'c10', 'master_submittals');
     await setDoc(docRef, {
-      records: normalized,
       schemaVersion: 5,
+      records: normalized,
       updatedAt: new Date().toISOString(),
       updatedBy: localStorage.getItem('c10_user_email') || 'Admin'
     }, { merge: true });
@@ -6397,10 +6855,14 @@ export const subscribeMasterSubmittals = (callback: (records: MasterSubmittalRec
     const unsub = onSnapshot(docRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
-        if (data && Array.isArray(data.records) && data.records.length > 0) {
+        if (data && data.schemaVersion === 5 && Array.isArray(data.records) && data.records.length > 0) {
           const normalized = normalizeMasterSubmittalsList(data.records);
           saveLocalMasterSubmittals(normalized);
           callback(normalized);
+        } else {
+          // Tự động nâng cấp dữ liệu Firestore cũ lên schemaVersion 5 chuẩn cột Trình kí MOA & Trạng thái CĐT
+          saveSubmittalsToFirestore(DEFAULT_MASTER_SUBMITTALS);
+          callback(DEFAULT_MASTER_SUBMITTALS);
         }
       }
     }, (err) => {
@@ -6559,51 +7021,57 @@ export const syncFromGoogleSheet = async (): Promise<{ success: boolean; count: 
       });
     }
 
+    // 3. Quét động 2 sheet Hồ sơ nghiệm thu MOA ('18. MOA-M' & '19. MOA-W') theo chuẩn cột Trình kí MOA (Cột F: Ngày trình, Cột G: Trạng thái)
+    const moaSheetConfigs: Array<{ sheetName: string; moaType: 'MOA-M' | 'MOA-W'; linkCol: number }> = [
+      { sheetName: '18. MOA-M', moaType: 'MOA-M', linkCol: 9 },
+      { sheetName: '19. MOA-W', moaType: 'MOA-W', linkCol: 11 }
+    ];
+    const syncedMoaRecords: MasterSubmittalRecord[] = [];
+    for (const mCfg of moaSheetConfigs) {
+      const mRows = await fetchSheetRows(mCfg.sheetName);
+      mRows.forEach((row) => {
+        const code = getGvizStr(row, 2);
+        if (!code || code.length < 3 || code === 'STT' || code.startsWith('HỒ SƠ') || code.startsWith('CODE') || code === 'MOA-M' || code === 'MOA-W') return;
+        const prev = existingByCode.get(code.toUpperCase());
+        const title = getGvizStr(row, 1).replace(/\r/g, '').replace(/\n+/g, ' ') || prev?.title || code;
+        const ntDate = parseGvizDateToISO(row?.c?.[3]) || prev?.acceptanceDate || '';
+        const ntStatus = getGvizStr(row, 4) || prev?.tvgsStatus || '';
+        const moaSubDate = parseGvizDateToISO(row?.c?.[5]);
+        const moaStatus = getGvizStr(row, 6);
+        const rawNotes = getGvizStr(row, 7);
+        const volNo = getGvizStr(row, 8) || prev?.volumeNo || '1';
+        const rawLink = getGvizStr(row, mCfg.linkCol);
+        const linkUrl = (rawLink && rawLink.startsWith('http')) ? rawLink : prev?.linkUrl;
+
+        const rec: MasterSubmittalRecord = {
+          id: prev?.id || `moa-${306 + syncedMoaRecords.length}`,
+          category: 'inspection_moa',
+          stt: syncedMoaRecords.length + 1,
+          code,
+          title,
+          moaType: mCfg.moaType,
+          volumeNo: volNo,
+          submissionDate: moaSubDate,
+          acceptanceDate: ntDate,
+          tvgsStatus: ntStatus,
+          clientStatus: moaStatus,
+          finalStatus: 'NOT_STARTED',
+          linkUrl,
+          notes: rawNotes || prev?.notes
+        };
+        rec.finalStatus = computeNormalizedFinalStatus(rec);
+        syncedMoaRecords.push(rec);
+      });
+    }
+
     if (syncedStandardRecords.length > 0) {
-      // 3. Quét động các sheet Biên bản Nghiệm thu MOA (18. MOA-M & 19. MOA-W)
-      const moaConfigs = [
-        { sheetName: '18. MOA-M', moaType: 'MOA-M' as const, linkCol: 9 },
-        { sheetName: '19. MOA-W', moaType: 'MOA-W' as const, linkCol: 11 }
-      ];
-      for (const mCfg of moaConfigs) {
-        const rows = await fetchSheetRows(mCfg.sheetName);
-        rows.forEach((row, rIdx) => {
-          const code = getGvizStr(row, 2);
-          if (!code || code.length < 3 || code === 'STT' || code.startsWith('HỒ SƠ') || code.startsWith('CODE') || code === '0') return;
-          const title = getGvizStr(row, 1).replace(/\r/g, '').replace(/\n+/g, ' ');
-          const acceptanceDate = parseGvizDateToISO(row?.c?.[3]);
-          const tvgsStatus = getGvizStr(row, 4);
-          const submissionDate = parseGvizDateToISO(row?.c?.[5]);
-          const clientStatus = getGvizStr(row, 6);
-          const link = getGvizStr(row, mCfg.linkCol);
-
-          const prev = existingByCode.get(code.toUpperCase());
-          const rec: MasterSubmittalRecord = {
-            id: prev?.id || `moa-${mCfg.moaType}-${rIdx + 1}`,
-            category: 'inspection_moa',
-            stt: rIdx + 1,
-            code,
-            title: title || code,
-            acceptanceDate: acceptanceDate || '',
-            tvgsStatus: tvgsStatus || '',
-            submissionDate: submissionDate || '',
-            clientStatus: clientStatus || '',
-            linkUrl: link || prev?.linkUrl || '',
-            moaType: mCfg.moaType,
-            volumeNo: prev?.volumeNo || '',
-            finalStatus: 'NOT_STARTED'
-          };
-          rec.finalStatus = computeNormalizedFinalStatus(rec);
-          syncedStandardRecords.push(rec);
-        });
-      }
-
-      // Giữ lại các phân hệ đặc thù (Bê tông, Vật tư nhập) và các MOA chưa có trong Sheet
-      const syncedCodes = new Set(syncedStandardRecords.map(r => String(r.code || '').trim().toUpperCase()));
+      // Giữ lại các phân hệ đặc thù (Bê tông, Vật tư nhập) và hợp nhất cùng dữ liệu MOA mới quét
       const specialRecords = existingRecords.filter(r =>
-        r.category === 'concrete' || r.category === 'material_import' || (r.category === 'inspection_moa' && !syncedCodes.has(String(r.code || '').trim().toUpperCase()))
+        r.category === 'concrete' ||
+        r.category === 'material_import' ||
+        (syncedMoaRecords.length === 0 && r.category === 'inspection_moa')
       );
-      const combined = normalizeMasterSubmittalsList([...syncedStandardRecords, ...specialRecords]);
+      const combined = normalizeMasterSubmittalsList([...syncedStandardRecords, ...specialRecords, ...syncedMoaRecords]);
       await saveSubmittalsToFirestore(combined);
       return {
         success: true,
@@ -6659,6 +7127,112 @@ export const saveAutoSyncConfig = (cfg: AutoSyncConfig) => {
   try {
     localStorage.setItem('c10_submittal_autosync_config', JSON.stringify(cfg));
   } catch {}
+};
+
+export interface LiveSubmittalDashboardStats {
+  total: number;
+  approved: number;
+  unapproved: number;
+  delayed: number;
+  tvgsDelayCount: number;
+  cdtDelayCount: number;
+  contractorDelayCount: number;
+  approvalRate: number;
+}
+
+export const computeLiveSubmittalDashboardStats = (
+  recordsInput?: MasterSubmittalRecord[],
+  cfgInput?: SubmittalFilterConfig
+): LiveSubmittalDashboardStats => {
+  const records = recordsInput || loadLocalMasterSubmittals();
+  const filterCfg = cfgInput || loadSubmittalFilterConfig();
+  const parseDateMs = (dateStr?: string): number | null => {
+    if (!dateStr) return null;
+    const raw = String(dateStr).trim();
+    if (!raw) return null;
+    if (raw.includes('/')) {
+      const parts = raw.split('/');
+      if (parts.length === 3) {
+        const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+        const parsed = new Date(`${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`).getTime();
+        return isNaN(parsed) ? null : parsed;
+      }
+    }
+    const parsed = new Date(raw).getTime();
+    return isNaN(parsed) ? null : parsed;
+  };
+
+  let tvgsDelayCount = 0;
+  let cdtDelayCount = 0;
+  let contractorDelayCount = 0;
+  const nowMs = Date.now();
+
+  records.forEach((rec) => {
+    if (rec.category === 'inspection_moa') {
+      if (rec.finalStatus === 'PENDING') {
+        const moaDateStr = rec.submissionDate || rec.acceptanceDate || rec.clientDate;
+        const moaSubMs = parseDateMs(moaDateStr);
+        if (moaSubMs !== null) {
+          const diffMoaDays = Math.floor((nowMs - moaSubMs) / (1000 * 3600 * 24));
+          if (diffMoaDays > 15) {
+            cdtDelayCount++;
+          }
+        }
+      }
+      return;
+    }
+
+    if (rec.finalStatus !== 'PENDING') return;
+
+    const subMs = parseDateMs(rec.submissionDate);
+    if (subMs === null) return;
+
+    const planMs = parseDateMs(rec.plannedDate);
+    let isContractorLate = false;
+    if (planMs !== null && subMs > planMs) {
+      const diff = Math.floor((subMs - planMs) / (1000 * 3600 * 24));
+      if (diff > 0) isContractorLate = true;
+    } else if (rec.notes && rec.notes.toLowerCase().includes('chậm trình')) {
+      isContractorLate = true;
+    }
+    if (isContractorLate) contractorDelayCount++;
+
+    const tvgsApproved = isApprovedStatusText(rec.tvgsStatus) || isApprovedStatusText(rec.tvgsCode);
+    const cdtApproved = isApprovedStatusText(rec.clientStatus) || isApprovedStatusText(rec.clientCode);
+
+    const cdtSubmitMs = parseDateMs(rec.clientDate);
+    if (cdtSubmitMs !== null && !cdtApproved) {
+      const diffCdtDays = Math.floor((nowMs - cdtSubmitMs) / (1000 * 3600 * 24));
+      if (diffCdtDays > filterCfg.cdtLimitDays) {
+        cdtDelayCount++;
+        return;
+      }
+    }
+
+    if (!tvgsApproved) {
+      const diffTvgsDays = Math.floor((nowMs - subMs) / (1000 * 3600 * 24));
+      if (diffTvgsDays > filterCfg.tvgsLimitDays) {
+        tvgsDelayCount++;
+      }
+    }
+  });
+
+  const total = records.length;
+  const approved = records.filter((r) => r.finalStatus === 'APPROVED').length;
+  const unapproved = records.filter((r) => r.finalStatus === 'PENDING').length;
+  const delayed = tvgsDelayCount + cdtDelayCount;
+  const approvalRate = total > 0 ? Math.round((approved / total) * 100) : 0;
+
+  return {
+    total,
+    approved,
+    unapproved,
+    delayed,
+    tvgsDelayCount,
+    cdtDelayCount,
+    contractorDelayCount,
+    approvalRate
+  };
 };
 
 export const Submittal: React.FC<SubmittalProps> = ({
@@ -6864,9 +7438,19 @@ export const Submittal: React.FC<SubmittalProps> = ({
     delayBadgeText: string;
     delayDetailText: string;
   } => {
+    // Quy tắc riêng cho Hồ sơ MOA (inspection_moa):
+    // - Lấy cột trạng thái của Trình kí MOA: đã ký -> Đã hoàn thành; rỗng -> Chưa trình (không tính chậm)
+    // - Nếu Đang trình (PENDING) -> xét tiếp trình từ ngày nào (submissionDate || acceptanceDate), quá 15 ngày chưa duyệt thì là Chậm
     if (rec.category === 'inspection_moa') {
       if (rec.finalStatus !== 'PENDING') {
-        return { delayType: 'NONE', isContractorLate: false, contractorLateDays: 0, overdueDays: 0, delayBadgeText: '', delayDetailText: '' };
+        return {
+          delayType: 'NONE',
+          isContractorLate: false,
+          contractorLateDays: 0,
+          overdueDays: 0,
+          delayBadgeText: '',
+          delayDetailText: ''
+        };
       }
       const moaDateStr = rec.submissionDate || rec.acceptanceDate || rec.clientDate;
       const moaSubMs = parseSubmittalDateMs(moaDateStr);
@@ -6883,8 +7467,16 @@ export const Submittal: React.FC<SubmittalProps> = ({
           };
         }
       }
-      return { delayType: 'NONE', isContractorLate: false, contractorLateDays: 0, overdueDays: 0, delayBadgeText: '', delayDetailText: '' };
+      return {
+        delayType: 'NONE',
+        isContractorLate: false,
+        contractorLateDays: 0,
+        overdueDays: 0,
+        delayBadgeText: '',
+        delayDetailText: ''
+      };
     }
+
     const subMs = parseSubmittalDateMs(rec.submissionDate);
     if (subMs === null) {
       return {
@@ -6897,29 +7489,8 @@ export const Submittal: React.FC<SubmittalProps> = ({
       };
     }
 
-    // Kiểm tra Nhà thầu chậm trình so với Kế hoạch (chỉ xét khi có cả ngày đệ trình và ngày kế hoạch)
-    const planMs = parseSubmittalDateMs(rec.plannedDate);
-    let isContractorLate = false;
-    let contractorLateDays = 0;
-    if (planMs !== null && subMs > planMs) {
-      contractorLateDays = Math.floor((subMs - planMs) / (1000 * 3600 * 24));
-      if (contractorLateDays > 0) isContractorLate = true;
-    } else if (rec.notes && rec.notes.toLowerCase().includes('chậm trình')) {
-      isContractorLate = true;
-    }
-
-    // Nếu hồ sơ đã Duyệt (APPROVED) hoặc Từ chối = Đã đóng (REJECTED) -> Không còn trễ hạn phê duyệt
-    if (rec.finalStatus === 'APPROVED' || rec.finalStatus === 'REJECTED') {
-      if (isContractorLate) {
-        return {
-          delayType: 'CONTRACTOR_DELAY',
-          isContractorLate: true,
-          contractorLateDays,
-          overdueDays: contractorLateDays,
-          delayBadgeText: 'Chậm trình do Nhà thầu',
-          delayDetailText: contractorLateDays > 0 ? `Nhà thầu trình trễ ${contractorLateDays} ngày so với KH` : 'Chậm trình do Nhà thầu'
-        };
-      }
+    // Nếu hồ sơ không ở trạng thái Đang trình (PENDING) -> Không tính trễ hạn hoặc chậm trình
+    if (rec.finalStatus !== 'PENDING') {
       return {
         delayType: 'NONE',
         isContractorLate: false,
@@ -6928,6 +7499,17 @@ export const Submittal: React.FC<SubmittalProps> = ({
         delayBadgeText: '',
         delayDetailText: ''
       };
+    }
+
+    // Kiểm tra Nhà thầu chậm trình so với Kế hoạch (chỉ xét đối với hồ sơ đang trình có cả ngày đệ trình và ngày kế hoạch)
+    const planMs = parseSubmittalDateMs(rec.plannedDate);
+    let isContractorLate = false;
+    let contractorLateDays = 0;
+    if (planMs !== null && subMs > planMs) {
+      contractorLateDays = Math.floor((subMs - planMs) / (1000 * 3600 * 24));
+      if (contractorLateDays > 0) isContractorLate = true;
+    } else if (rec.notes && rec.notes.toLowerCase().includes('chậm trình')) {
+      isContractorLate = true;
     }
 
     const nowMs = Date.now();
@@ -6945,7 +7527,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
           contractorLateDays,
           overdueDays: diffCdtDays,
           delayBadgeText: 'CĐT chậm',
-          delayDetailText: `CĐT chậm (${diffCdtDays} ngày > ${filterConfig.cdtLimitDays} ngày kể từ ngày trình CĐT ${rec.clientDate})`
+          delayDetailText: `CĐT chậm (${diffCdtDays} ngày kể từ ngày trình CĐT ${rec.clientDate})`
         };
       }
     }
@@ -6960,7 +7542,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
           contractorLateDays,
           overdueDays: diffTvgsDays,
           delayBadgeText: 'TVGS chậm',
-          delayDetailText: `TVGS chậm (${diffTvgsDays} ngày > ${filterConfig.tvgsLimitDays} ngày)`
+          delayDetailText: `TVGS chậm (${diffTvgsDays} ngày)`
         };
       }
     }
@@ -6986,20 +7568,20 @@ export const Submittal: React.FC<SubmittalProps> = ({
     };
   };
 
-  // Hồ sơ đang mở (PENDING) bị chậm phê duyệt (TVGS chậm hoặc CĐT chậm) hoặc Chậm trình do Nhà thầu
+  // Hồ sơ đang mở (PENDING) bị chậm phê duyệt (TVGS chậm hoặc CĐT chậm)
   const isRecordOverdue = (rec: MasterSubmittalRecord): boolean => {
     if (rec.finalStatus !== 'PENDING') return false;
     const info = evaluateRecordDelay(rec);
     return info.delayType === 'TVGS_DELAY' || info.delayType === 'CDT_DELAY';
   };
 
-  // 3. Tính toán KPI thống kê tiến độ duyệt hồ sơ toàn dự án (Căn cứ cột CĐT phê duyệt; Từ chối = Đã đóng)
+  // 3. Tính toán KPI thống kê tiến độ duyệt hồ sơ toàn dự án (Căn cứ cột CĐT phê duyệt; Từ chối = Đã đóng; MOA lấy cột Trình kí MOA)
   const kpiStats = useMemo(() => {
     const total = masterRecords.length;
     const approved = masterRecords.filter(r => r.finalStatus === 'APPROVED').length;
     const pending = masterRecords.filter(r => r.finalStatus === 'PENDING').length;
-    const rejected = masterRecords.filter(r => r.finalStatus === 'REJECTED').length;
     const notStarted = masterRecords.filter(r => r.finalStatus === 'NOT_STARTED').length;
+    const rejected = masterRecords.filter(r => r.finalStatus === 'REJECTED').length;
     const approvedPercent = total > 0 ? Math.round((approved / total) * 100) : 0;
 
     let tvgsDelayCount = 0;
@@ -7016,8 +7598,8 @@ export const Submittal: React.FC<SubmittalProps> = ({
       total,
       approved,
       pending,
-      rejected,
       notStarted,
+      rejected,
       approvedPercent,
       tvgsDelayCount,
       cdtDelayCount,
@@ -7025,21 +7607,16 @@ export const Submittal: React.FC<SubmittalProps> = ({
     };
   }, [masterRecords, filterConfig]);
 
+  // 3B. Thống kê chuyên biệt cho Hồ sơ MOA theo cột Trạng thái của Trình kí MOA
   const moaStats = useMemo(() => {
-    const moaRecords = masterRecords.filter(r => r.category === 'inspection_moa');
-    const total = moaRecords.length;
-    const approved = moaRecords.filter(r => r.finalStatus === 'APPROVED').length;
-    const pending = moaRecords.filter(r => r.finalStatus === 'PENDING').length;
-    const notStarted = moaRecords.filter(r => r.finalStatus === 'NOT_STARTED').length;
-    const overdue = moaRecords.filter(r => r.finalStatus === 'PENDING' && isRecordOverdue(r)).length;
-    return {
-      total,
-      approved,
-      pending,
-      notStarted,
-      overdue
-    };
-  }, [masterRecords]);
+    const moaList = masterRecords.filter(r => r.category === 'inspection_moa');
+    const total = moaList.length;
+    const approved = moaList.filter(r => r.finalStatus === 'APPROVED').length;
+    const pending = moaList.filter(r => r.finalStatus === 'PENDING').length;
+    const notStarted = moaList.filter(r => r.finalStatus === 'NOT_STARTED').length;
+    const overdue = moaList.filter(r => r.finalStatus === 'PENDING' && isRecordOverdue(r)).length;
+    return { total, approved, pending, notStarted, overdue };
+  }, [masterRecords, filterConfig]);
 
   // 4. Đếm số lượng hồ sơ theo từng danh mục
   const categoryCounts = useMemo(() => {
@@ -7079,11 +7656,12 @@ export const Submittal: React.FC<SubmittalProps> = ({
 
   const allOverdueRecords = useMemo(() => {
     return masterRecords.filter((rec) => {
-      if (!isRecordOverdue(rec)) return false;
-      if (delayFilter === 'TVGS_DELAY') return evaluateRecordDelay(rec).delayType === 'TVGS_DELAY';
-      if (delayFilter === 'CDT_DELAY') return evaluateRecordDelay(rec).delayType === 'CDT_DELAY';
-      if (delayFilter === 'CONTRACTOR_DELAY') return evaluateRecordDelay(rec).isContractorLate;
-      return true;
+      if (rec.finalStatus !== 'PENDING') return false;
+      const d = evaluateRecordDelay(rec);
+      if (delayFilter === 'TVGS_DELAY') return d.delayType === 'TVGS_DELAY';
+      if (delayFilter === 'CDT_DELAY') return d.delayType === 'CDT_DELAY';
+      if (delayFilter === 'CONTRACTOR_DELAY') return d.isContractorLate;
+      return d.delayType === 'TVGS_DELAY' || d.delayType === 'CDT_DELAY';
     });
   }, [masterRecords, filterConfig, delayFilter]);
 
@@ -7092,17 +7670,27 @@ export const Submittal: React.FC<SubmittalProps> = ({
     return found ? found.shortLabel : key.toUpperCase();
   };
 
-  // Render Donut SVG chuẩn phong cách CN8-2
-  const renderCN82DonutChart = (total: number, approved: number, unapproved: number, closedRejected: number = 0) => {
+  // Render Donut SVG 3 màu (Xanh lá: Đã duyệt, Vàng cam: Đang trình, Đỏ: Trễ)
+  const renderCN82DonutChart = (total: number, approved: number, unapproved: number, overdue: number = 0) => {
     const radius = 50;
     const circumference = 2 * Math.PI * radius;
-    const effectiveDone = approved + closedRejected;
-    const approvedRatio = total > 0 ? effectiveDone / total : 0;
-    const unapprovedRatio = total > 0 ? unapproved / total : 0;
-    const gap = total > 0 && effectiveDone > 0 && unapproved > 0 ? 4 : 0;
-    const approvedLength = Math.max(0, approvedRatio * circumference - gap);
-    const unapprovedLength = Math.max(0, unapprovedRatio * circumference - gap);
-    const unapprovedOffset = -(approvedRatio * circumference);
+    const onTimePending = Math.max(0, unapproved - overdue);
+    const activeSum = approved + onTimePending + overdue;
+    const denom = activeSum > 0 ? activeSum : 1;
+
+    const approvedRatio = activeSum > 0 ? approved / denom : 0;
+    const pendingRatio = activeSum > 0 ? onTimePending / denom : 0;
+    const overdueRatio = activeSum > 0 ? overdue / denom : 0;
+
+    const nonZeroCount = (approved > 0 ? 1 : 0) + (onTimePending > 0 ? 1 : 0) + (overdue > 0 ? 1 : 0);
+    const gap = nonZeroCount > 1 ? 3 : 0;
+
+    const approvedLength = Math.max(0, approvedRatio * circumference - (approved > 0 ? gap : 0));
+    const pendingLength = Math.max(0, pendingRatio * circumference - (onTimePending > 0 ? gap : 0));
+    const overdueLength = Math.max(0, overdueRatio * circumference - (overdue > 0 ? gap : 0));
+
+    const pendingOffset = -(approvedRatio * circumference);
+    const overdueOffset = -((approvedRatio + pendingRatio) * circumference);
 
     return (
       <div className="flex flex-col items-center justify-center my-3">
@@ -7116,7 +7704,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
               stroke="#f1f5f9"
               strokeWidth="14"
             />
-            {effectiveDone > 0 && (
+            {approved > 0 && (
               <circle
                 cx="64"
                 cy="64"
@@ -7129,7 +7717,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
                 strokeLinecap="butt"
               />
             )}
-            {unapproved > 0 && (
+            {onTimePending > 0 && (
               <circle
                 cx="64"
                 cy="64"
@@ -7137,8 +7725,21 @@ export const Submittal: React.FC<SubmittalProps> = ({
                 fill="transparent"
                 stroke="#f59e0b"
                 strokeWidth="14"
-                strokeDasharray={`${unapprovedLength} ${circumference}`}
-                strokeDashoffset={unapprovedOffset}
+                strokeDasharray={`${pendingLength} ${circumference}`}
+                strokeDashoffset={pendingOffset}
+                strokeLinecap="butt"
+              />
+            )}
+            {overdue > 0 && (
+              <circle
+                cx="64"
+                cy="64"
+                r={radius}
+                fill="transparent"
+                stroke="#ef4444"
+                strokeWidth="14"
+                strokeDasharray={`${overdueLength} ${circumference}`}
+                strokeDashoffset={overdueOffset}
                 strokeLinecap="butt"
               />
             )}
@@ -7162,12 +7763,10 @@ export const Submittal: React.FC<SubmittalProps> = ({
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
             <span>Đã duyệt ({approved})</span>
           </span>
-          {closedRejected > 0 && (
-            <span className="inline-flex items-center gap-1 text-slate-500 text-[11px]">
-              <span className="w-2 h-2 rounded-full bg-slate-400 inline-block" />
-              <span>Đã đóng ({closedRejected})</span>
-            </span>
-          )}
+          <span className="inline-flex items-center gap-1.5 text-rose-600">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
+            <span>Trễ ({overdue})</span>
+          </span>
         </div>
       </div>
     );
@@ -7199,7 +7798,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
     return null;
   };
 
-    // 4C. Hàm động đánh giá bằng Gemini AI theo dữ liệu mới nhất mỗi khi cập nhật (5 câu hỏi trọng tâm)
+  // 4C. Hàm động đánh giá bằng Gemini AI theo dữ liệu mới nhất mỗi khi cập nhật (5 câu hỏi trọng tâm)
   const [aiEvalRefreshing, setAiEvalRefreshing] = useState<boolean>(false);
   const [aiEvalLastUpdated, setAiEvalLastUpdated] = useState<string>(() => {
     const now = new Date();
@@ -7211,12 +7810,26 @@ export const Submittal: React.FC<SubmittalProps> = ({
     setAiEvalLastUpdated(
       `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
     );
-  }, [masterRecords, filterConfig, lastSyncTime]);
+    try {
+      const payload: LiveSubmittalDashboardStats = {
+        total: kpiStats.total,
+        approved: kpiStats.approved,
+        unapproved: kpiStats.pending,
+        delayed: kpiStats.tvgsDelayCount + kpiStats.cdtDelayCount,
+        tvgsDelayCount: kpiStats.tvgsDelayCount,
+        cdtDelayCount: kpiStats.cdtDelayCount,
+        contractorDelayCount: kpiStats.contractorDelayCount,
+        approvalRate: kpiStats.approvedPercent
+      };
+      localStorage.setItem('c10_live_submittal_kpis', JSON.stringify(payload));
+      window.dispatchEvent(new Event('c10-submittals-updated'));
+    } catch {}
+  }, [masterRecords, filterConfig, kpiStats]);
 
   const geminiSubmittalEvaluations = useMemo(() => {
     const totalDocs = kpiStats.total;
     const approvedDocs = kpiStats.approved;
-    const pendingDocs = kpiStats.unapproved;
+    const pendingDocs = kpiStats.pending;
     const tvgsLate = kpiStats.tvgsDelayCount;
     const cdtLate = kpiStats.cdtDelayCount;
     const contractorLate = kpiStats.contractorDelayCount;
@@ -7227,9 +7840,9 @@ export const Submittal: React.FC<SubmittalProps> = ({
     let q1Status: 'SAFE' | 'WARNING' | 'DANGER' = 'SAFE';
     if (totalLate > 0 || contractorLate > 0) {
       if (tvgsLate >= cdtLate && tvgsLate >= contractorLate && tvgsLate > 0) {
-        bottleneckActor = `Khâu TVGS rà soát (${tvgsLate} hồ sơ quá ${filterConfig.tvgsLimitDays} ngày)`;
+        bottleneckActor = `Khâu TVGS rà soát (${tvgsLate} hồ sơ chậm)`;
       } else if (cdtLate >= tvgsLate && cdtLate >= contractorLate && cdtLate > 0) {
-        bottleneckActor = `Khâu CĐT phê duyệt (${cdtLate} hồ sơ quá ${filterConfig.cdtLimitDays} ngày)`;
+        bottleneckActor = `Khâu CĐT phê duyệt (${cdtLate} hồ sơ chậm)`;
       } else {
         bottleneckActor = `Khâu Nhà thầu trình lại (${contractorLate} hồ sơ chưa trình Rev mới)`;
       }
@@ -7258,7 +7871,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
     // 3. Hồ sơ trọng điểm trễ sâu hoặc trình nhiều lần (Rev 02+)
     const multiRevRecords = masterRecords.filter((r) => {
       const revNum = parseInt(String(r.rev || '').replace(/\D/g, ''), 10);
-      return (!isNaN(revNum) && revNum >= 2) || (r.submissionCount && r.submissionCount >= 2);
+      return (!isNaN(revNum) && revNum >= 2) || (Boolean(r.submissionCount) && Number(r.submissionCount) >= 2);
     });
     const overdueWithDays = masterRecords
       .filter((r) => r.finalStatus === 'PENDING' && isRecordOverdue(r))
@@ -7294,8 +7907,8 @@ export const Submittal: React.FC<SubmittalProps> = ({
     const q5Status: 'SAFE' | 'WARNING' | 'DANGER' =
       totalLate >= 5 ? 'DANGER' : totalLate > 0 || contractorLate > 0 || moaStats.notStarted > 0 ? 'WARNING' : 'SAFE';
     const actionItems: string[] = [];
-    if (tvgsLate > 0) actionItems.push(`TVGS ưu tiên giải quyết dứt điểm ${tvgsLate} hồ sơ quá hạn ${filterConfig.tvgsLimitDays} ngày`);
-    if (cdtLate > 0) actionItems.push(`Đôn đốc CĐT phê duyệt ${cdtLate} tờ trình quá hạn ${filterConfig.cdtLimitDays} ngày`);
+    if (tvgsLate > 0) actionItems.push(`TVGS ưu tiên giải quyết dứt điểm ${tvgsLate} hồ sơ quá hạn`);
+    if (cdtLate > 0) actionItems.push(`Đôn đốc CĐT phê duyệt ${cdtLate} tờ trình quá hạn`);
     if (contractorLate > 0) actionItems.push(`Nhà thầu khẩn trương hiệu chỉnh & trình lại ${contractorLate} hồ sơ bị trả về`);
     if (moaStats.notStarted > 0) actionItems.push(`Hoàn thiện trình ký ${moaStats.notStarted} hồ sơ MOA chưa trình`);
     if (actionItems.length === 0) actionItems.push(`Duy trì nhịp độ kiểm soát ${pendingDocs} hồ sơ đang trình trong hạn và chuẩn bị sớm hồ sơ giai đoạn tiếp theo`);
@@ -7333,7 +7946,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
       {
         id: 'q5',
         question: '5. Khuyến nghị hành động ưu tiên (Action Plan 7 ngày tới)',
-        metric: `Tổng hoàn thành: ${approvedDocs}/${totalDocs} (${kpiStats.approvalRate}%)`,
+        metric: `Tổng hoàn thành: ${approvedDocs}/${totalDocs} (${kpiStats.approvedPercent}%)`,
         status: q5Status,
         content: q5Content
       }
@@ -7365,7 +7978,7 @@ export const Submittal: React.FC<SubmittalProps> = ({
     );
   };
 
-const renderCN82CategoryChartsSection = () => {
+  const renderCN82CategoryChartsSection = () => {
     if (selectedCategory !== 'all') {
       const singleItem = categoryAnalytics.find((c) => c.cat.key === selectedCategory);
       if (!singleItem) return null;
@@ -7379,7 +7992,7 @@ const renderCN82CategoryChartsSection = () => {
                 Biểu đồ tiến độ & Hồ sơ chậm phê duyệt — {singleItem.cat.label}
               </h3>
               <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold">
-                TVGS &gt; {filterConfig.tvgsLimitDays} ngày | CĐT &gt; {filterConfig.cdtLimitDays} ngày: {singleItem.overdue} hồ sơ
+                Trễ hạn: {singleItem.overdue} hồ sơ
               </span>
             </div>
 
@@ -7446,9 +8059,6 @@ const renderCN82CategoryChartsSection = () => {
                       Đang trình: <b className="font-black text-amber-600">{singleItem.unapproved}</b>
                     </span>
                     <span>
-                      Đã đóng: <b className="font-black text-slate-600">{singleItem.closedRejected}</b>
-                    </span>
-                    <span>
                       Trễ:{' '}
                       <b className={`font-black ${hasOverdue ? 'text-rose-600' : 'text-slate-600'}`}>
                         {singleItem.overdue}
@@ -7458,7 +8068,7 @@ const renderCN82CategoryChartsSection = () => {
                 </div>
 
                 <div className="my-auto py-2">
-                  {renderCN82DonutChart(singleItem.total, singleItem.approved, singleItem.unapproved, singleItem.closedRejected)}
+                  {renderCN82DonutChart(singleItem.total, singleItem.approved, singleItem.unapproved, singleItem.overdue)}
                 </div>
 
                 <div className="text-center text-[11px] text-slate-400 font-medium pt-2 border-t border-slate-100">
@@ -7508,7 +8118,7 @@ const renderCN82CategoryChartsSection = () => {
                             hasOverdue ? 'text-rose-700/85' : 'text-slate-500'
                           }`}
                         >
-                          TVGS quá {filterConfig.tvgsLimitDays} ngày chưa duyệt hoặc CĐT quá {filterConfig.cdtLimitDays} ngày chưa duyệt
+                          Theo dõi các hồ sơ đang trình bị chậm phê duyệt từ phía TVGS hoặc CĐT
                         </p>
                       </div>
                     </div>
@@ -7632,8 +8242,8 @@ const renderCN82CategoryChartsSection = () => {
             </span>
             {[
               { key: 'ALL', label: `Tất cả trễ (${kpiStats.tvgsDelayCount + kpiStats.cdtDelayCount})` },
-              { key: 'TVGS_DELAY', label: `TVGS chậm > ${filterConfig.tvgsLimitDays} ngày (${kpiStats.tvgsDelayCount})` },
-              { key: 'CDT_DELAY', label: `CĐT chậm > ${filterConfig.cdtLimitDays} ngày (${kpiStats.cdtDelayCount})` },
+              { key: 'TVGS_DELAY', label: `TVGS chậm (${kpiStats.tvgsDelayCount})` },
+              { key: 'CDT_DELAY', label: `CĐT chậm (${kpiStats.cdtDelayCount})` },
               { key: 'CONTRACTOR_DELAY', label: `Chậm trình do Nhà thầu (${kpiStats.contractorDelayCount})` }
             ].map((item) => {
               const active = delayFilter === item.key;
@@ -7844,27 +8454,33 @@ const renderCN82CategoryChartsSection = () => {
                           Tổng: <b className="font-black text-slate-900">{item.total}</b>
                         </span>
                         <span>
-                          Đã duyệt: <b className="font-black text-emerald-600">{item.approved}</b>
+                          {item.cat.key === 'inspection_moa' ? 'Hoàn thành:' : 'Đã duyệt:'}{' '}
+                          <b className="font-black text-emerald-600">{item.approved}</b>
                         </span>
                         <span>
                           Đang trình: <b className="font-black text-amber-600">{item.unapproved}</b>
                         </span>
+                        {item.cat.key === 'inspection_moa' && (
+                          <span>
+                            Chưa trình: <b className="font-black text-slate-500">{item.notStarted}</b>
+                          </span>
+                        )}
                         <span>
-                          Trễ:{' '}
+                          {item.cat.key === 'inspection_moa' ? 'Chậm:' : 'Trễ:'}{' '}
                           <b className={`font-black ${hasOverdue ? 'text-rose-600' : 'text-slate-600'}`}>
                             {item.overdue}
                           </b>
                         </span>
                       </div>
 
-                      {renderCN82DonutChart(item.total, item.approved, item.unapproved, item.closedRejected)}
+                      {renderCN82DonutChart(item.total, item.approved, item.unapproved + (item.notStarted || 0), item.overdue)}
                     </div>
 
                     <div className="mt-3 pt-3 border-t border-slate-100">
                       <div className="flex items-center gap-1.5 mb-2">
                         <AlertCircle className="w-3.5 h-3.5 text-slate-400" />
                         <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                          Hồ sơ chậm (TVGS &gt; {filterConfig.tvgsLimitDays}d | CĐT &gt; {filterConfig.cdtLimitDays}d)
+                          Hồ sơ chậm phê duyệt
                         </span>
                         <span
                           className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
@@ -7920,20 +8536,41 @@ const renderCN82CategoryChartsSection = () => {
     );
   };
 
-  // 5. Lọc danh sách theo Tab, Search, Trạng thái CĐT và Nhóm chậm trễ
+  // 5. Thống kê số lượng chậm theo đúng phân hệ đang chọn & Lọc danh sách theo Tab, Search và Bộ lọc tiến độ duyệt
+  const activeCategoryDelayStats = useMemo(() => {
+    const scopeRecords = selectedCategory === 'all'
+      ? masterRecords
+      : masterRecords.filter(r => r.category === selectedCategory);
+    let tvgsDelay = 0;
+    let cdtDelay = 0;
+    let contractorDelay = 0;
+    let overdueAll = 0;
+    scopeRecords.forEach(r => {
+      const d = evaluateRecordDelay(r);
+      if (d.delayType === 'TVGS_DELAY') tvgsDelay++;
+      if (d.delayType === 'CDT_DELAY') cdtDelay++;
+      if (d.isContractorLate) contractorDelay++;
+      if (d.delayType === 'TVGS_DELAY' || d.delayType === 'CDT_DELAY' || d.isContractorLate) {
+        overdueAll++;
+      }
+    });
+    return {
+      total: scopeRecords.length,
+      tvgsDelay,
+      cdtDelay,
+      contractorDelay,
+      overdueAll
+    };
+  }, [masterRecords, selectedCategory, filterConfig]);
+
   const filteredRecords = useMemo(() => {
     return masterRecords.filter(rec => {
       if (selectedCategory !== 'all' && rec.category !== selectedCategory) {
         return false;
       }
-      if (statusFilter === 'MOA_OVERDUE') {
-        if (rec.finalStatus !== 'PENDING' || !isRecordOverdue(rec)) return false;
-      } else if (statusFilter !== 'ALL' && rec.finalStatus !== statusFilter) {
-        return false;
-      }
       if (delayFilter !== 'ALL') {
         const d = evaluateRecordDelay(rec);
-        if (delayFilter === 'OVERDUE_ALL' && d.delayType === 'NONE') return false;
+        if (delayFilter === 'OVERDUE_ALL' && d.delayType !== 'TVGS_DELAY' && d.delayType !== 'CDT_DELAY' && !d.isContractorLate) return false;
         if (delayFilter === 'TVGS_DELAY' && d.delayType !== 'TVGS_DELAY') return false;
         if (delayFilter === 'CDT_DELAY' && d.delayType !== 'CDT_DELAY') return false;
         if (delayFilter === 'CONTRACTOR_DELAY' && !d.isContractorLate) return false;
@@ -7951,7 +8588,7 @@ const renderCN82CategoryChartsSection = () => {
       }
       return true;
     });
-  }, [masterRecords, selectedCategory, statusFilter, delayFilter, searchQuery, filterConfig]);
+  }, [masterRecords, selectedCategory, delayFilter, searchQuery, filterConfig]);
 
   // Phân trang
   const totalPages = Math.ceil(filteredRecords.length / pageSize) || 1;
@@ -7962,6 +8599,9 @@ const renderCN82CategoryChartsSection = () => {
 
   useEffect(() => {
     setCurrentPage(1);
+    if (selectedCategory !== 'inspection_moa' && statusFilter === 'MOA_OVERDUE') {
+      setStatusFilter('ALL');
+    }
   }, [selectedCategory, statusFilter, delayFilter, searchQuery]);
 
   const renderCategoryIcon = (key: SubmittalCategoryKey, className: string = 'w-4 h-4') => {
@@ -7979,51 +8619,21 @@ const renderCN82CategoryChartsSection = () => {
     }
   };
 
-  // Render badge trạng thái + ghi chú TVGS chậm / CĐT chậm / Chậm trình do Nhà thầu
+  // Render badge trạng thái + ghi chú TVGS chậm / CĐT chậm / Chậm trình do Nhà thầu / MOA (Đã hoàn thành, Đang trình, Chậm > 15d, Chưa trình)
   const renderStatusBadge = (rec: MasterSubmittalRecord) => {
-    if (rec.category === 'inspection_moa') {
-      const status = rec.finalStatus;
-      const dInfo = evaluateRecordDelay(rec);
-      return (
-        <div className="flex flex-col items-center gap-1">
-          {status === 'APPROVED' ? (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span>Đã hoàn thành (Đã ký)</span>
-            </span>
-          ) : status === 'PENDING' ? (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
-              <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span>Đang Trình</span>
-            </span>
-          ) : status === 'NOT_STARTED' ? (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
-              <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>Chưa trình</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap">
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-              <span>{rec.clientStatus || 'Từ chối'}</span>
-            </span>
-          )}
-          {dInfo.delayBadgeText && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black border bg-rose-50 text-rose-700 border-rose-300">
-              {dInfo.delayBadgeText}
-            </span>
-          )}
-        </div>
-      );
-    }
-
     const status = rec.finalStatus;
     const dInfo = evaluateRecordDelay(rec);
+    const isMoa = rec.category === 'inspection_moa';
     return (
       <div className="flex flex-col items-center gap-1">
         {status === 'APPROVED' ? (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span>Đã Duyệt {rec.clientCode ? `(${rec.clientCode})` : rec.tvgsCode ? `(${rec.tvgsCode})` : ''}</span>
+            <span>
+              {isMoa
+                ? 'Đã hoàn thành (Đã ký)'
+                : `Đã Duyệt ${rec.clientCode ? `(${rec.clientCode})` : rec.tvgsCode ? `(${rec.tvgsCode})` : ''}`}
+            </span>
           </span>
         ) : status === 'PENDING' ? (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
@@ -8031,7 +8641,7 @@ const renderCN82CategoryChartsSection = () => {
             <span>Đang Trình</span>
           </span>
         ) : status === 'NOT_STARTED' ? (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300 whitespace-nowrap">
             <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>Chưa trình</span>
           </span>
@@ -8043,7 +8653,7 @@ const renderCN82CategoryChartsSection = () => {
         )}
         {dInfo.delayBadgeText && (
           <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black border whitespace-nowrap ${
-            dInfo.delayType === 'TVGS_DELAY'
+            dInfo.delayType === 'TVGS_DELAY' || isMoa
               ? 'bg-rose-100 text-rose-700 border-rose-300'
               : dInfo.delayType === 'CDT_DELAY'
               ? 'bg-purple-100 text-purple-800 border-purple-300'
@@ -8113,7 +8723,7 @@ const renderCN82CategoryChartsSection = () => {
                 </span>
               </div>
               <p className="text-[11px] text-slate-300 mt-1">
-                Ngưỡng trễ hiện tại: <b>TVGS &gt; {filterConfig.tvgsLimitDays} ngày</b> | <b>CĐT &gt; {filterConfig.cdtLimitDays} ngày</b>
+                Theo dõi &amp; kiểm soát tiến độ phê duyệt hồ sơ TVGS / CĐT
                 {autoSyncConfig.lastSyncedAt && (
                   <span className="ml-2 text-slate-400">
                     • Đồng bộ cuối: {new Date(autoSyncConfig.lastSyncedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
@@ -8132,7 +8742,7 @@ const renderCN82CategoryChartsSection = () => {
               title="Điều chỉnh số ngày trễ đối với TVGS và CĐT"
             >
               <Sliders className="w-4 h-4 text-amber-300" />
-              <span>Cài đặt hạn trễ ({filterConfig.tvgsLimitDays}d / {filterConfig.cdtLimitDays}d)</span>
+              <span>Cài đặt hạn trễ</span>
             </button>
 
             {/* Nút Xem thử khách */}
@@ -8227,7 +8837,7 @@ const renderCN82CategoryChartsSection = () => {
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Căn cứ theo cột <b>Trạng thái CĐT phê duyệt</b> (Từ chối = Đã đóng) • Tự động cảnh báo <b>TVGS chậm (&gt; {filterConfig.tvgsLimitDays} ngày)</b> & <b>CĐT chậm (&gt; {filterConfig.cdtLimitDays} ngày)</b>
+              Căn cứ theo cột <b>Trạng thái CĐT phê duyệt</b> (Từ chối = Đã đóng) • Tự động cảnh báo <b>TVGS chậm</b> &amp; <b>CĐT chậm</b>
             </p>
           </div>
         </div>
@@ -8435,9 +9045,9 @@ const renderCN82CategoryChartsSection = () => {
           {/* TIER 2.5: BIỂU ĐỒ TRÒN CHO TỪNG LOẠI HỒ SƠ & DANH SÁCH TRỄ HẠN */}
           {renderCN82CategoryChartsSection()}
 
-          {/* TIER 3: THANH CÔNG CỤ TÌM KIẾM & BỘ LỌC TRẠNG THÁI + BỘ LỌC CHẬM TRỄ */}
+          {/* TIER 3: THANH CÔNG CỤ TÌM KIẾM & BỘ LỌC TIẾN ĐỘ DUYỆT */}
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
               {/* Ô tìm kiếm */}
               <div className="relative flex-1 max-w-md">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -8458,106 +9068,48 @@ const renderCN82CategoryChartsSection = () => {
                 )}
               </div>
 
-              {/* Bộ lọc trạng thái CĐT */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-xs font-bold text-slate-400 mr-1 flex items-center gap-1">
-                  <Filter className="w-3.5 h-3.5" /> {selectedCategory === 'inspection_moa' ? 'Trạng thái Trình kí MOA:' : 'Trạng thái CĐT:'}
-                </span>
-                {selectedCategory === 'inspection_moa' ? (
-                  ([
-                    { key: 'ALL', label: `Tất cả (${moaStats.total})` },
-                    { key: 'APPROVED', label: `Đã hoàn thành (${moaStats.approved})` },
-                    { key: 'PENDING', label: `Đang trình (${moaStats.pending})` },
-                    { key: 'MOA_OVERDUE', label: `Chậm > 15 ngày (${moaStats.overdue})` },
-                    { key: 'NOT_STARTED', label: `Chưa trình (${moaStats.notStarted})` }
-                  ] as const).map((item) => {
-                    const isActive = statusFilter === item.key;
+              {/* Bộ lọc chi tiết theo nhóm chậm trễ & nút cấu hình Admin */}
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-xs font-bold text-slate-400 mr-1">
+                    Bộ lọc tiến độ duyệt:
+                  </span>
+                  {[
+                    { key: 'ALL', label: `Tất cả hồ sơ (${activeCategoryDelayStats.total})` },
+                    { key: 'OVERDUE_ALL', label: `Tất cả hồ sơ chậm (${activeCategoryDelayStats.overdueAll})` },
+                    { key: 'TVGS_DELAY', label: `TVGS chậm (${activeCategoryDelayStats.tvgsDelay})` },
+                    { key: 'CDT_DELAY', label: `CĐT chậm (${activeCategoryDelayStats.cdtDelay})` },
+                    { key: 'CONTRACTOR_DELAY', label: `Chậm trình do Nhà thầu (${activeCategoryDelayStats.contractorDelay})` }
+                  ].map((df) => {
+                    const active = delayFilter === df.key;
                     return (
                       <button
-                        key={item.key}
+                        key={df.key}
                         type="button"
-                        onClick={() => setStatusFilter(item.key)}
+                        onClick={() => setDelayFilter(df.key as any)}
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          isActive
-                            ? 'bg-slate-800 text-white shadow-xs'
-                            : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200'
+                          active
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200'
                         }`}
                       >
-                        {item.label}
+                        {df.label}
                       </button>
                     );
-                  })
-                ) : (
-                  (['ALL', 'APPROVED', 'PENDING', 'REJECTED'] as const).map((st) => {
-                    const label =
-                      st === 'ALL'
-                        ? `Tất cả (${kpiStats.total})`
-                        : st === 'APPROVED'
-                        ? `Đã duyệt (${kpiStats.approved})`
-                        : st === 'PENDING'
-                        ? `Đang trình (${kpiStats.pending})`
-                        : `Từ chối / Đã đóng (${kpiStats.rejected})`;
-                    const isActive = statusFilter === st;
-                    return (
-                      <button
-                        key={st}
-                        type="button"
-                        onClick={() => setStatusFilter(st)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          isActive
-                            ? 'bg-slate-800 text-white shadow-xs'
-                            : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })
+                  })}
+                </div>
+
+                {canEdit && (
+                  <button
+                    type="button"
+                    onClick={() => setShowFilterConfigModal(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    <Sliders className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Điều chỉnh bộ lọc &amp; ngày trễ</span>
+                  </button>
                 )}
               </div>
-            </div>
-
-            {/* Hàng 2: Bộ lọc chi tiết theo nhóm chậm trễ & nút cấu hình Admin */}
-            <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-xs font-bold text-slate-400 mr-1">
-                  Bộ lọc tiến độ duyệt:
-                </span>
-                {[
-                  { key: 'ALL', label: 'Tất cả hồ sơ' },
-                  { key: 'OVERDUE_ALL', label: `Tất cả hồ sơ chậm (${kpiStats.tvgsDelayCount + kpiStats.cdtDelayCount + kpiStats.contractorDelayCount})` },
-                  { key: 'TVGS_DELAY', label: `TVGS chậm > ${filterConfig.tvgsLimitDays} ngày (${kpiStats.tvgsDelayCount})` },
-                  { key: 'CDT_DELAY', label: `CĐT chậm > ${filterConfig.cdtLimitDays} ngày (${kpiStats.cdtDelayCount})` },
-                  { key: 'CONTRACTOR_DELAY', label: `Chậm trình do Nhà thầu (${kpiStats.contractorDelayCount})` }
-                ].map((df) => {
-                  const active = delayFilter === df.key;
-                  return (
-                    <button
-                      key={df.key}
-                      type="button"
-                      onClick={() => setDelayFilter(df.key as any)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        active
-                          ? 'bg-indigo-600 text-white shadow-xs'
-                          : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200'
-                      }`}
-                    >
-                      {df.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {canEdit && (
-                <button
-                  type="button"
-                  onClick={() => setShowFilterConfigModal(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold transition-all cursor-pointer"
-                >
-                  <Sliders className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Điều chỉnh bộ lọc & ngày trễ (TVGS: {filterConfig.tvgsLimitDays}d | CĐT: {filterConfig.cdtLimitDays}d)</span>
-                </button>
-              )}
             </div>
           </div>
 
@@ -8582,10 +9134,10 @@ const renderCN82CategoryChartsSection = () => {
                       <th className="p-3.5 text-center">Chi tiết</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody key={`tbody-${selectedCategory}-${delayFilter}-${currentPage}-${searchQuery}`} className="divide-y divide-slate-100">
                     {paginatedRecords.length > 0 ? (
                       paginatedRecords.map((rec, idx) => (
-                        <tr key={rec.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                        <tr key={`${rec.id || 'row'}-${idx}`} className="hover:bg-slate-50/80 transition-colors">
                           <td className="p-3.5 text-center font-mono text-slate-500 font-bold">
                             {(currentPage - 1) * pageSize + idx + 1}
                           </td>
@@ -8681,10 +9233,10 @@ const renderCN82CategoryChartsSection = () => {
                       <th className="p-3.5 text-center">Chi tiết</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody key={`tbody-${selectedCategory}-${delayFilter}-${currentPage}-${searchQuery}`} className="divide-y divide-slate-100">
                     {paginatedRecords.length > 0 ? (
                       paginatedRecords.map((rec, idx) => (
-                        <tr key={rec.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                        <tr key={`${rec.id || 'row'}-${idx}`} className="hover:bg-slate-50/80 transition-colors">
                           <td className="p-3.5 text-center font-mono text-slate-500 font-bold">
                             {(currentPage - 1) * pageSize + idx + 1}
                           </td>
@@ -8733,7 +9285,7 @@ const renderCN82CategoryChartsSection = () => {
                   </tbody>
                 </table>
               ) : selectedCategory === 'inspection_moa' ? (
-                /* BẢNG ĐẶC THÙ: BIÊN BẢN NGHIỆM THU MOA-M VÀ MOA-W */
+                /* BẢNG ĐẶC THÙ: BIÊN BẢN NGHIỆM THU MOA-M VÀ MOA-W (LẤY CỘT TRẠNG THÁI CỦA TRÌNH KÍ MOA) */
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="bg-slate-50/90 text-slate-700 font-bold border-b border-slate-200">
@@ -8743,15 +9295,15 @@ const renderCN82CategoryChartsSection = () => {
                       <th className="p-3.5">Nội dung công tác nghiệm thu</th>
                       <th className="p-3.5 text-center">Checklist NT</th>
                       <th className="p-3.5 text-center">Ngày trình MOA</th>
-                      <th className="p-3.5 text-center">Quyển lưu trữ</th>
                       <th className="p-3.5 text-center">Trạng thái Trình kí MOA</th>
+                      <th className="p-3.5 text-center">Quyển lưu trữ</th>
                       <th className="p-3.5 text-center">Tài liệu đính kèm</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody key={`tbody-${selectedCategory}-${delayFilter}-${currentPage}-${searchQuery}`} className="divide-y divide-slate-100">
                     {paginatedRecords.length > 0 ? (
                       paginatedRecords.map((rec, idx) => (
-                        <tr key={rec.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                        <tr key={`${rec.id || 'row'}-${idx}`} className="hover:bg-slate-50/80 transition-colors">
                           <td className="p-3.5 text-center font-mono text-slate-500 font-bold">
                             {(currentPage - 1) * pageSize + idx + 1}
                           </td>
@@ -8770,18 +9322,17 @@ const renderCN82CategoryChartsSection = () => {
                           <td className="p-3.5 font-medium text-slate-800 max-w-sm">
                             {rec.title}
                           </td>
-                          <td className="p-3.5 text-center font-mono text-slate-600">
-                            {rec.acceptanceDate ? (
-                              <div className="flex flex-col items-center gap-0.5">
-                                <span>{rec.acceptanceDate}</span>
-                                {rec.tvgsStatus && (
-                                  <span className="text-[10px] font-bold text-slate-500">({rec.tvgsStatus})</span>
-                                )}
-                              </div>
-                            ) : '-'}
+                          <td className="p-3.5 text-center">
+                            <div className="font-mono text-slate-600">{rec.acceptanceDate || '-'}</div>
+                            {rec.tvgsStatus && (
+                              <span className="text-[10px] font-bold text-slate-500">({rec.tvgsStatus})</span>
+                            )}
                           </td>
-                          <td className="p-3.5 text-center font-mono text-slate-600">
-                            {rec.submissionDate || '-'}
+                          <td className="p-3.5 text-center font-mono text-slate-700 font-semibold">
+                            {rec.submissionDate || (rec.finalStatus === 'PENDING' ? rec.acceptanceDate || '-' : '-')}
+                          </td>
+                          <td className="p-3.5 text-center">
+                            {renderStatusBadge(rec)}
                           </td>
                           <td className="p-3.5 text-center">
                             <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[11px]">
@@ -8789,23 +9340,43 @@ const renderCN82CategoryChartsSection = () => {
                             </span>
                           </td>
                           <td className="p-3.5 text-center">
-                            {renderStatusBadge(rec)}
-                          </td>
-                          <td className="p-3.5 text-center">
-                            {rec.linkUrl ? (
-                              <a
-                                href={rec.linkUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition-all cursor-pointer shadow-xs"
-                                title="Mở biên bản nghiệm thu đã duyệt trên SharePoint"
+                            <div className="flex items-center justify-center gap-1.5">
+                              {rec.linkUrl ? (
+                                <a
+                                  href={rec.linkUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition-all cursor-pointer shadow-xs"
+                                  title="Mở biên bản nghiệm thu đã duyệt trên SharePoint"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                  <span>Mở MOA</span>
+                                </a>
+                              ) : (
+                                <span className="text-slate-400 italic text-[11px]">Đang lưu trữ</span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setSelectedRecord(rec)}
+                                className="p-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-600 transition-all cursor-pointer"
+                                title="Xem chi tiết"
                               >
-                                <ExternalLink className="w-3 h-3" />
-                                <span>Mở MOA</span>
-                              </a>
-                            ) : (
-                              <span className="text-slate-400 italic text-[11px]">Đang lưu trữ</span>
-                            )}
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+                              {canEdit && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingRecord(rec);
+                                    setShowAddEditModal(true);
+                                  }}
+                                  className="p-1.5 rounded-lg bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-600 transition-all cursor-pointer"
+                                  title="Chỉnh sửa biên bản MOA"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -8835,10 +9406,10 @@ const renderCN82CategoryChartsSection = () => {
                       <th className="p-3.5 text-center">Thao tác</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody key={`tbody-${selectedCategory}-${delayFilter}-${currentPage}-${searchQuery}`} className="divide-y divide-slate-100">
                     {paginatedRecords.length > 0 ? (
                       paginatedRecords.map((rec, idx) => (
-                        <tr key={rec.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                        <tr key={`${rec.id || 'row'}-${idx}`} className="hover:bg-slate-50/80 transition-colors">
                           <td className="p-3.5 text-center font-mono text-slate-500 font-bold">
                             {(currentPage - 1) * pageSize + idx + 1}
                           </td>
@@ -8995,6 +9566,7 @@ const renderCN82CategoryChartsSection = () => {
                 <X className="w-4 h-4" />
               </button>
             </div>
+
             <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1 text-xs">
               {/* Highlight Card: Mã hồ sơ & Mã TRA */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50/50 p-4 rounded-2xl border border-blue-200/80 flex items-center justify-between flex-wrap gap-2">
@@ -9557,7 +10129,7 @@ const renderCN82CategoryChartsSection = () => {
                   2. Số ngày tối đa đối với CĐT (Mặc định: 20 ngày)
                 </label>
                 <p className="text-[11px] text-slate-500 mb-2">
-                  Nếu quá số ngày này kể từ ngày trình CĐT (hoặc ngày TVGS duyệt) mà CĐT chưa duyệt thì ghi chú là <b className="text-purple-700">CĐT chậm</b>.
+                  Chỉ tính khi hồ sơ <b>có ngày trình qua CĐT</b> (không liên quan ngày TVGS duyệt). Quá số ngày này mà CĐT chưa duyệt thì ghi chú là <b className="text-purple-700">CĐT chậm</b>.
                 </p>
                 <div className="flex items-center gap-2">
                   <input

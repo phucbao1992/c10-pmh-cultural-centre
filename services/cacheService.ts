@@ -1,6 +1,5 @@
-
-const CACHE_KEY_PREFIX = 'C10_CACHE_V9_';
-const ONE_DAY_MS = 24 * 60 * 60 * 1000; // Giữ cache đến khi có lệnh làm mới từ Admin
+const CACHE_KEY_PREFIX = 'C10_CACHE_V10_';
+const CACHE_TTL_MS = 10 * 1000; // Tự động làm mới dữ liệu từ Google Sheet sau mỗi 10 giây
 
 export const setCache = (key: string, data: any) => {
   const cacheObj = {
@@ -32,5 +31,5 @@ export const clearDataCacheKeys = () => {
 
 export const isCacheStale = (timestamp: number, forceRealtime: boolean = false) => {
   if (forceRealtime) return true;
-  return (Date.now() - timestamp) > ONE_DAY_MS;
+  return (Date.now() - timestamp) > CACHE_TTL_MS;
 };

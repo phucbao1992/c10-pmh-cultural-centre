@@ -51,7 +51,8 @@ import SitePhotos from './components/SitePhotos';
 import PasswordProtection from './components/PasswordProtection';
 import { Tab, Language } from './types';
 import { PROJECT_NAME, PROJECT_SUBTITLE, TRANSLATIONS, ENABLE_PASSWORD_PROTECTION, RENDER_URL, GOOGLE_SHEET_ID, SITE_IMAGES_FOLDER_ID } from './constants';
-import { fetchDashboardData, fetchSubmittalData, fetchMonitoringData, MONITORING_CONFIG_EVENT, SheetData, SubmittalData, MonitoringData, extractSheetId, saveMonitoringSourceConfig } from './services/sheetsService';
+import { fetchDashboardData, fetchSubmittalData, fetchMonitoringData, clearSheetCsvMemoryCache, MONITORING_CONFIG_EVENT, SheetData, SubmittalData, MonitoringData, extractSheetId, saveMonitoringSourceConfig, syncCloudResourceLinksToFirestore, subscribeCloudResourceLinksFromFirestore } from './services/sheetsService';
+import { extractDriveFolderId } from './services/utils';
 import { getCache, setCache, isCacheStale, clearDataCacheKeys } from './services/cacheService';
 import { db, ADMIN_EMAIL } from './services/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -111,13 +112,7 @@ export interface CloudResourceDef {
   openUrl: string;
 }
 
-const extractDriveFolderIdFromUrl = (input?: string): string => {
-  if (!input) return '';
-  const trimmed = input.trim();
-  const match = trimmed.match(/\/folders\/([a-zA-Z0-9-_]+)/);
-  if (match && match[1]) return match[1];
-  return trimmed;
-};
+const extractDriveFolderIdFromUrl = extractDriveFolderId;
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ 
   language, 
@@ -199,7 +194,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   useEffect(() => {
     loadUserPermissions().then(list => setUserPermissions(list));
     const unsub = subscribeUserPermissions(list => setUserPermissions(list));
-    return () => unsub();
+    const handleVaultEvt = () => {
+      setVaultSyncedAt(getLastVaultSyncTime());
+      loadUserPermissions().then(list => setUserPermissions(list));
+    };
+    window.addEventListener(VAULT_EVENT_SYNCED, handleVaultEvt);
+    return () => {
+      unsub();
+      window.removeEventListener(VAULT_EVENT_SYNCED, handleVaultEvt);
+    };
   }, []);
 
   const handleToggleNewMemberRole = (roleKey: TabPermissionKey) => {
@@ -342,27 +345,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const handleClearCache = () => {
     setClearingCache(true);
-    setTimeout(() => {
+    setTimeout(async () => {
+      // 1. Sao lưu toàn bộ dữ liệu người dùng lên Két sắt Đám mây trước khi dọn cache
+      await backupToCloudVaultNow(true).catch(() => {});
+
       const preserveAuthAdmin = localStorage.getItem('is_admin');
       const preserveLayer2 = localStorage.getItem('layer2-auth');
       const preserveAdminUnlock = localStorage.getItem('c10_admin_unlocked');
       const preserveAppAuth = localStorage.getItem('app-auth');
 
-      // Preserve all overridden resource links
-      const preservedOverrides: Record<string, string> = {};
-      const overrideKeys = [
-        'c10_override_main_sheet_id',
-        'c10_override_submittal_sheet_id',
-        'c10_override_monitoring_sheet_id',
-        'c10_daily_report_drive_folder',
-        'c10_daily_report_sheet_url',
-        'c10_override_site_photos_folder_id',
-        'c10_override_weekly_report_folder_id',
-        'c10_daily_report_webhook_url'
+      // 2. Bảo vệ tuyệt đối toàn bộ dữ liệu người dùng đã nhập (Phân quyền, Báo cáo ngày, Logo, Hồ sơ Submittal, Cấu hình)
+      const preservedUserData: Record<string, string> = {};
+      const allProtectedKeys = [
+        ...PROTECTED_USER_DATA_KEYS,
+        ...SUBMITTAL_DATA_KEYS,
+        'c10_vault_last_synced_at',
+        'visited_c10_v1'
       ];
-      overrideKeys.forEach(k => {
+      allProtectedKeys.forEach((k) => {
         const val = localStorage.getItem(k);
-        if (val) preservedOverrides[k] = val;
+        if (val) preservedUserData[k] = val;
       });
 
       localStorage.clear();
@@ -372,14 +374,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       if (preserveAdminUnlock) localStorage.setItem('c10_admin_unlocked', preserveAdminUnlock);
       if (preserveAppAuth) localStorage.setItem('app-auth', preserveAppAuth);
 
-      Object.entries(preservedOverrides).forEach(([k, v]) => {
+      Object.entries(preservedUserData).forEach(([k, v]) => {
         localStorage.setItem(k, v);
       });
 
       setClearingCache(false);
       setCacheCleared(true);
       setTimeout(() => setCacheCleared(false), 3000);
-      showToast(language === 'VN' ? 'Đã làm mới dữ liệu và dọn dẹp bộ nhớ đệm cache!' : 'Cache cleared successfully!');
+      showToast(
+        language === 'VN'
+          ? 'Đã làm mới cache biểu đồ & bảo toàn 100% Mã phân quyền, Báo cáo ngày, Hồ sơ!'
+          : 'Cache cleared while preserving 100% permissions, daily reports & submittals!'
+      );
     }, 600);
   };
 
@@ -440,7 +446,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     const procurementOverride = localStorage.getItem('c10_procurement_sheet_id');
     const procurementSheetId = procurementOverride ? extractSheetId(procurementOverride) : '1Ei9tAIdX9VrZuOURw0MFy51-d0JTg8dkboNz8GLzWz0';
     const procurementSheetUrl = `https://docs.google.com/spreadsheets/d/${procurementSheetId}/edit`;
-
 
     return [
       {
@@ -553,6 +558,42 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         isEditable: true
       },
       {
+        id: 'defects_sheet',
+        name: language === 'VN' ? 'Google Sheet Lỗi Tồn Đọng & NCR (Defects Sheet)' : 'Defects & NCR Tracking Google Sheet',
+        category: 'sheet',
+        categoryLabel: 'Google Sheet',
+        storageKey: 'c10_override_defects_sheet_id',
+        defaultUrl: 'https://docs.google.com/spreadsheets/d/1yPaZhqlwRk0RQje_Ferb17XdpheR2nPEcbWlYuQVdWI/edit?gid=0#gid=0',
+        currentDisplayUrl: defectsSheetUrl,
+        openUrl: defectsSheetUrl,
+        targetModules: [
+          { name: 'Defects (Lỗi & NCR)', tagColor: 'bg-rose-100 text-rose-800 border-rose-200' },
+          { name: 'Biểu đồ Defects tồn đọng (Dashboard)', tagColor: 'bg-amber-100 text-amber-800 border-amber-200' }
+        ],
+        description: language === 'VN'
+          ? 'Cung cấp danh sách lỗi hiện trường, mức độ ưu tiên (Level 2/3), đơn vị xử lý và số ngày tồn đọng cho tab Vấn đề tồn đọng & thẻ KPI trên Dashboard.'
+          : 'Feeds site defect items, priority levels, assignees, and aging metrics for the Issues tab and Dashboard.',
+        isEditable: true
+      },
+      {
+        id: 'procurement_sheet',
+        name: language === 'VN' ? 'Google Sheet Kế Hoạch Mua Sắm (Procurement Sheet)' : 'Procurement Plan Google Sheet',
+        category: 'sheet',
+        categoryLabel: 'Google Sheet',
+        storageKey: 'c10_procurement_sheet_id',
+        defaultUrl: 'https://docs.google.com/spreadsheets/d/1Ei9tAIdX9VrZuOURw0MFy51-d0JTg8dkboNz8GLzWz0/edit',
+        currentDisplayUrl: procurementSheetUrl,
+        openUrl: procurementSheetUrl,
+        targetModules: [
+          { name: 'Kế hoạch mua hàng (PMH & Nhà thầu)', tagColor: 'bg-blue-100 text-blue-800 border-blue-200' },
+          { name: 'Hạng mục mua sắm sắp tới (Dashboard)', tagColor: 'bg-indigo-100 text-indigo-800 border-indigo-200' }
+        ],
+        description: language === 'VN'
+          ? 'Cung cấp tiến độ mời thầu và ngày yêu cầu vật tư về công trường của Chủ đầu tư PMH và Nhà thầu chính Delta.'
+          : 'Feeds tender schedule and required delivery dates for PMH and Main Contractor procurement items.',
+        isEditable: true
+      },
+      {
         id: 'site_photos_drive',
         name: language === 'VN' ? 'Google Drive: Thư Mục Hình Ảnh Công Trường' : 'Site Photos Google Drive Folder',
         category: 'drive',
@@ -610,42 +651,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
           : 'Google Apps Script Webhook receiving JSON payloads to upload daily report PDFs and append rows to Google Sheets.',
         isEditable: true
       },
-            {
-        id: 'defects_sheet',
-        name: language === 'VN' ? 'Google Sheet Lỗi Tồn Đọng & NCR (Defects Sheet)' : 'Defects & NCR Tracking Google Sheet',
-        category: 'sheet',
-        categoryLabel: 'Google Sheet',
-        storageKey: 'c10_override_defects_sheet_id',
-        defaultUrl: 'https://docs.google.com/spreadsheets/d/1yPaZhqlwRk0RQje_Ferb17XdpheR2nPEcbWlYuQVdWI/edit?gid=0#gid=0',
-        currentDisplayUrl: defectsSheetUrl,
-        openUrl: defectsSheetUrl,
-        targetModules: [
-          { name: 'Defects (Lỗi & NCR)', tagColor: 'bg-rose-100 text-rose-800 border-rose-200' },
-          { name: 'Biểu đồ Defects tồn đọng (Dashboard)', tagColor: 'bg-amber-100 text-amber-800 border-amber-200' }
-        ],
-        description: language === 'VN'
-          ? 'Cung cấp danh sách lỗi hiện trường, mức độ ưu tiên (Level 2/3), đơn vị xử lý và số ngày tồn đọng cho tab Vấn đề tồn đọng & thẻ KPI trên Dashboard.'
-          : 'Feeds site defect items, priority levels, assignees, and aging metrics for the Issues tab and Dashboard.',
-        isEditable: true
-      },
-      {
-        id: 'procurement_sheet',
-        name: language === 'VN' ? 'Google Sheet Kế Hoạch Mua Sắm (Procurement Sheet)' : 'Procurement Plan Google Sheet',
-        category: 'sheet',
-        categoryLabel: 'Google Sheet',
-        storageKey: 'c10_procurement_sheet_id',
-        defaultUrl: 'https://docs.google.com/spreadsheets/d/1Ei9tAIdX9VrZuOURw0MFy51-d0JTg8dkboNz8GLzWz0/edit',
-        currentDisplayUrl: procurementSheetUrl,
-        openUrl: procurementSheetUrl,
-        targetModules: [
-          { name: 'Kế hoạch mua hàng (PMH & Nhà thầu)', tagColor: 'bg-blue-100 text-blue-800 border-blue-200' },
-          { name: 'Hạng mục mua sắm sắp tới (Dashboard)', tagColor: 'bg-indigo-100 text-indigo-800 border-indigo-200' }
-        ],
-        description: language === 'VN'
-          ? 'Cung cấp tiến độ mời thầu và ngày yêu cầu vật tư về công trường của Chủ đầu tư PMH và Nhà thầu chính Delta.'
-          : 'Feeds tender schedule and required delivery dates for PMH and Main Contractor procurement items.',
-        isEditable: true
-      },
       {
         id: 'firebase_cloud',
         name: language === 'VN' ? 'Firebase Cloud Firestore & Authentication' : 'Firebase Cloud Firestore & Auth',
@@ -696,6 +701,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       }).catch(console.warn);
     }
 
+    syncCloudResourceLinksToFirestore().catch(console.warn);
+
     // Trigger global update event
     window.dispatchEvent(new Event('c10-resource-updated'));
     window.dispatchEvent(new Event('c10-auth-changed'));
@@ -720,6 +727,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         fileName: 'C10 Tổng hợp kết quả quan trắc'
       }).catch(console.warn);
     }
+
+    syncCloudResourceLinksToFirestore().catch(console.warn);
 
     window.dispatchEvent(new Event('c10-resource-updated'));
     window.dispatchEvent(new Event('c10-auth-changed'));
@@ -1823,12 +1832,39 @@ const App: React.FC = () => {
   const [syncSettings, setSyncSettings] = useState<DataSyncSettings>(() => loadLocalSyncSettings());
   const [isRefreshingAllData, setIsRefreshingAllData] = useState<boolean>(false);
 
-  // Subscribe to real-time sync settings from Firestore
+  // Subscribe to real-time sync settings, cloud resource links, user permissions & 3-Layer Cloud Vault on app boot
   useEffect(() => {
-    const unsub = subscribeDataSyncSettings((settings) => {
+    restoreFromCloudVaultOnBoot()
+      .then(() => {
+        return loadUserPermissions();
+      })
+      .catch(() => {});
+    const unsubPerms = subscribeUserPermissions(() => {
+      window.dispatchEvent(new Event('c10-auth-changed'));
+    });
+    const unsubSync = subscribeDataSyncSettings((settings) => {
       setSyncSettings(settings);
     });
-    return () => unsub();
+    const unsubLinks = subscribeCloudResourceLinksFromFirestore(() => {
+      clearDataCacheKeys();
+      fetchDashboardData().then((res) => {
+        if (res) {
+          setSheetData(res);
+          setCache('sheets', res);
+        }
+      }).catch(() => {});
+      fetchSubmittalData().then((res) => {
+        if (res) {
+          setSubmittalData(res);
+          setCache('submittal', res);
+        }
+      }).catch(() => {});
+    });
+    return () => {
+      unsubPerms();
+      unsubSync();
+      unsubLinks();
+    };
   }, []);
 
   // Update sync settings handler
@@ -1845,6 +1881,7 @@ const App: React.FC = () => {
     setIsRefreshingAllData(true);
     try {
       clearDataCacheKeys();
+      clearSheetCsvMemoryCache();
       const [dashRes, subRes, monRes] = await Promise.all([
         fetchDashboardData().catch(() => null),
         fetchSubmittalData().catch(() => null),
@@ -1937,11 +1974,11 @@ const App: React.FC = () => {
 
   const handlePasswordSuccess = () => {
     setIsPasswordModalOpen(false);
-    setIsLayer2Authenticated(true);
+    const isAdminUser =
+      localStorage.getItem('is_admin') === 'true' &&
+      localStorage.getItem('c10_admin_unlocked') === 'true';
+    setIsLayer2Authenticated(isAdminUser);
     localStorage.removeItem('c10_guest_mode');
-    localStorage.setItem('layer2-auth', 'true');
-    localStorage.setItem('c10_admin_unlocked', 'true');
-    localStorage.setItem('is_admin', 'true');
     window.dispatchEvent(new Event('c10-auth-changed'));
     if (pendingAction?.type === 'link') {
       window.open(pendingAction.url, '_blank');
@@ -1949,96 +1986,106 @@ const App: React.FC = () => {
     }
   };
 
-  // Lazy Data Fetching Logic (Honoring Section Realtime & Admin Refresh Settings)
+  // Stale-While-Revalidate Data Fetching: Hiển thị dữ liệu cache tức thì và luôn tự động làm mới ngầm từ Google Sheets
   const loadDataForTab = useCallback(async (tab: Tab) => {
+    clearSheetCsvMemoryCache();
+
     if (tab === Tab.DASHBOARD || tab === Tab.MODEL_HOUSE || tab === Tab.ISSUES || tab === Tab.SCHEDULE || tab === Tab.PAYMENT) {
       const cachedSheets = getCache('sheets');
-      const isRealtime = tab === Tab.PAYMENT ? isSectionRealtime('payment') : isSectionRealtime('dashboard');
-      
-      if (cachedSheets) {
+      if (cachedSheets && !sheetData) {
         setSheetData(cachedSheets.data);
       }
-
-      if (!cachedSheets || isCacheStale(cachedSheets.timestamp, isRealtime)) {
-        if (!cachedSheets) setLoading(true);
-        const res = await fetchDashboardData();
-        if (res) {
-          setSheetData(res);
-          setCache('sheets', res);
-          setError(false);
-        } else if (!cachedSheets) {
-          setError(true);
-        }
-        setLoading(false);
+      if (!cachedSheets && !sheetData) {
+        setLoading(true);
       }
 
-      // Also ensure submittal and monitoring data are fetched for Dashboard executive summaries
+      fetchDashboardData()
+        .then((res) => {
+          if (res) {
+            setSheetData(res);
+            setCache('sheets', res);
+            setError(false);
+          } else if (!cachedSheets && !sheetData) {
+            setError(true);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+
       if (tab === Tab.DASHBOARD) {
-        if (!submittalData) {
-          const isSubRealtime = isSectionRealtime('submittal');
-          const cachedSub = getCache('submittal');
-          if (cachedSub) setSubmittalData(cachedSub.data);
-          if (!cachedSub || isCacheStale(cachedSub.timestamp, isSubRealtime)) {
-            fetchSubmittalData().then(res => res && setSubmittalData(res)).catch(() => {});
-          }
-        }
-        if (!monitoringData) {
-          const isMonRealtime = isSectionRealtime('monitoring');
-          const cachedMon = getCache('monitoring');
-          if (cachedMon) setMonitoringData(cachedMon.data);
-          if (!cachedMon || isCacheStale(cachedMon.timestamp, isMonRealtime)) {
-            fetchMonitoringData().then(res => res && setMonitoringData(res)).catch(() => {});
-          }
-        }
+        const cachedSub = getCache('submittal');
+        if (cachedSub && !submittalData) setSubmittalData(cachedSub.data);
+        fetchSubmittalData()
+          .then((res) => {
+            if (res) {
+              setSubmittalData(res);
+              setCache('submittal', res);
+            }
+          })
+          .catch(() => {});
+
+        const cachedMon = getCache('monitoring');
+        if (cachedMon && !monitoringData) setMonitoringData(cachedMon.data);
+        fetchMonitoringData()
+          .then((res) => {
+            if (res) {
+              setMonitoringData(res);
+              setCache('monitoring', res);
+            }
+          })
+          .catch(() => {});
       }
     }
 
     if (tab === Tab.SUBMITTAL) {
       const cachedSubmittal = getCache('submittal');
-      const isRealtime = isSectionRealtime('submittal');
-      
-      if (cachedSubmittal) {
+      if (cachedSubmittal && !submittalData) {
         setSubmittalData(cachedSubmittal.data);
       }
-
-      if (!cachedSubmittal || isCacheStale(cachedSubmittal.timestamp, isRealtime)) {
-        if (!cachedSubmittal) setLoading(true);
-        const res = await fetchSubmittalData();
-        if (res) {
-          setSubmittalData(res);
-          setCache('submittal', res);
-          setError(false);
-        } else if (!cachedSubmittal) {
-          setError(true);
-        }
-        setLoading(false);
+      if (!cachedSubmittal && !submittalData) {
+        setLoading(true);
       }
+
+      fetchSubmittalData()
+        .then((res) => {
+          if (res) {
+            setSubmittalData(res);
+            setCache('submittal', res);
+            setError(false);
+          } else if (!cachedSubmittal && !submittalData) {
+            setError(true);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
     }
 
     if (tab === Tab.MONITORING) {
       const cachedMonitoring = getCache('monitoring');
-      const isRealtime = isSectionRealtime('monitoring');
-      
-      if (cachedMonitoring) {
+      if (cachedMonitoring && !monitoringData) {
         setMonitoringData(cachedMonitoring.data);
       }
-
-      if (!cachedMonitoring || isCacheStale(cachedMonitoring.timestamp, isRealtime)) {
-        if (!cachedMonitoring) setLoading(true);
-        const res = await fetchMonitoringData();
-        if (res) {
-          setMonitoringData(res);
-          setCache('monitoring', res);
-          setError(false);
-        } else if (!cachedMonitoring) {
-          setError(true);
-        }
-        setLoading(false);
+      if (!cachedMonitoring && !monitoringData) {
+        setLoading(true);
       }
+
+      fetchMonitoringData()
+        .then((res) => {
+          if (res) {
+            setMonitoringData(res);
+            setCache('monitoring', res);
+            setError(false);
+          } else if (!cachedMonitoring && !monitoringData) {
+            setError(true);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
     }
-  }, [isSectionRealtime]);
+  }, [sheetData, submittalData, monitoringData]);
 
   const refreshMonitoringNow = useCallback(async () => {
+    clearSheetCsvMemoryCache();
     const res = await fetchMonitoringData();
     if (res) {
       setMonitoringData(res);
@@ -2048,6 +2095,7 @@ const App: React.FC = () => {
   }, []);
 
   const refreshPaymentDataNow = useCallback(async () => {
+    clearSheetCsvMemoryCache();
     const res = await fetchDashboardData();
     if (res) {
       setSheetData(res);
@@ -2056,14 +2104,20 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Giữ tham chiếu mới nhất của loadDataForTab để tránh vòng lặp re-subscribe
+  const loadDataForTabRef = React.useRef(loadDataForTab);
+  useEffect(() => {
+    loadDataForTabRef.current = loadDataForTab;
+  }, [loadDataForTab]);
+
   // Effect: Load data whenever active tab changes
   useEffect(() => {
     if (isGlobalAuthenticated) {
-      loadDataForTab(activeTab);
+      loadDataForTabRef.current(activeTab);
     }
-  }, [activeTab, loadDataForTab, isGlobalAuthenticated]);
+  }, [activeTab, isGlobalAuthenticated]);
 
-  // Effect: Real-time polling & live config listener for Monitoring, Dashboard, and Payment
+  // Effect: Real-time polling, window focus & visibilitychange auto-sync for all tabs
   useEffect(() => {
     if (!isGlobalAuthenticated) return;
 
@@ -2071,6 +2125,14 @@ const App: React.FC = () => {
       refreshMonitoringNow();
     };
     window.addEventListener(MONITORING_CONFIG_EVENT, handleConfigChange);
+
+    const handleWindowFocusOrVisible = () => {
+      if (document.visibilityState === 'visible') {
+        loadDataForTabRef.current(activeTab);
+      }
+    };
+    window.addEventListener('focus', handleWindowFocusOrVisible);
+    document.addEventListener('visibilitychange', handleWindowFocusOrVisible);
 
     let unsubscribeSnapshot: (() => void) | undefined;
     try {
@@ -2081,21 +2143,30 @@ const App: React.FC = () => {
       }
     } catch {}
 
-    let intervalId: ReturnType<typeof setInterval> | undefined;
-    if (activeTab === Tab.MONITORING) {
-      intervalId = setInterval(() => {
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === 'hidden') return;
+      if (activeTab === Tab.MONITORING) {
         refreshMonitoringNow();
-      }, 15000);
-    } else if (activeTab === Tab.DASHBOARD || activeTab === Tab.PAYMENT) {
-      intervalId = setInterval(() => {
+      } else if (
+        activeTab === Tab.DASHBOARD ||
+        activeTab === Tab.SCHEDULE ||
+        activeTab === Tab.PAYMENT ||
+        activeTab === Tab.MODEL_HOUSE ||
+        activeTab === Tab.ISSUES
+      ) {
         refreshPaymentDataNow();
-      }, 15000);
-    }
+        if (activeTab === Tab.DASHBOARD) {
+          refreshMonitoringNow();
+        }
+      }
+    }, 15000);
 
     return () => {
       window.removeEventListener(MONITORING_CONFIG_EVENT, handleConfigChange);
+      window.removeEventListener('focus', handleWindowFocusOrVisible);
+      document.removeEventListener('visibilitychange', handleWindowFocusOrVisible);
       if (unsubscribeSnapshot) unsubscribeSnapshot();
-      if (intervalId) clearInterval(intervalId);
+      clearInterval(intervalId);
     };
   }, [activeTab, isGlobalAuthenticated, refreshMonitoringNow, refreshPaymentDataNow]);
 

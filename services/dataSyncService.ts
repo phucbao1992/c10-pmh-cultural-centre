@@ -28,19 +28,19 @@ export interface DataSyncSettings {
 }
 
 export const DATA_SYNC_DOC = 'data_sync_settings';
-export const LOCAL_STORAGE_KEY_SYNC_SETTINGS = 'c10_data_sync_settings_v1';
+export const LOCAL_STORAGE_KEY_SYNC_SETTINGS = 'c10_data_sync_settings_v2';
 
 export const DEFAULT_SYNC_SETTINGS: DataSyncSettings = {
-  manualOnly: true,
+  manualOnly: false,
   sections: {
-    dashboard: false,
+    dashboard: true,
     dailyReport: true, // Báo cáo ngày có listener riêng trên Firestore
-    weeklyReport: false,
-    focusPoints: false,
-    monitoring: false,
-    submittal: false,
-    procurement: false,
-    payment: false,
+    weeklyReport: true,
+    focusPoints: true,
+    monitoring: true,
+    submittal: true,
+    procurement: true,
+    payment: true,
   },
   scheduledSync: {
     enabled: false,

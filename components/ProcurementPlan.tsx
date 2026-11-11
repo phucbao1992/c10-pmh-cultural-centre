@@ -4,7 +4,8 @@ import {
   Calendar, CheckCircle2, Clock, AlertCircle, Building2, Truck, FileSpreadsheet
 } from 'lucide-react';
 import { Language } from '../types';
-import { parseCSV } from './IssuesList';
+import { parseCSV } from '../services/utils';
+import { syncCloudResourceLinksToFirestore } from '../services/sheetsService';
 
 interface ProcurementPlanProps {
   language: Language;
@@ -697,15 +698,35 @@ const ProcurementPlan: React.FC<ProcurementPlanProps> = ({ language, onProtected
     return { items, notesFooter };
   };
 
-  const fetchSheetData = async (targetId?: string) => {
-    setLoading(true);
+  const fetchSheetData = async (targetId?: string, silent = false) => {
+    if (!silent) setLoading(true);
     setError(false);
     const customId = targetId || localStorage.getItem('c10_procurement_sheet_id') || sheetId;
+    const effectiveSheetId = customId || DEFAULT_SHEET_ID;
 
     try {
-      // 1. Fetch PMH: If no custom sheet set by admin, load the user's latest asset
+      // 1. Fetch PMH: Ưu tiên đọc trực tiếp từ Google Sheet (gviz CSV no-store), nếu lỗi mới dùng file dự phòng
       let pmhLoaded = false;
-      if (!customId) {
+      if (effectiveSheetId) {
+        try {
+          const resPmh = await fetch(
+            `https://docs.google.com/spreadsheets/d/${effectiveSheetId}/gviz/tq?tqx=out:csv&gid=1573500963&_t=${Date.now()}`,
+            { cache: 'no-store' }
+          );
+          if (resPmh.ok) {
+            const textPmh = await resPmh.text();
+            const parsedPmh = parsePMHCSV(textPmh);
+            if (parsedPmh.mainItems.length > 0 || parsedPmh.otherItems.length > 0) {
+              setDataPMH(parsedPmh);
+              pmhLoaded = true;
+            }
+          }
+        } catch (e) {
+          console.warn('Remote PMH sheet fetch failed:', e);
+        }
+      }
+
+      if (!pmhLoaded) {
         try {
           const resLocal = await fetch('/assets/aistudio/C10_Procurement_data_22cf8358');
           if (resLocal.ok) {
@@ -718,29 +739,19 @@ const ProcurementPlan: React.FC<ProcurementPlanProps> = ({ language, onProtected
         }
       }
 
-      if (!pmhLoaded && customId) {
-        try {
-          const resPmh = await fetch(`https://docs.google.com/spreadsheets/d/${customId}/export?format=csv&gid=1573500963`);
-          if (resPmh.ok) {
-            const textPmh = await resPmh.text();
-            setDataPMH(parsePMHCSV(textPmh));
-            pmhLoaded = true;
-          }
-        } catch (e) {
-          console.warn('Remote PMH sheet fetch failed:', e);
-        }
-      }
-
       if (!pmhLoaded && !dataPMH) {
         setDataPMH(DEFAULT_PMH_DATA);
       }
 
       // 2. Fetch MC: Use customId if available, otherwise DEFAULT_SHEET_ID
-      const mcSheetId = customId || DEFAULT_SHEET_ID;
+      const mcSheetId = effectiveSheetId;
       if (mcSheetId) {
         try {
           // Use gviz for browser CORS support
-          const resMc = await fetch(`https://docs.google.com/spreadsheets/d/${mcSheetId}/gviz/tq?tqx=out:csv&gid=463708799`);
+          const resMc = await fetch(
+            `https://docs.google.com/spreadsheets/d/${mcSheetId}/gviz/tq?tqx=out:csv&gid=463708799&_t=${Date.now()}`,
+            { cache: 'no-store' }
+          );
           if (resMc.ok) {
             const textMc = await resMc.text();
             setDataMC(parseMCCSV(textMc));
@@ -765,12 +776,25 @@ const ProcurementPlan: React.FC<ProcurementPlanProps> = ({ language, onProtected
       console.error('Error loading procurement data:', err);
       if (!dataPMH) setDataPMH(DEFAULT_PMH_DATA);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchSheetData();
+    const handleFocus = () => fetchSheetData(undefined, true);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchSheetData(undefined, true);
+      }
+    }, 20000);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('c10-resource-updated', handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('c10-resource-updated', handleFocus);
+    };
   }, []);
 
   // Helper to check if a date string is upcoming or overdue (e.g. within 45 days or past)
@@ -872,6 +896,8 @@ const ProcurementPlan: React.FC<ProcurementPlanProps> = ({ language, onProtected
     setCustomSheetUrl(clean);
     localStorage.setItem('c10_procurement_sheet_id', id);
     localStorage.setItem('c10_procurement_custom_url', clean);
+    syncCloudResourceLinksToFirestore().catch(() => {});
+    window.dispatchEvent(new Event('c10-resource-updated'));
     setConfigFeedback(language === 'VN' ? 'Đã cập nhật link Google Sheet cho Kế hoạch mua hàng thành công!' : 'Successfully updated Google Sheet for Procurement Plan!');
     fetchSheetData(id);
     setTimeout(() => {
@@ -940,8 +966,6 @@ const ProcurementPlan: React.FC<ProcurementPlanProps> = ({ language, onProtected
               <span>{language === 'EN' ? 'Add Link' : 'Thêm link'}</span>
             </button>
           )}
-
-          
         </div>
       </div>
 

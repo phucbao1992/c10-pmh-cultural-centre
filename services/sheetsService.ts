@@ -248,22 +248,72 @@ const parseCSV = (text: string): string[][] => {
     return result;
 };
 
-const fetchSheetCSV = async (sheetName: string, range: string, customSheetId?: string) => {
-    try {
-        let overrideMainId = '';
-        if (typeof window !== 'undefined') {
-            overrideMainId = localStorage.getItem('c10_override_main_sheet_id') || '';
-        }
-        const targetSheetId = extractSheetId(customSheetId || overrideMainId || GOOGLE_SHEET_ID);
-        const url = `https://docs.google.com/spreadsheets/d/${targetSheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&range=${encodeURIComponent(range)}&_t=${Date.now()}`;
-        const response = await fetch(url, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`Failed to fetch ${sheetName}`);
-        const text = await response.text();
-        return parseCSV(text);
-    } catch (error) {
-        console.error(`Error fetching CSV for ${sheetName}:`, error);
-        return [];
+const sheetCsvMemoryCache = new Map<string, { rows: string[][]; timestamp: number }>();
+const inFlightCsvRequests = new Map<string, Promise<string[][]>>();
+const SHEET_MEM_TTL_MS = 2000;
+
+export const clearSheetCsvMemoryCache = () => {
+    sheetCsvMemoryCache.clear();
+};
+
+const fetchSheetCSV = async (sheetName: string, range: string, customSheetId?: string): Promise<string[][]> => {
+    let overrideMainId = '';
+    if (typeof window !== 'undefined') {
+        overrideMainId = localStorage.getItem('c10_override_main_sheet_id') || '';
     }
+    const effectiveInputId =
+        customSheetId && customSheetId !== GOOGLE_SHEET_ID
+            ? customSheetId
+            : overrideMainId || GOOGLE_SHEET_ID;
+    const targetSheetId = extractSheetId(effectiveInputId);
+    const cacheKey = `${targetSheetId}__${sheetName.trim()}__${range.trim()}`;
+
+    const memHit = sheetCsvMemoryCache.get(cacheKey);
+    if (memHit && Date.now() - memHit.timestamp < SHEET_MEM_TTL_MS) {
+        return memHit.rows;
+    }
+
+    const existingPromise = inFlightCsvRequests.get(cacheKey);
+    if (existingPromise) {
+        return existingPromise;
+    }
+
+    const requestPromise = (async (): Promise<string[][]> => {
+        try {
+            const url = `https://docs.google.com/spreadsheets/d/${targetSheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName.trim())}&range=${encodeURIComponent(range.trim())}&_t=${Date.now()}`;
+            const response = await fetch(url, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`Failed to fetch ${sheetName}`);
+            const text = await response.text();
+            const parsed = parseCSV(text);
+            if (parsed && parsed.length > 0) {
+                sheetCsvMemoryCache.set(cacheKey, { rows: parsed, timestamp: Date.now() });
+                if (typeof window !== 'undefined') {
+                    try {
+                        localStorage.setItem(`c10_lkg_csv_${cacheKey}`, JSON.stringify(parsed));
+                    } catch {}
+                }
+            }
+            return parsed;
+        } catch (error) {
+            console.warn(`Error fetching CSV for ${sheetName}, using Last-Known-Good fallback:`, error);
+            if (memHit && memHit.rows.length > 0) return memHit.rows;
+            if (typeof window !== 'undefined') {
+                try {
+                    const savedLkg = localStorage.getItem(`c10_lkg_csv_${cacheKey}`);
+                    if (savedLkg) {
+                        const parsedLkg = JSON.parse(savedLkg);
+                        if (Array.isArray(parsedLkg)) return parsedLkg;
+                    }
+                } catch {}
+            }
+            return [];
+        } finally {
+            inFlightCsvRequests.delete(cacheKey);
+        }
+    })();
+
+    inFlightCsvRequests.set(cacheKey, requestPromise);
+    return requestPromise;
 };
 
 export interface GeneralInfoData {
@@ -802,9 +852,13 @@ export const fetchMonitoringData = async (): Promise<MonitoringData | null> => {
             }
         } catch {}
 
+        const overrideMonId = typeof window !== 'undefined' ? (localStorage.getItem('c10_override_monitoring_sheet_id') || '').trim() : '';
+        const hasCustomMonSheet = (config.sourceType === 'custom_sheet' && Boolean(config.customSheetId)) || Boolean(overrideMonId);
         const targetSheetId =
             config.sourceType === 'custom_sheet' && config.customSheetId
                 ? extractSheetId(config.customSheetId)
+                : overrideMonId
+                ? extractSheetId(overrideMonId)
                 : DEFAULT_TEMPLATE_SHEET_ID;
 
         let sourceLabel = 'File: C10 Tổng hợp kết quả quan trắc (Real-time)';
